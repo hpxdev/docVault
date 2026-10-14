@@ -1,14 +1,18 @@
 import asyncio
+import json
 import uuid
+from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.common import Limit, Offset, error_responses
 from app.core.errors import AppError, ConflictError, NotFoundError, error_body
+from app.core.redis import async_cache
 from app.db.session import get_db
 from app.models import Document, DocumentInsights, DocumentSegment
 from app.schemas.documents import (
@@ -22,7 +26,7 @@ from app.schemas.documents import (
 )
 from app.services import cache
 from app.services.events import publish_deleted, publish_status
-from app.services.status import STAGE_COLUMN, STAGES, recompute
+from app.services.status import STAGE_COLUMN, STAGES, channel, recompute, status_payload
 from app.services.storage import Storage, get_storage
 from app.services.upload import handle_upload
 from app.workers import dispatch
@@ -129,6 +133,101 @@ async def list_documents(
     )
     items = [DocumentOut.from_model(doc, cat) for doc, cat in rows.all()]
     return DocumentList(items=items, total=total or 0, limit=limit, offset=offset)
+
+
+def _parse_ids(
+    ids: Annotated[str | None, Query(description="Comma-separated document IDs (max 50)")] = None,
+) -> list[uuid.UUID]:
+    """Dependency: validated before the stream starts, so errors are normal JSON responses."""
+    if not ids:
+        return []
+    try:
+        wanted = list(dict.fromkeys(uuid.UUID(x.strip()) for x in ids.split(",") if x.strip()))
+    except ValueError as exc:
+        raise AppError(
+            "ids must be comma-separated UUIDs.", code="VALIDATION_ERROR", status_code=422
+        ) from exc
+    if len(wanted) > 50:
+        raise AppError("At most 50 ids.", code="VALIDATION_ERROR", status_code=422)
+    return wanted
+
+
+_EVENTS_DOC = """Server-Sent Events with document status.
+
+1. `snapshot` for each requested document (current state; `not_found` for unknown IDs),
+2. then `status` on every change (stage started/finished/retrying/failed) and `deleted`,
+3. `: ping` comments every 15 s while idle (heartbeat).
+
+`ids` limits the stream to those documents (max 50); without it, all documents are watched
+(snapshot of the 50 newest). With `close_when_settled=true` the stream ends once every requested
+document is no longer `queued`/`processing` (useful for scripts: `curl -N`)."""
+
+
+@router.get(
+    "/events",
+    response_class=EventSourceResponse,
+    summary="Live document status (SSE)",
+    description=_EVENTS_DOC,
+    responses={
+        200: {
+            "content": {
+                "text/event-stream": {
+                    "example": 'event: snapshot\ndata: {"id": "…", "status": "queued"}\n\n'
+                    'event: status\ndata: {"id": "…", "status": "processing"}\n\n'
+                }
+            }
+        },
+        **error_responses(422),
+    },
+)
+async def document_events(
+    session: DB,
+    wanted: Annotated[list[uuid.UUID], Depends(_parse_ids)],
+    close_when_settled: bool = False,
+) -> AsyncIterator[ServerSentEvent]:
+    pubsub = async_cache().pubsub()
+    # Subscribe before reading the snapshot so no change can fall between the two.
+    if wanted:
+        await pubsub.subscribe(*[channel(i) for i in wanted])
+    else:
+        await pubsub.psubscribe("doc:*")
+    try:
+        stmt = select(Document)
+        stmt = (
+            stmt.where(Document.id.in_(wanted))
+            if wanted
+            else stmt.order_by(Document.created_at.desc()).limit(50)
+        )
+        docs = (await session.scalars(stmt)).all()
+        await session.commit()  # don't hold a transaction open for the stream's lifetime
+        pending: set[str] = set()
+        for doc in docs:
+            payload = status_payload(doc)
+            if doc.status in ("queued", "processing"):
+                pending.add(payload["id"])
+            yield ServerSentEvent(event="snapshot", data=payload)
+        for missing in {str(i) for i in wanted} - {str(d.id) for d in docs}:
+            yield ServerSentEvent(event="not_found", data={"id": missing})
+        if close_when_settled and wanted and not pending:
+            return
+        while True:
+            message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
+            if message is None:
+                continue
+            data = json.loads(message["data"])
+            if data.get("deleted"):
+                pending.discard(data["id"])
+                yield ServerSentEvent(event="deleted", data=data)
+            else:
+                if data.get("status") in ("queued", "processing"):
+                    pending.add(data["id"])
+                else:
+                    pending.discard(data["id"])
+                yield ServerSentEvent(event="status", data=data)
+            if close_when_settled and wanted and not pending:
+                return
+    finally:
+        await pubsub.aclose()
 
 
 @router.get(

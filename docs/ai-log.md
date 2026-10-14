@@ -364,3 +364,30 @@ session endpoints were needed to test either.
   disconnect). A real-socket disconnect is checked on the live stack at the backend checkpoint.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T16 — Document status SSE
+
+**Produced by AI**
+- `GET /documents/events?ids=a,b[&close_when_settled=true]` (native FastAPI SSE): subscribes to
+  `doc:{id}` channels (or `doc:*`) **before** reading the snapshot so no change is lost in between;
+  sends `snapshot` per document (`not_found` for unknown IDs), then `status` / `deleted` events;
+  FastAPI's built-in `: ping` keepalive every 15 s serves as the heartbeat. Optional
+  `close_when_settled` (my addition) ends the stream when no watched document is
+  queued/processing, for scripts (`curl -N`) and finite tests.
+
+**Problems found and fixes**
+- Validation errors raised inside a streaming generator happen after the 200 response has
+  started (unhandled error). Fix: ID parsing moved into a dependency, like the chat stream.
+- A scripted edit (Python run from a Git Bash heredoc) wrote `…` as cp1252 bytes and turned `\n`
+  escapes into line breaks. Found by a UTF-8 scan of the repo (only this file affected); repaired.
+  From here on such edits go through the editor tool.
+
+**Verification (actually run)**
+- `pytest` → 115 passed, incl. `test_status_stream.py`: snapshot (`queued`) first, `not_found`
+  for an unknown ID, live `status` events published by the worker code running in another thread
+  (extract `running` … final `ready`, `chat_ready: true`), stream closes when settled; an
+  already-failed document closes right after its snapshot; bad IDs → 422 JSON.
+
+Human review: ___
