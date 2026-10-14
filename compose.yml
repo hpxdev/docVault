@@ -1,0 +1,66 @@
+name: ai-vault
+
+x-backend: &backend
+  image: ai-vault-backend:local
+  env_file: .env
+  volumes:
+    - storage:/data/storage
+  restart: unless-stopped
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg17
+    environment:
+      POSTGRES_USER: vault
+      POSTGRES_PASSWORD: vault
+      POSTGRES_DB: vault
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vault -d vault"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.2.10
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    <<: *backend
+    build:
+      context: ./backend
+      target: runtime
+    # Runs `alembic upgrade head` before starting uvicorn (see Dockerfile CMD).
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  worker:
+    <<: *backend
+    pull_policy: never  # built by the api service
+    command: ["sh", "-c", "celery -A app.workers.celery_app worker -Q ingest,ai --concurrency=$${WORKER_CONCURRENCY:-2} --loglevel=INFO --without-gossip --without-mingle"]
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  storage:

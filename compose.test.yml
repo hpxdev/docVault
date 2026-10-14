@@ -1,0 +1,51 @@
+# Test stack: real Postgres + pgvector and Redis, fake AI providers.
+#   docker compose -f compose.test.yml run --rm tests            # full fake-mode suite
+#   docker compose -f compose.test.yml run --rm tests ruff check .
+name: ai-vault-test
+
+services:
+  test-db:
+    image: pgvector/pgvector:0.8.7-pg17
+    environment:
+      POSTGRES_USER: vault
+      POSTGRES_PASSWORD: vault
+      POSTGRES_DB: vault_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    command: ["postgres", "-c", "fsync=off", "-c", "synchronous_commit=off", "-c", "full_page_writes=off"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vault -d vault_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  test-redis:
+    image: redis:8.2.10
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  tests:
+    build:
+      context: ./backend
+      target: test
+    image: ai-vault-backend:test
+    environment:
+      AI_PROVIDER: fake
+      OPENAI_API_KEY: ""
+      DATABASE_URL: postgresql+psycopg://vault:vault@test-db:5432/vault_test
+      REDIS_URL: redis://test-redis:6379/0
+      CACHE_REDIS_URL: redis://test-redis:6379/1
+      STORAGE_DIR: /tmp/vault-storage
+      LOG_LEVEL: WARNING
+      RUN_LIVE_AI_TESTS: ${RUN_LIVE_AI_TESTS:-0}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
