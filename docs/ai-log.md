@@ -495,3 +495,29 @@ context only when the follow-up contains a reference word (it, that, they, …).
 `test_standalone_follow_up_is_not_rewritten`. Suite: 123 passed.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Backend acceptance checkpoint (fake mode)
+
+**Run (actually executed):**
+1. `docker compose down -v` (fresh volumes), `git clone` of the repo at `56fadf8` into a temp
+   dir, `cp .env.example .env`, set `AI_PROVIDER=fake` (no key provided yet), `docker compose up
+   -d --build` → db, redis, api healthy, worker running; migrations ran on API start.
+2. `bash scripts/walkthrough.sh` (the README curl walkthrough) → exit 0:
+   upload → accepted / duplicate / rejected `UNSUPPORTED_FILE_TYPE`; status SSE snapshot + 5 live
+   events ending `ready`; insights (`ai_mode: fake`, single pass, 6/6 segments covered); cited
+   answer → page 3 with original excerpt; streamed follow-up (`meta`, 28 `token`, `citations`,
+   `done`) condensed to "When was it approved? (context: What is the total capital budget?)";
+   "Who is the CFO?" → `not_found`; history; both metrics endpoints.
+   (First attempt found the fake-condenser bug logged above; this is the run after the fix.)
+3. From the same clone: `ruff check . && ruff format --check . && pytest -q` → all checks passed,
+   123 passed, 1 deselected (live). No ERROR lines in api/worker logs.
+4. T19 live evaluation: **NOT RUN** (no key / no spend approval yet). `docs/EVALUATION.md` says so.
+
+**Not verified:** anything about real OpenAI behaviour (answer quality, citation discipline,
+structured-output schema acceptance by the API, real token usage/cost, latency); a real-socket
+client disconnect during a slow stream (the test closes the endpoint generator directly);
+HNSW being chosen for vault-wide queries at scale.
+
+Human review: ___
