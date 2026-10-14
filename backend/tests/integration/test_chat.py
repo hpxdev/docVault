@@ -280,3 +280,15 @@ async def test_injection_text_cannot_widen_scope(client, enqueued, fake_chat):
     assert "plan.pdf" not in prompt and "4.2 million" not in prompt
     assert {c["document_id"] for c in msg["citations"]} <= {injection}
     assert msg["scope_document_ids"] == [injection]
+
+
+async def test_standalone_follow_up_is_not_rewritten(client, enqueued):
+    """A follow-up that does not refer back keeps its meaning: in the walkthrough the fake
+    condenser once glued the previous question on, turning "Who is the CFO?" into an answer."""
+    [doc] = await _ingest(client, enqueued, ("plan.pdf", fixtures.five_page_pdf()))
+    sid = await _session(client, [doc])
+    await _ask(client, sid, BUDGET_Q)
+    await _ask(client, sid, "When was it approved?")
+    msg = (await _ask(client, sid, "Who is the CFO?")).json()["assistant_message"]
+    assert msg["standalone_query"] == "Who is the CFO?"
+    assert msg["answer_status"] == "not_found"

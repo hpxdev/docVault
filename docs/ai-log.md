@@ -481,3 +481,17 @@ Human review: ___
 - **NOT RUN:** waiting for the user's key and spend approval.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Fix — fake condenser rewrote standalone follow-ups
+
+**Found by the clean-clone walkthrough:** "Who is the CFO?", asked as the third turn, came back
+`answered` instead of `not_found`. The fake condenser always appended the previous question as
+context ("Who is the CFO? (context: When was it approved?)"), creating lexical overlap with the
+budget page. This was a test-double bug (a real model follows `chat.condense.v1` rule 3:
+standalone questions are returned unchanged), but it made fake mode misleading. Fix: the fake adds
+context only when the follow-up contains a reference word (it, that, they, …). New test
+`test_standalone_follow_up_is_not_rewritten`. Suite: 123 passed.
+
+Human review: ___

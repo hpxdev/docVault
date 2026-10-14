@@ -208,11 +208,33 @@ def fake_answer(messages: Sequence[BaseMessage]) -> str:
     )
 
 
+_REFERENCE_WORDS = frozenset(
+    [
+        "it",
+        "its",
+        "it's",
+        "that",
+        "this",
+        "these",
+        "those",
+        "they",
+        "them",
+        "their",
+        "he",
+        "she",
+        "there",
+    ]
+)
+
+
 def fake_condense(messages: Sequence[BaseMessage]) -> str:
+    """Mirrors chat.condense.v1: add context only when the follow-up refers back to the
+    conversation (a reference word such as "it"); a standalone question is returned unchanged."""
     text = _human_text(messages)
     follow_up = text.rsplit("Follow-up question:", 1)[-1].split("Standalone question:")[0].strip()
     users = re.findall(r"^User: (.+)$", text, re.M)
-    if not users:
+    refers_back = bool(_REFERENCE_WORDS & set(re.findall(r"[a-z']+", follow_up.lower())))
+    if not users or not refers_back:
         return follow_up
     return f"{follow_up} (context: {users[-1].strip()})"
 
