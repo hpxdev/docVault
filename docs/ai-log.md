@@ -311,3 +311,56 @@ Human review: ___
   both documents in the top 8; RRF/cap unit checks; scoped EXPLAIN never shows the HNSW index.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T13–T15 — Chat sessions, ask (JSON), ask (SSE stream)
+
+Committed together: the JSON and SSE endpoints share one pipeline (`services/chat.py`), and the
+session endpoints were needed to test either.
+
+**Produced by AI**
+- **T13** (`api/chat.py`, `schemas/chat.py`): create (unknown documents → 404; documents need not
+  be ready yet), list (recent first), detail, PATCH (rename, add/remove documents, scope_mode),
+  delete; history oldest-first with limit/offset, citations and per-message usage from the ledger.
+  Untitled sessions are auto-titled from the first question.
+- **T14** (`services/chat.py`, `services/citations.py`, prompts `chat.condense.v1`,
+  `chat.answer.v1`): `prepare_ask` runs as a FastAPI dependency (scope validation → `409
+  DOCUMENTS_NOT_READY` with per-document reasons incl. `EMBEDDING_MODEL_MISMATCH`, `422
+  NO_DOCUMENTS_IN_SCOPE`; persists the user message) so errors are normal HTTP errors even for
+  the stream. `answer_events` condenses only when history exists (last 6 messages), embeds the
+  standalone query (cached), retrieves, builds `<sources>` with `[S#]`, streams the answer,
+  validates markers (`[S1, S7]` groups handled; unknown markers removed and stored in
+  `retrieval.invalid_citations`), maps citations to stored chunks with an excerpt that is a
+  substring of the original chunk text, and persists message + citations + retrieval trace +
+  latencies. AI errors persist an assistant message with `answer_status="error"` and return the
+  error envelope (JSON) or an `error` event (SSE).
+- **T15**: FastAPI's native `EventSourceResponse` (FastAPI 0.143.1 ships `fastapi.sse`, with a
+  15 s `: ping` keepalive), so `sse-starlette` is not needed. The pipeline runs in its own
+  asyncio task feeding a queue; on client disconnect FastAPI cancels the response generator,
+  whose `finally` sets a stop flag; the pipeline stops at the next token and saves the partial
+  answer with `interrupted: true` (ledger row `status="interrupted"`, tokens counted locally).
+- New codes: `NO_DOCUMENTS_IN_SCOPE` (422), `answer_status="error"`.
+
+**Problems found and fixes**
+- **Real bug found by the vault-wide test:** section locator labels contain double quotes
+  (`section "Onboarding Guide > Accounts"`), which broke the `location="…"` attribute in the
+  sources block, so the fake model could not parse Markdown sources (a real model would see a
+  malformed delimiter too). Fix: quotes in attribute values are replaced.
+- A test scripted one fake reply for a second-turn question; the condense call consumed it.
+  Test now scripts both replies.
+
+**Verification (actually run)**
+- `pytest` → 113 passed, incl. `test_chat.py` (CRUD; 409/422 scope checks before anything is
+  stored; cited answer → page 3 with an original-text excerpt; ledger purposes
+  `embed_query, answer` on turn 1; invalid markers dropped → `answered`/`unsupported`;
+  `not_found`; condensing with exactly the last 6 messages; history order and pagination; scope
+  recorded per message; `429 AI_BUDGET_EXCEEDED` kept in history; multi-document and vault-wide;
+  an in-scope injection document cannot pull other documents into the prompt) and
+  `test_chat_stream.py` (event order `meta → token+ → citations → done`, persisted message matches
+  the stream, scope errors as JSON before streaming, `error` event, disconnect → partial answer
+  saved with `interrupted: true` and an `interrupted` ledger row).
+- The disconnect test drives the endpoint's generator directly and closes it (what FastAPI does on
+  disconnect). A real-socket disconnect is checked on the live stack at the backend checkpoint.
+
+Human review: ___

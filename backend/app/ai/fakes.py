@@ -210,7 +210,7 @@ def fake_answer(messages: Sequence[BaseMessage]) -> str:
 
 def fake_condense(messages: Sequence[BaseMessage]) -> str:
     text = _human_text(messages)
-    follow_up = text.rsplit("Follow-up question:", 1)[-1].strip()
+    follow_up = text.rsplit("Follow-up question:", 1)[-1].split("Standalone question:")[0].strip()
     users = re.findall(r"^User: (.+)$", text, re.M)
     if not users:
         return follow_up
