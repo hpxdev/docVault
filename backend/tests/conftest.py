@@ -108,3 +108,29 @@ def run_queued(enqueued: list[tuple[str, str]]) -> list[tuple[str, str, str]]:
         outcome = execute_stage(stage, doc_id)
         done.append((stage, doc_id, outcome.result))
     return done
+
+
+@pytest.fixture(autouse=True)
+def _reset_ai():
+    from app.ai import registry
+
+    registry.clear_overrides()
+    registry._fake_chat.cache_clear()
+    registry._fake_embeddings.cache_clear()
+    yield
+    registry.clear_overrides()
+
+
+@pytest.fixture
+def fake_chat():
+    """The shared FakeChatModel; push scripted outputs with `fake_chat.push(...)`."""
+    from app.ai import registry
+
+    return registry.get_chat_model()
+
+
+@pytest.fixture
+def fake_embeddings():
+    from app.ai import registry
+
+    return registry.get_embedding_model()

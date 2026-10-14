@@ -175,3 +175,41 @@ extract stage depend on each other; the per-task breakdown is below.
   document reaches `ready` yet (expected at this point, not a pass of the full pipeline).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T09 — AI layer
+
+**Produced by AI**
+- Interfaces (`ai/providers.py`), LangChain OpenAI implementation (`ai/openai_provider.py`:
+  `ChatOpenAI` with `stream_usage=True`, `with_structured_output(method="json_schema",
+  strict=True, include_raw=True)`, `OpenAIEmbeddings`), deterministic fakes (`ai/fakes.py`),
+  provider registry (`ai/registry.py`), and the client that enforces the spend cap and writes the
+  `ai_calls` ledger (`ai/client.py`). Prices in `ai/pricing.py` "as of 2026-10-15".
+- Error classification: timeout/connection/429/5xx → `AI_PROVIDER_UNAVAILABLE` (transient);
+  `insufficient_quota` 429 → `AI_QUOTA_EXCEEDED` (not retried: retrying can't fix billing);
+  401 → `AI_AUTH_FAILED`; other 4xx → `AI_REQUEST_REJECTED`.
+- Design choices: ledger rows are committed in their own transaction (spend survives a rollback
+  of the stage's data writes); failed and interrupted calls are recorded too; a model without a
+  price entry is refused (`AI_NOT_CONFIGURED`) so nothing is spent untracked; the worker uses SDK
+  `max_retries=0` (Celery retries the stage) while the API uses `AI_MAX_RETRIES` in the SDK.
+- Embedding token counts are computed locally with `cl100k_base` because LangChain's
+  `OpenAIEmbeddings` does not return usage. This is the model's tokenizer, but it is a local count,
+  not a provider-reported one (to note in the README).
+
+**Problems found and fixes**
+- `with_structured_output` is not available on a `.bind(max_tokens=…)` wrapper; switched to one
+  `ChatOpenAI` instance per output cap. Found while reading the pinned LangChain API, not by a
+  failing live call (no live calls made).
+- Two of my own tests were wrong: `"one "` is 2 o200k tokens, not 1; and the async cap test
+  seeded spend behind the Redis cache without invalidating it. Tests corrected; code unchanged.
+
+**Verification (actually run)**
+- `pytest` → 82 passed, incl. `test_ai_layer.py`: pricing arithmetic; fake calls ledgered with
+  `model="fake"` and $0; cost from usage for priced test doubles (named as the real models, no
+  network); cap blocks before the provider is called; DB recompute on cache miss; failed and
+  interrupted (early-closed stream) calls recorded; classification table; `AI_NOT_CONFIGURED`
+  without a key; unpriced model refused; fake-embedding similarity.
+- **NOT VERIFIED:** behaviour against the real OpenAI API (no live calls yet).
+
+Human review: ___
