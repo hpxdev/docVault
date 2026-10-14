@@ -273,3 +273,41 @@ Human review: ___
 - **NOT VERIFIED:** insight quality from the real model (fake output is extractive filler).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T12 — Retrieval
+
+**Produced by AI**
+- `services/retrieval.py`: our own SQL on `chunks`, always filtered by the server-provided
+  document IDs and the current embedding model.
+  - Document scope: exact cosine distances inside a `MATERIALIZED` CTE (HNSW cannot be used, so
+    no post-filter starvation), with **per-document** top-20 candidate lists via `row_number()`.
+  - Whole vault: HNSW query with `SET LOCAL hnsw.iterative_scan = relaxed_order` and
+    `hnsw.ef_search = 100`, global top-20, re-sorted by exact distance.
+  - Full text: `plainto_tsquery('english')` with `&` swapped for `|` (OR semantics), re-parsed with
+    the `simple` config to avoid double stemming; ranked by `ts_rank_cd`; per-document top-20.
+  - RRF fusion (k=60), then a soft per-document cap `max(2, ceil(top_k / n_docs))` with backfill
+    from leftovers. Trace (ranks, similarity, RRF, counts, timing) returned for the message record.
+
+**Problems found and fixes**
+- **Design gap found by `test_document_cap_keeps_multi_document_answers_diverse`:** with global
+  top-20 candidate lists a 120-page document filled both lists and the 5-page document never
+  became a candidate, so the per-document cap had nothing to pick. Fix: per-document candidate
+  lists for document-scoped search.
+- I wanted a test showing the vault query uses HNSW. With 5, 300 and 1000 chunks Postgres chose
+  a seq scan or the `document_id` btree + sort (cheaper at that size), even with
+  `enable_seqscan=off`. I did not force the plan. The test now asserts only the guaranteed
+  property: the scoped query never uses HNSW. **NOT VERIFIED:** HNSW actually being chosen for
+  vault-wide queries at large scale (planner- and data-dependent).
+- Two more scripted edits broke `\n` escapes inside Python heredocs; switched to the Edit tool for
+  such changes.
+
+**Verification (actually run)**
+- `pytest` → 99 passed, incl. `test_retrieval.py`: known answer (page-3 chunk ranked 1 in both
+  lists); scope isolation with the injection document (a query matching the injection text, asked
+  in a Falcon-only scope, returns only Falcon chunks; vault mode limited to allowed IDs); hybrid
+  full-text finds `ZX-48213` on page 120 at FTS rank 1 and fused rank 1; per-document cap keeps
+  both documents in the top 8; RRF/cap unit checks; scoped EXPLAIN never shows the HNSW index.
+
+Human review: ___
