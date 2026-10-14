@@ -8,12 +8,26 @@ import uuid
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.core.config import get_settings
 from app.core.errors import error_body
 from app.core.logging import request_id_var
 
 log = logging.getLogger("app.request")
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+
+
+def _upload_too_large(scope: Scope) -> bool:
+    """Cheap pre-check on Content-Length before the multipart body is parsed. Per-file limits are
+    still enforced while streaming each file."""
+    if scope.get("method") != "POST" or not scope.get("path", "").endswith("/documents"):
+        return False
+    raw = dict(scope.get("headers") or []).get(b"content-length")
+    if not raw or not raw.isdigit():
+        return False
+    settings = get_settings()
+    limit = settings.max_upload_bytes * settings.max_files_per_upload + 1024 * 1024
+    return int(raw) > limit
 
 
 class RequestContextMiddleware:
@@ -41,6 +55,19 @@ class RequestContextMiddleware:
             await send(message)
 
         try:
+            if _upload_too_large(scope):
+                body = json.dumps(
+                    error_body("FILE_TOO_LARGE", "The request body exceeds the upload limit.")
+                ).encode()
+                await send_wrapper(
+                    {
+                        "type": "http.response.start",
+                        "status": 413,
+                        "headers": [(b"content-type", b"application/json")],
+                    }
+                )
+                await send({"type": "http.response.body", "body": body})
+                return
             await self.app(scope, receive, send_wrapper)
         except Exception:
             log.exception("unhandled error")

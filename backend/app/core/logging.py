@@ -54,7 +54,8 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure_logging(level: str = "INFO") -> None:
-    handler = logging.StreamHandler(sys.stdout)
+    # sys.__stdout__: Celery replaces sys.stdout with a logging proxy, which would loop.
+    handler = logging.StreamHandler(sys.__stdout__)
     handler.setFormatter(JsonFormatter())
     root = logging.getLogger()
     root.handlers[:] = [handler]

@@ -95,3 +95,83 @@ Human review: ___
 - Live stack: worker heartbeat seen by `/health/ready` (`last_heartbeat_age_s: 9`).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T04 — Storage interface
+
+**Produced by AI**
+- `Storage` protocol + `LocalStorage` (`{root}/{document_id}/original.{ext}`), with a scratch dir
+  on the same filesystem so saving is a rename, and a guard against keys escaping the root.
+
+**Verification (actually run)**
+- `tests/unit/test_status_storage.py`: save/open/exists/delete round trip; `../../etc/passwd` key
+  rejected. Passed.
+
+Human review: ___
+
+---
+
+## 2026-10-15 · T05–T08 — Upload, Celery pipeline, extractors, document endpoints
+
+Developed together and committed as one commit because the upload endpoint, the pipeline and the
+extract stage depend on each other; the per-task breakdown is below.
+
+**Produced by AI**
+- **T05 upload** (`services/upload.py`, `services/sniff.py`): files are streamed to a temp file in
+  1 MB chunks with SHA-256 and a size cutoff; type sniffed from bytes (`%PDF-`, ZIP containing
+  `word/document.xml`, text heuristics; extension only distinguishes MD from TXT); dedupe on
+  SHA-256 (also inside one request, and on a concurrent-insert `IntegrityError`); per-file
+  results; row committed **before** `extract` is enqueued; enqueue failure marks the document
+  `QUEUE_UNAVAILABLE`. A Content-Length pre-check in the middleware rejects absurd bodies before
+  multipart parsing. When every file is rejected the response is an error envelope with per-file
+  results in `details` (single code → its status, e.g. 415; mixed codes → 400 `UPLOAD_REJECTED`).
+- **T06 pipeline** (`services/pipeline.py`, `workers/tasks.py`, `workers/dispatch.py`): stage claim
+  under `SELECT … FOR UPDATE`; only pending/running/retrying stages are claimable, so re-delivery of
+  a finished stage is a no-op; runs left `running` by a dead worker are closed as `WORKER_LOST`;
+  data writes and the status update commit together; transient errors → `retrying` + Celery
+  `self.retry` with exponential backoff and jitter, up to `AI_MAX_RETRIES`; permanent errors fail
+  fast; soft time limit → `STAGE_TIMEOUT`. Status events published on `doc:{id}`.
+- **T07 extractors** (`services/extraction.py`): PDF per page (encryption, page limit, scanned,
+  empty-page warnings), DOCX per heading section incl. tables, MD per ATX heading (ignores fenced
+  code) with heading path, TXT line ranges; UTF-8 → UTF-8-sig → cp1252, UTF-16 rejected.
+- **T08 endpoints** (`api/documents.py`): list (status/q/category filters, LIKE wildcards escaped,
+  newest first, paginated), detail, content (paginated segments with locators), file download,
+  reprocess (default failed stages; `extract` re-runs everything; 409 `DOCUMENT_PROCESSING`,
+  `NOTHING_TO_REPROCESS`, `EXTRACTION_REQUIRED`), delete (DB cascade + file + metrics cache +
+  `deleted` event). OpenAPI examples on schemas and error responses.
+- New error codes not in MASTER_PROMPT §6 (documented here, to go in the README):
+  `UPLOAD_REJECTED`, `QUEUE_UNAVAILABLE`, `FILE_MISSING`, `DOCUMENT_PROCESSING`,
+  `NOTHING_TO_REPROCESS`, `EXTRACTION_REQUIRED`, `STAGE_TIMEOUT`, `WORKER_LOST`, `INTERNAL_ERROR`,
+  `DB_UNAVAILABLE`.
+
+**Problems found and fixes**
+- A stage waiting for a retry was set back to `pending`; with the other stages also pending the
+  derived status became `queued` ("nothing started"), which is wrong. Caught by
+  `test_transient_error_is_retried_then_succeeds`. Fix: explicit `retrying` stage status.
+- `ruff` (ASYNC230/240) flagged blocking file I/O in the async upload path. Fix: temp-file
+  writes via `asyncio.to_thread`.
+- SQLAlchemy 2.1 deprecates `.distinct(col)` for DISTINCT ON. Fix: correlated scalar subquery for
+  the latest insights category.
+- My test expected httpx to send a raw control character in a filename; httpx percent-encodes it.
+  Test split: path stripping via the API, control characters via a unit test of `safe_filename`.
+- **Found on the live stack:** no JSON log lines from the worker. Celery replaces `sys.stdout`
+  with a logging proxy, so our handler (bound to `sys.stdout`) looped into logging and lines were
+  dropped. Fix: handler writes to `sys.__stdout__`; `worker_redirect_stdouts=False`.
+
+**Verification (actually run)**
+- `docker compose -f compose.test.yml run --rm tests sh -c "ruff format . && ruff check . && pytest -q"`
+  → 70 passed (upload cases, sniffing, extraction codes/locators, status derivation, pipeline
+  idempotency, WORKER_LOST, transient retry incl. the real Celery task in eager mode, permanent
+  no-retry, events, list/detail/content/file/reprocess/delete).
+- **Checkpoint M1** on the real stack (`docker compose up`, AI_PROVIDER=fake, real Celery worker):
+  uploaded the 10 generated fixtures with one curl request → 202, all accepted. Second request
+  (dup PDF, renamed binary, empty file, UTF-16 text) → 202 with duplicate / UNSUPPORTED_FILE_TYPE /
+  EMPTY_FILE / accepted. After the worker ran: encrypted → ENCRYPTED_DOCUMENT, image-only →
+  NO_EXTRACTABLE_TEXT, 301 pages → PAGE_LIMIT_EXCEEDED, damaged → CORRUPT_DOCUMENT, UTF-16 →
+  UNSUPPORTED_ENCODING; 5- and 120-page PDFs, DOCX, MD, TXT and the injection PDF extracted
+  (pages/sections as expected). `processing_runs` showed 6 succeeded + 5 failed extract runs.
+  Index and insights stay `pending`: those stages are not implemented until T10/T11, so no
+  document reaches `ready` yet (expected at this point, not a pass of the full pipeline).
+
+Human review: ___

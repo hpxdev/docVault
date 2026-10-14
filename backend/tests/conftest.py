@@ -16,6 +16,7 @@ os.environ.setdefault("AI_PROVIDER", "fake")
 os.environ.setdefault("STORAGE_DIR", "/tmp/vault-storage")
 
 from app.core.config import get_settings  # noqa: E402
+from app.workers import stages as _stages  # noqa: E402,F401  (registers pipeline stages)
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
@@ -82,3 +83,28 @@ async def client(app) -> AsyncIterator[httpx.AsyncClient]:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test/api/v1") as c:
         yield c
+
+
+@pytest.fixture(autouse=True)
+def enqueued(monkeypatch) -> list[tuple[str, str]]:
+    """Record enqueued stages instead of sending them to Celery. Tests run stages explicitly."""
+    calls: list[tuple[str, str]] = []
+    from app.workers import dispatch
+
+    monkeypatch.setattr(
+        dispatch, "enqueue_stage", lambda stage, doc_id: calls.append((stage, str(doc_id)))
+    )
+    return calls
+
+
+def run_queued(enqueued: list[tuple[str, str]]) -> list[tuple[str, str, str]]:
+    """Drain recorded tasks (including ones enqueued while draining), like a worker would."""
+    from app.services.pipeline import execute_stage
+    from app.workers import stages  # noqa: F401
+
+    done = []
+    while enqueued:
+        stage, doc_id = enqueued.pop(0)
+        outcome = execute_stage(stage, doc_id)
+        done.append((stage, doc_id, outcome.result))
+    return done

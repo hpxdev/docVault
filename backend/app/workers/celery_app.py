@@ -40,6 +40,7 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     worker_hijack_root_logger=False,
+    worker_redirect_stdouts=False,
     worker_concurrency=settings.worker_concurrency,
     timezone="UTC",
 )
