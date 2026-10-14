@@ -202,3 +202,72 @@ class ContentPage(Page):
 class ReprocessResponse(BaseModel):
     document: DocumentOut
     stages: list[str] = Field(description="Stages reset to pending and enqueued")
+
+
+class KeyPoint(BaseModel):
+    text: str
+    pages: list[int] = Field(description="Source PDF pages (empty for non-PDF documents)")
+    sections: list[int] | None = Field(
+        default=None, description="Source section numbers for DOCX/MD/TXT (see /content ordinals)"
+    )
+
+
+class InsightsOut(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "document_id": DOC_ID,
+                "ai_mode": "openai",
+                "model": "gpt-4o-mini",
+                "prompt_version": "insights.single.v1",
+                "summary_short": "Status report for Project Falcon: budget approved at $4.2M…",
+                "summary_detailed": "…",
+                "key_points": [
+                    {"text": "The total approved budget is $4.2M, approved in March.", "pages": [3]}
+                ],
+                "entities": {
+                    "people": [],
+                    "organizations": ["Project Falcon"],
+                    "locations": [],
+                    "dates": ["March"],
+                    "amounts": ["4.2 million dollars"],
+                },
+                "topics": ["budget", "milestones"],
+                "category": "report",
+                "tags": ["project", "budget"],
+                "sentiment": {"label": "neutral", "rationale": "Factual status reporting."},
+                "suggested_questions": ["What is the approved budget?"],
+                "coverage": {
+                    "segments_total": 5,
+                    "segments_covered": 5,
+                    "method": "single",
+                    "groups": 1,
+                    "validation": {
+                        "dropped_refs": 0,
+                        "dropped_key_points": 0,
+                        "invalid_enums": 0,
+                        "truncated_fields": [],
+                    },
+                },
+                "created_at": "2026-10-15T09:12:09.880Z",
+            }
+        }
+    )
+
+    document_id: uuid.UUID
+    ai_mode: Literal["openai", "fake"] = Field(
+        description="`fake` = produced by the deterministic test double, not a real model"
+    )
+    model: str
+    prompt_version: str
+    summary_short: str
+    summary_detailed: str
+    key_points: list[KeyPoint]
+    entities: dict[str, list[str]]
+    topics: list[str]
+    category: str
+    tags: list[str]
+    sentiment: dict[str, Any]
+    suggested_questions: list[str]
+    coverage: dict[str, Any]
+    created_at: datetime

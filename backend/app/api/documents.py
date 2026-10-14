@@ -15,6 +15,7 @@ from app.schemas.documents import (
     ContentPage,
     DocumentList,
     DocumentOut,
+    InsightsOut,
     ReprocessResponse,
     SegmentOut,
     UploadResponse,
@@ -193,6 +194,56 @@ async def download_document(document_id: uuid.UUID, session: DB, storage: Storag
     if not path.is_file():
         raise NotFoundError("The stored file is missing.", code="FILE_MISSING")
     return FileResponse(path, media_type=doc.mime_type, filename=doc.filename)
+
+
+@router.get(
+    "/{document_id}/insights",
+    response_model=InsightsOut,
+    summary="AI insights: summaries, key points with source pages, entities, tags, sentiment",
+    responses=error_responses(
+        404,
+        overrides={404: ("INSIGHTS_NOT_READY", "Insights are not available yet.")},
+    ),
+)
+async def get_document_insights(document_id: uuid.UUID, session: DB):
+    """`404 INSIGHTS_NOT_READY` (with the current insights status in `details`) while the stage is
+    pending/running or after it failed. `ai_mode: fake` marks output from the test double."""
+    doc = await get_document_or_404(session, document_id)
+    row = await session.scalar(
+        select(DocumentInsights)
+        .where(DocumentInsights.document_id == document_id)
+        .order_by(DocumentInsights.created_at.desc())
+        .limit(1)
+    )
+    if row is None:
+        raise NotFoundError(
+            "Insights are not available yet.",
+            code="INSIGHTS_NOT_READY",
+            details={
+                "status": doc.status,
+                "insights_status": doc.insights_status,
+                "error": {"code": doc.error_code, "message": doc.error_message}
+                if doc.insights_status == "failed"
+                else None,
+            },
+        )
+    return InsightsOut(
+        document_id=row.document_id,
+        ai_mode="fake" if row.model == "fake" else "openai",
+        model=row.model,
+        prompt_version=row.prompt_version,
+        summary_short=row.summary_short,
+        summary_detailed=row.summary_detailed,
+        key_points=row.key_points,
+        entities=row.entities,
+        topics=row.topics,
+        category=row.category,
+        tags=row.tags,
+        sentiment=row.sentiment,
+        suggested_questions=row.suggested_questions,
+        coverage=row.coverage,
+        created_at=row.created_at,
+    )
 
 
 @router.post(

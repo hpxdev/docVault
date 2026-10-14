@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.tokens import count_chat_tokens, count_embedding_tokens
 from app.models import Chunk, Document, DocumentSegment
 from app.services.extraction import extract
+from app.services.insights import generate_insights
 from app.services.locators import locator_label
 from app.services.pipeline import _STAGE_FUNCS, register_stage
 from app.services.stage_errors import StageError
@@ -120,3 +121,8 @@ def index_stage(session: Session, doc: Document) -> None:
             )
         )
     doc.embedding_model = ai.embeddings.name
+
+
+@register_stage("insights")
+def insights_stage(session: Session, doc: Document) -> None:
+    generate_insights(session, doc, sync_ai())

@@ -241,3 +241,35 @@ Human review: ___
   failure → retry → final `AI_PROVIDER_UNAVAILABLE` with no chunks and no `chat_ready_at`.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T11 — Insights stage
+
+**Produced by AI**
+- Versioned prompts `insights.single.v1`, `insights.map.v1`, `insights.reduce.v1`
+  (`app/prompts/*.md`) and a loader that builds LangChain `ChatPromptTemplate` messages.
+- `services/insights.py`: documents up to `INSIGHTS_SINGLE_PASS_MAX_TOKENS` (o200k count of the
+  marked text) go to one structured call; longer ones are split into consecutive ~8K-token groups
+  (oversized segments split into token windows that keep their marker), one map call per group,
+  then one reduce call over all notes in order. Coverage `{segments_total, segments_covered,
+  method, groups, validation}` is computed from the segment IDs actually sent.
+- Server-side validation: refs outside the document dropped (PDF pages `1..page_count`, other
+  types section ordinals); key points left with no valid ref dropped; invalid category → `other`,
+  invalid sentiment → `null`; word limits enforced by truncation; tags lowercased/deduped/≤ 8.
+  All counted in `coverage.validation`.
+- Non-PDF key points store `sections` (section ordinals) and an empty `pages` list, so DOCX/MD/TXT
+  insights never claim page numbers.
+- Upsert on `(document_id, prompt_version)`; `GET /documents/{id}/insights` with
+  `404 INSIGHTS_NOT_READY` (current status in details) and `ai_mode` derived from the stored model.
+
+**Verification (actually run)**
+- `pytest` → 93 passed, incl. `test_insights.py`: single pass for the 5-page PDF with all page
+  markers; map-reduce for the 120-page PDF (threshold lowered in the test) where every page reaches
+  a map call, the last-page fact is in the last map input, the reduce input has every part and the
+  `refs: 120` note; invalid refs/enums dropped and counted exactly; DOCX refs → sections; insights
+  failure → `partial` with chat still ready, then reprocess of only the failed stage → `ready`;
+  re-run upserts a single row.
+- **NOT VERIFIED:** insight quality from the real model (fake output is extractive filler).
+
+Human review: ___
