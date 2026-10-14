@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import chat, documents, health
+from app.api import chat, documents, health, metrics
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -64,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix=API_PREFIX)
     app.include_router(documents.router, prefix=API_PREFIX)
     app.include_router(chat.router, prefix=API_PREFIX)
+    app.include_router(metrics.router, prefix=API_PREFIX)
     return app
 
 

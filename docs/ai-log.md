@@ -391,3 +391,54 @@ Human review: ___
   already-failed document closes right after its snapshot; bad IDs → 422 JSON.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T17 — Metrics endpoints
+
+**Produced by AI**
+- `GET /metrics/documents` and `GET /metrics/processing?window=1h|24h|7d|all`
+  (`services/metrics.py`): document counts by status/type, chat-ready, pages/chunks/bytes,
+  average pages (over documents that have pages), uploads per UTC day for 14 days (zero-filled),
+  top categories/tags from each document's newest insights; per stage started/succeeded/failed,
+  `success_rate = succeeded/(succeeded+failed)` with running and retry-scheduled runs reported
+  separately, p50/p95 duration (`percentile_cont`), retries (attempt > 1), failures by code;
+  p50/p95 upload → chat-ready; queue depth (`LLEN` on the broker); AI calls/tokens/estimated cost
+  by purpose and model plus error rate; chat questions, not_found/unsupported/error rates,
+  p50/p95 first-token and total latency, average citations per answer. Every rate returns
+  `{value, numerator, denominator}` (`value` is null for 0/0). 15 s Redis cache (`cached` flag);
+  uploads, reprocess and delete invalidate it.
+
+**Problems found and fixes**
+- A first draft of the citation-count query contained a garbled placeholder (dead
+  `if False` branch). Caught on re-read before running; replaced with a plain join query.
+- SQLAlchemy 2.1 rejects positional `group_by(1)` (`ArgumentError`). Fix: explicit columns.
+- `DISTINCT ON` via `.distinct(col)` is deprecated; used a `row_number()` window instead.
+
+**Verification (actually run)**
+- `test_metrics.py`: seeded documents, runs, ledger rows, messages and citations → exact counts,
+  rates with denominators (e.g. extract 3/4 = 0.75), percentiles (100–400 ms → p50 250, p95 385),
+  0/0 → null, window filtering (9-day-old run only in `all`), invalid window → 422, cache hit then
+  invalidation by an upload.
+
+Human review: ___
+
+---
+
+## 2026-10-15 · T18 — Caches
+
+**Produced by AI**
+- Query-embedding cache (`services/cache.py`): key `qemb:{embedding_model}:{sha256(normalised
+  query)}` (lowercased, whitespace-collapsed), 7-day TTL, JSON vector; a cache hit makes no
+  provider call and writes no ledger row; Redis errors fall back to calling the provider.
+- Metrics cache (T17). Duplicate uploads deduplicated by SHA-256 (T05).
+- Chat answers are deliberately **not** cached (same question in another session can need a
+  different answer: scope and history differ). Asserted by a test.
+
+**Verification (actually run)**
+- `test_caches.py`: second (differently formatted) query → cache hit, one provider call, TTL set;
+  a different embedding model → miss; the same question in two sessions → the second message's
+  ledger shows only `answer` (embedding reused) and the answer is regenerated.
+- Full suite: `ruff check . && ruff format --check . && pytest -q` → 121 passed.
+
+Human review: ___
