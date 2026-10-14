@@ -1,6 +1,9 @@
 # Test stack: real Postgres + pgvector and Redis, fake AI providers.
 #   docker compose -f compose.test.yml run --rm tests            # full fake-mode suite
 #   docker compose -f compose.test.yml run --rm tests ruff check .
+#   LIVE (spends money; needs approval and OPENAI_API_KEY in .env):
+#   TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 \
+#     docker compose -f compose.test.yml run --rm tests pytest -m live -s
 name: ai-vault-test
 
 services:
@@ -33,9 +36,13 @@ services:
       context: ./backend
       target: test
     image: ai-vault-backend:test
+    # .env (optional) only supplies OPENAI_API_KEY for opt-in live tests; every other value below
+    # overrides it. Fake mode never calls OpenAI even when a key is present.
+    env_file:
+      - path: .env
+        required: false
     environment:
-      AI_PROVIDER: fake
-      OPENAI_API_KEY: ""
+      AI_PROVIDER: ${TEST_AI_PROVIDER:-fake}
       DATABASE_URL: postgresql+psycopg://vault:vault@test-db:5432/vault_test
       REDIS_URL: redis://test-redis:6379/0
       CACHE_REDIS_URL: redis://test-redis:6379/1

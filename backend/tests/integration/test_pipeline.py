@@ -185,3 +185,46 @@ async def test_celery_task_retries_transient_errors(client, enqueued, monkeypatc
         (3, "succeeded"),
     ]
     assert _doc(doc_id).extract_status == "succeeded"
+
+
+async def test_concurrent_index_and_insights_end_ready(client, enqueued, monkeypatch):
+    """Regression: on the live worker the two stages overlap. Each must derive the status from
+    the current locked row, not from the copy loaded when it started."""
+    import threading
+    import time as _time
+
+    doc_id = await _upload(client, "plan.pdf", fixtures.five_page_pdf())
+    pipeline.execute_stage("extract", doc_id)
+    index_fn, insights_fn = pipeline._STAGE_FUNCS["index"], pipeline._STAGE_FUNCS["insights"]
+    both_started = threading.Barrier(2, timeout=10)
+
+    def slow(fn, delay):
+        def run(session, doc):
+            both_started.wait()  # both stages have loaded the document while the other runs
+            _time.sleep(delay)
+            fn(session, doc)
+
+        return run
+
+    monkeypatch.setitem(pipeline._STAGE_FUNCS, "index", slow(index_fn, 0.3))
+    monkeypatch.setitem(pipeline._STAGE_FUNCS, "insights", slow(insights_fn, 0.1))
+    results = {}
+    threads = [
+        threading.Thread(target=lambda s=s: results.update({s: pipeline.execute_stage(s, doc_id)}))
+        for s in ("index", "insights")
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+    assert {s: r.result for s, r in results.items()} == {
+        "index": "succeeded",
+        "insights": "succeeded",
+    }
+    doc = _doc(doc_id)
+    assert (doc.index_status, doc.insights_status, doc.status) == (
+        "succeeded",
+        "succeeded",
+        "ready",
+    )
+    assert doc.ready_at is not None and doc.chat_ready_at is not None

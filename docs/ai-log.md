@@ -442,3 +442,42 @@ Human review: ___
 - Full suite: `ruff check . && ruff format --check . && pytest -q` → 121 passed.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Fix — concurrent index/insights left documents stuck in `processing`
+
+**Found by running the walkthrough on the live stack** (real Celery worker, fake AI): the status
+stream showed index finishing with `insights: pending` and insights finishing with
+`index: running`; the document never left `processing` although both stages had succeeded.
+Cause: `_finish` re-read the document with `session.get(..., with_for_update=True)`, but
+SQLAlchemy returned the instance already in the session's identity map (loaded when the stage
+started), so each stage derived `status` from a stale view of the other stage. The test suite ran
+stages one after another and could not see it.
+
+**Fix:** `populate_existing=True` on the locked reads in `claim` and `_finish`, so status is
+derived from the current, locked row.
+
+**Verification (actually run):** new test `test_concurrent_index_and_insights_end_ready` runs both
+stages in two threads, synchronised with a barrier so each has loaded the document while the
+other runs. With the fix temporarily reverted it fails (`'processing' != 'ready'`); with the fix it
+passes. Full suite: 122 passed, 1 deselected (live).
+
+Human review: ___
+
+---
+
+## 2026-10-15 · T19 preparation (not run)
+
+- `tests/live/test_live_openai.py` + `tests/live/eval_set.py`: one end-to-end document (a
+  self-written 6-page "Northwind Solar Farm" brief with known facts per page) and 10 questions
+  (7 answerable with expected page + key phrase, 3 unanswerable expecting `not_found`). Writes
+  `tests/live/.results/live_eval.json`. Skipped unless `RUN_LIVE_AI_TESTS=1`,
+  `AI_PROVIDER=openai` and a key are present; deselected by default (`-m 'not live'`).
+- `compose.test.yml` reads `OPENAI_API_KEY` from `.env` (optional) for live runs only;
+  `TEST_AI_PROVIDER=openai` switches the provider.
+- Pre-run estimate (not measured): about 20 calls (6 page embeddings in one request, 1 insights
+  call, 10 query embeddings, 10 answers), roughly $0.005–0.01.
+- **NOT RUN:** waiting for the user's key and spend approval.
+
+Human review: ___

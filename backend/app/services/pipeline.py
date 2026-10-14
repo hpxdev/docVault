@@ -75,7 +75,7 @@ def claim(
     session: Session, document_id: uuid.UUID, stage: str, attempt: int, task_id: str | None
 ) -> ProcessingRun | None:
     col = STAGE_COLUMN[stage]
-    doc = session.get(Document, document_id, with_for_update=True)
+    doc = session.get(Document, document_id, with_for_update=True, populate_existing=True)
     if doc is None:
         return None
     if getattr(doc, col) not in ACTIVE:
@@ -130,7 +130,9 @@ def _finish(
     run = session.get(ProcessingRun, run_id)
     if run is None:  # document deleted mid-run (cascade)
         return None
-    doc = session.get(Document, run.document_id, with_for_update=True)
+    # populate_existing: the session may still hold the copy loaded when the stage started;
+    # index and insights run concurrently, so status must be derived from the locked, current row.
+    doc = session.get(Document, run.document_id, with_for_update=True, populate_existing=True)
     if doc is None:
         return None
     _close_run(run, run_status, code, message)
