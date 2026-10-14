@@ -213,3 +213,31 @@ Human review: ___
 - **NOT VERIFIED:** behaviour against the real OpenAI API (no live calls yet).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T10 — Index stage
+
+**Produced by AI**
+- `index_stage` (`workers/stages.py`): each segment is split on its own with
+  `RecursiveCharacterTextSplitter.from_tiktoken_encoder("cl100k_base", 800, 100)`, so chunks never
+  cross page/section boundaries and inherit the exact locator; embeddings in batches of ≤ 100;
+  delete-then-insert of the document's chunks in the same transaction as the status update;
+  `chat_ready_at` and `documents.embedding_model` set on success.
+- Embedding input = `"{filename} | {locator label}\n{chunk text}"` (a small contextual header);
+  stored chunk text, the generated `tsv` and citation excerpts use the raw chunk text only.
+
+**Problems found and fixes**
+- My scripted edit dropped the `EMBED_BATCH` constant and turned a `\n` escape into a literal line
+  break; ruff/pytest caught both immediately (syntax error, F821). Fixed by hand.
+- Two earlier tests assumed index was not implemented (chat_ready false; reprocess allowed while
+  insights was still pending). Updated.
+
+**Verification (actually run)**
+- `pytest` → 86 passed, incl. `test_index.py`: locators equal their segment's, chunk text is a
+  substring of its segment, the page-3 fact lands only in a page-3 chunk, generated tsvector is
+  populated, long text splits into ≤ 800-token chunks, 120 pages → 2 embedding requests
+  (100 + 20), re-delivery is a no-op and reprocess rewrites identical chunks, transient embedding
+  failure → retry → final `AI_PROVIDER_UNAVAILABLE` with no chunks and no `chat_ready_at`.
+
+Human review: ___

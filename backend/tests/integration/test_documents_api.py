@@ -47,7 +47,8 @@ async def test_detail_content_and_file(client, enqueued):
     run_queued(enqueued)
     detail = (await client.get(f"/documents/{doc_id}")).json()
     assert detail["stages"]["extract"] == "succeeded"
-    assert detail["chat_ready"] is False and detail["page_count"] == 5
+    assert detail["stages"]["index"] == "succeeded"
+    assert detail["chat_ready"] is True and detail["page_count"] == 5
 
     content = await client.get(f"/documents/{doc_id}/content", params={"limit": 2, "offset": 2})
     body = content.json()
