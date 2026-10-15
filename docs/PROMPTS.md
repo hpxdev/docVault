@@ -161,12 +161,12 @@ are replaced (a real bug: section labels contain quotes; see ai-log T13–T15).
 
 ---
 
-## 5. `summary.custom.v2` (custom summaries; `v1` kept)
+## 5. `summary.custom.v3` (custom summaries; `v1`, `v2` kept)
 
 | | |
 |---|---|
 | Input | File name, marker kind, a coverage note, the reader's focus inside `<focus>` (may be empty) and the document text with `[Page N]` / `[Section N: heading]` markers inside `<document>` |
-| Output | `CustomSummaryV2LLM`: `focus_covered`, `focus_not_addressed[]`, `summary`, `key_points[{text, refs}]` (max 1,200 output tokens; v1 had no `focus_not_addressed`) |
+| Output | `CustomSummaryV3LLM`: `focus_topics[{topic, addressed}]`, `summary`, `key_points[{text, refs}]` (max 1,200 output tokens). The server derives `focus_not_addressed` and `focus_covered`. v2 returned `focus_covered` and `focus_not_addressed[]` itself; v1 only `focus_covered` |
 
 The options become rules in the **system** prompt, never free text from the user:
 - **length**: short ≤ 80 words / 3 key points, medium ≤ 200 / 5, long ≤ 400 / 8;
@@ -174,14 +174,18 @@ The options become rules in the **system** prompt, never free text from the user
   risks first; technical: precise terms and conditions; plain: everyday words). The prompt says
   the tone changes wording and order, never the facts;
 - **focus**: the only free text. It goes into the user message inside `<focus>`, declared to be
-  data that only names topics ("write a poem" in it is not an instruction). v2 treats each
-  topic separately: topics the document does not address go into `focus_not_addressed` and one
-  closing sentence says so; `focus_covered: false` only when no topic is addressed.
+  data that only names topics ("write a poem" in it is not an instruction). Since v2 each topic
+  is handled separately and one closing sentence names the topics the document does not
+  address. v3 makes the model return one verdict per topic; the server derives the gap list
+  (topics with `addressed: false`) and `focus_covered` (any topic addressed; unknown if no
+  verdicts came back) and keeps the verdicts in `coverage.focus_topics`.
 - **v2 also says:** never infer risks, problems, benefits, opinions, consequences or
   recommendations ("a date, a plan or a figure is not a risk"); an executive tone does not mean
   adding risks. It has one example from an unrelated domain (a lease, "rent and penalties").
-  `focus_not_addressed` comes before `summary` in the schema, so the model decides the gaps
-  before writing.
+  The verdicts come before `summary` in the schema, so the model decides the gaps before
+  writing. A required entry per topic is harder to skip than v2's optional list.
+- The focus rule of every version is kept in a per-version table in `services/summaries.py`, so
+  any stored summary's prompt can be reproduced.
 
 **Long documents.** Above `ON_DEMAND_MAX_INPUT_TOKENS` (40K) the text is cut into ≤ 1,500-token
 windows; with a focus, the windows sharing the most words with it are sent first, otherwise
@@ -201,8 +205,13 @@ executive / focus *budget and risks* on the revised brief:
   figures, pages, length and tone right, but it **invented a "risks" point** the document does not
   contain and reported the focus as covered;
 - **v2** ([re-test](EVALUATION.md#summarycustomv2-re-test-2026-10-15-approved)): no invented content; the summary ends "The document
-  does not address specific risks…", but `focus_not_addressed` came back **empty**. A control
-  (*budget and schedule*) was correct. One run each: no evidence on variance.
+  does not address specific risks…", but `focus_not_addressed` came back **empty**;
+- **v3** ([re-test](EVALUATION.md#summarycustomv3-re-test-2026-10-15-approved)): verdicts "budget" addressed, "risks" not
+  addressed → `focus_not_addressed: ["risks"]`; the summary ends "The document does not address
+  risks."; nothing invented.
+
+A control (*budget and schedule*) was correct with v2 and v3. One run per version: no evidence
+on variance.
 
 ## 6. `compare.v1` (comparisons)
 

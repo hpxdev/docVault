@@ -344,3 +344,40 @@ in the document. v2 has a new cache key, so both were real calls.
 | **Total** | | | | | **0.00053550** (2 calls) |
 
 **Project AI spend so far (estimated):** $0.00596954 + $0.00053550 = **$0.00650504**.
+
+---
+
+# `summary.custom.v3` re-test (2026-10-15, approved)
+
+Why: with v2 the model wrote "the document does not address risks" in the summary but left the
+optional `focus_not_addressed` list empty. v3 (active; v1 and v2 kept) replaces it with a
+required verdict per focus topic, `focus_topics: [{topic, addressed}]`, placed first in the
+schema; the server derives `focus_not_addressed` (topics with `addressed: false`) and
+`focus_covered` (any topic addressed) and stores the verdicts in `coverage.focus_topics`. The
+focus rule of every prompt version now lives in a per-version table, so v1 and v2 stay
+reproducible (v2 had overwritten v1's rule in code). Run: real mode, API, same document and
+options as the two earlier runs, plus the same control.
+
+| Request (short, executive) | `focus_topics` (model) | `focus_not_addressed` (server) | Summary (verbatim) | Key points (pages) | Verdict |
+|---|---|---|---|---|---|
+| focus *budget and risks* | budget: addressed; risks: **not addressed** | `["risks"]` | The total capital budget for the Northwind Solar Farm project is 44.0 million euros, approved by the steering committee on 12 May 2026, which includes a contingency reserve of 3.6 million euros. The document does not address risks. | budget + contingency (3) | ✓ gap structured and stated, nothing invented |
+| focus *budget and schedule* (control) | budget: addressed; schedule: addressed | `[]` | The total capital budget for the Northwind Solar Farm is 44.0 million euros, approved on 12 May 2026, including a contingency reserve of 3.6 million euros. Construction is set to begin in September 2026, with grid connection targeted for the fourth quarter of 2027. | budget + contingency (3); construction + grid (4) | ✓ |
+
+- Every figure, date and page correct; 38 and 44 words (limit 80); no refs dropped.
+- Compared with v2, the *budget and risks* summary no longer mentions the schedule, which was
+  outside the focus.
+- **UI (real stack):** the same options in the Library drawer returned the stored result
+  ("stored result (no AI cost)"; ledger unchanged at 43 calls) and showed the amber note "Not in
+  the document: risks". This is the first browser check of that note.
+
+**Across the three runs of the same request:** v1 invented a risks point; v2 stated the gap
+only in the text; v3 returns it as data and in the text. One run per version: this shows the
+failure mode is fixed for this case, not that it can never recur.
+
+| Purpose | Prompt | Input tokens | Output tokens | Latency | Estimated cost (USD) |
+|---|---|---|---|---|---|
+| summary_custom | summary.custom.v3 | 1,221 | 114 | 3.0 s | 0.00025155 |
+| summary_custom | summary.custom.v3 | 1,221 | 155 | 2.4 s | 0.00027615 |
+| **Total** | | | | | **0.00052770** (2 calls) |
+
+**Project AI spend so far (estimated):** $0.00650504 + $0.00052770 = **$0.00703274**.

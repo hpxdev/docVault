@@ -870,3 +870,26 @@ needs another real run. The new UI note was checked only by the type-checked bui
 browser (it would not have rendered for this result anyway).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · `summary.custom.v3` + real re-test (approved)
+
+**Produced by AI:** `prompts/summary.custom.v3.md` and schema `CustomSummaryV3LLM`: a required
+`focus_topics: [{topic, addressed}]` before the summary; the server derives
+`focus_not_addressed` and `focus_covered` (`services/summaries.focus_verdicts`: names cleaned,
+duplicates dropped, max 5; no verdicts → coverage unknown) and stores the verdicts in
+`coverage.focus_topics`. No migration or API change. The focus rules of v1–v3 now live in a
+per-version table (v2 had overwritten v1's rule in code, so v1 was no longer reproducible from
+the code; restored from the git history). Fake support per schema version; tests updated plus
+`test_every_summary_prompt_version_is_reproducible`. `ruff` clean, **144 passed**; api/worker
+rebuilt.
+
+**Real re-test (approved, 2 calls, $0.00052770; project total $0.00703274):** *budget and
+risks* → verdicts budget ✓, risks ✗ → `focus_not_addressed: ["risks"]`, summary ends "The
+document does not address risks.", nothing invented, figures and pages right. Control *budget
+and schedule* → both addressed, no gap. UI on the real stack: the same options returned the
+stored result (no AI call; ledger unchanged) and showed "Not in the document: risks", the first
+browser check of that note.
+
+Human review: ___

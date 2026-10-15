@@ -120,3 +120,21 @@ class CustomSummaryV2LLM(_Strict):
     )
     summary: str = Field(description="The summary, within the requested word limit")
     key_points: list[KeyPointLLM] = Field(description="Key points, within the requested count")
+
+
+class FocusTopicLLM(_Strict):
+    topic: str = Field(description="One topic of the reader's focus, in the reader's words")
+    addressed: bool = Field(description="True only if the document states something about it")
+
+
+class CustomSummaryV3LLM(_Strict):
+    """summary.custom.v3. One entry per focus topic, before the summary: a required per-topic
+    verdict is harder to skip than v2's optional gap list (empty in the real re-test). The server
+    derives `focus_not_addressed` and `focus_covered` from it."""
+
+    focus_topics: list[FocusTopicLLM] = Field(
+        description="One entry per topic in <focus>, in order; empty only when no focus was "
+        "requested"
+    )
+    summary: str = Field(description="The summary, within the requested word limit")
+    key_points: list[KeyPointLLM] = Field(description="Key points, within the requested count")

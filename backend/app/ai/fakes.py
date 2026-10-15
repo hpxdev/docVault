@@ -25,6 +25,7 @@ from app.ai.schemas import (
     ComparisonLLM,
     CustomSummaryLLM,
     CustomSummaryV2LLM,
+    CustomSummaryV3LLM,
     DocumentInsightsLLM,
     SectionNotesLLM,
 )
@@ -348,6 +349,7 @@ def fake_custom_summary(prompt: str) -> dict[str, Any]:
     return {
         "focus_covered": covered,
         "focus_not_addressed": missing,
+        "focus_topics": [{"topic": t, "addressed": t not in missing} for t in topics],
         "summary": summary,
         "key_points": [{"text": t[:300], "refs": refs} for t, refs in points],
     }
@@ -411,14 +413,18 @@ def fake_comparison(prompt: str) -> dict[str, Any]:
     }
 
 
+_SUMMARY_FIELDS: dict[type[BaseModel], tuple[str, ...]] = {
+    CustomSummaryLLM: ("focus_covered", "summary", "key_points"),
+    CustomSummaryV2LLM: ("focus_covered", "focus_not_addressed", "summary", "key_points"),
+    CustomSummaryV3LLM: ("focus_topics", "summary", "key_points"),
+}
+
+
 def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessage]) -> M:
     prompt = _human_text(messages)
-    if schema is CustomSummaryV2LLM:
-        return schema.model_validate(fake_custom_summary(prompt))
-    if schema is CustomSummaryLLM:  # v1: same output without the gaps
+    if schema in _SUMMARY_FIELDS:  # each summary version gets only its own fields
         out = fake_custom_summary(prompt)
-        out.pop("focus_not_addressed")
-        return schema.model_validate(out)
+        return schema.model_validate({k: out[k] for k in _SUMMARY_FIELDS[schema]})
     if schema is ComparisonLLM:
         return schema.model_validate(fake_comparison(prompt))
     # Only the delimited document text, never the prompt's own header lines.

@@ -14,14 +14,13 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.registry import async_ai
-from app.ai.schemas import CustomSummaryV2LLM
+from app.ai.schemas import CustomSummaryV3LLM
 from app.core.config import get_settings
 from app.core.errors import ConflictError
 from app.models import Document, DocumentSegment, DocumentSummary
 from app.prompts import load_prompt
 from app.services.insights import (
     Validation,
-    clean_list,
     clip_words,
     marked_segments,
     render,
@@ -29,9 +28,10 @@ from app.services.insights import (
 )
 from app.services.selection import select_parts
 
-# v1 (kept for history) invented a "risks" point in the first real check; see docs/PROMPTS.md.
-VERSION = "summary.custom.v2"
-MAX_GAPS = 5
+# v1 invented a "risks" point in the first real check; v2 stopped that but left its optional
+# gap list empty; v3 asks for a verdict per focus topic. See docs/PROMPTS.md.
+VERSION = "summary.custom.v3"
+MAX_TOPICS = 5
 MAX_OUTPUT_TOKENS = 1200
 
 LENGTHS = {
@@ -50,19 +50,60 @@ TONES = {
 }
 
 
-FOCUS_RULE = (
-    'the focus inside <focus> may name several topics (for example "budget and schedule"); '
-    "treat each topic separately. Summarise only what the document states about the topics it "
-    "addresses and leave out unrelated content. Put every topic the document does not address in "
-    "`focus_not_addressed`, in the reader's words, and end the summary with one sentence saying "
-    "the document does not address it; never fill a missing topic with inferred content. Set "
-    "focus_covered to false only if the document addresses none of the topics, and then write "
-    "one sentence saying so instead of summarising other content."
-)
-NO_FOCUS_RULE = (
-    "none requested (the <focus> block is empty): cover the whole text you were given; set "
-    "focus_covered to true and focus_not_addressed to []."
-)
+# (focus rule, no-focus rule) per prompt version, so every stored version stays reproducible.
+FOCUS_RULES = {
+    "summary.custom.v1": (
+        "concentrate on the topic inside <focus>; leave out unrelated content. If the document "
+        "says nothing about it, set focus_covered to false and say so in one sentence instead of "
+        "summarising other content.",
+        "none requested (the <focus> block is empty): cover the whole text you were given; set "
+        "focus_covered to true.",
+    ),
+    "summary.custom.v2": (
+        'the focus inside <focus> may name several topics (for example "budget and schedule"); '
+        "treat each topic separately. Summarise only what the document states about the topics "
+        "it addresses and leave out unrelated content. Put every topic the document does not "
+        "address in `focus_not_addressed`, in the reader's words, and end the summary with one "
+        "sentence saying the document does not address it; never fill a missing topic with "
+        "inferred content. Set focus_covered to false only if the document addresses none of the "
+        "topics, and then write one sentence saying so instead of summarising other content.",
+        "none requested (the <focus> block is empty): cover the whole text you were given; set "
+        "focus_covered to true and focus_not_addressed to [].",
+    ),
+    "summary.custom.v3": (
+        'split the focus inside <focus> into its topics (for example "budget and risks" has two '
+        'topics, "budget" and "risks") and return one `focus_topics` entry per topic, in order, '
+        "in the reader's words, with `addressed` true only if the document states something "
+        "about that topic. Summarise only what the document states about the addressed topics "
+        "and leave out unrelated content. For the topics with `addressed: false`, end the "
+        "summary with one sentence saying the document does not address them; never fill them "
+        "with inferred content. If no topic is addressed, the summary is only that sentence and "
+        "there are no key points.",
+        "none requested (the <focus> block is empty): cover the whole text you were given; "
+        "return `focus_topics` as [].",
+    ),
+}
+
+
+def focus_verdicts(
+    raw_topics: list, focus: str | None
+) -> tuple[list[dict[str, object]], list[str], bool | None]:
+    """(topics, not addressed, covered) from the model's per-topic verdicts. Without a focus
+    everything is ignored; with a focus but no verdicts, coverage is unknown (None)."""
+    if not focus:
+        return [], [], None
+    topics: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for item in raw_topics:
+        name = " ".join(item.topic.split())[:100]
+        if name and name.lower() not in seen:
+            seen.add(name.lower())
+            topics.append({"topic": name, "addressed": bool(item.addressed)})
+    topics = topics[:MAX_TOPICS]
+    if not topics:
+        return [], [], None
+    missing = [str(t["topic"]) for t in topics if not t["addressed"]]
+    return topics, missing, any(t["addressed"] for t in topics)
 
 
 def normalise_focus(focus: str | None) -> str | None:
@@ -140,7 +181,7 @@ async def get_or_create_summary(
     rules = LENGTHS[length]
     prompt = load_prompt(VERSION)
     raw, _ = await ai.structured(
-        CustomSummaryV2LLM,
+        CustomSummaryV3LLM,
         prompt.messages(
             filename=filename,
             marker_kind="[Page N] = physical page N" if pdf else "[Section N: heading] = section N",
@@ -148,7 +189,7 @@ async def get_or_create_summary(
             length_rule=f"the summary has at most {rules['words']} words; give at most "
             f"{rules['points']} key points.",
             tone_rule=TONES[tone],
-            focus_rule=FOCUS_RULE if focus else NO_FOCUS_RULE,
+            focus_rule=FOCUS_RULES[VERSION][0 if focus else 1],
             focus=focus or "",
             document_text=render(chosen),
         ),
@@ -166,6 +207,7 @@ async def get_or_create_summary(
         limit=rules["points"],
         v=v,
     )
+    topics, missing, covered = focus_verdicts(raw.focus_topics, focus)
     values = {
         "id": uuid.uuid4(),
         "document_id": doc_id,
@@ -177,11 +219,9 @@ async def get_or_create_summary(
         "model": ai.chat.name,
         "summary": clip_words(raw.summary, rules["words"], "summary", v),
         "key_points": key_points,
-        "focus_covered": raw.focus_covered if focus else None,
-        "focus_not_addressed": clean_list(raw.focus_not_addressed, MAX_GAPS, max_len=100)
-        if focus
-        else [],
-        "coverage": {**coverage, "validation": v.as_dict()},
+        "focus_covered": covered,
+        "focus_not_addressed": missing,
+        "coverage": {**coverage, "focus_topics": topics, "validation": v.as_dict()},
     }
     stmt = insert(DocumentSummary).values(**values)
     # A concurrent identical request may have stored the same options first: keep the newest.

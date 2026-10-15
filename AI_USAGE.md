@@ -44,7 +44,7 @@ from the git history. Sections the developer must write in their own words are m
 | Live eval (T19) | Evaluation set and live test | Added the key; approved the spend | Real run: 10/10, $0.0016 estimated |
 | 3 Frontend (T20–T23) | React UI, `web` container | Go-ahead for the phase | `npm run build`; manual checks in a browser pane in fake mode |
 | 4 Delivery (T24–T25) | These documents, demo script, clean-clone check | Recording and submitting the video | See ai-log |
-| Bonus items (after T25) | Versions, custom summaries, comparisons, rate limiting: migration, prompts, API, UI, 16 tests | Chose to build these four next | 143 tests; manual UI check on a separate fake-mode stack; two small real checks (docs/EVALUATION.md) |
+| Bonus items (after T25) | Versions, custom summaries, comparisons, rate limiting: migration, prompts, API, UI, 16 tests | Chose to build these four next | 144 tests; manual UI check on a separate fake-mode stack; two small real checks (docs/EVALUATION.md) |
 
 **Human review of the code:** every log entry has a `Human review: ___` field for the
 developer. **[developer to complete: which parts you read or changed yourself, and how]**
@@ -100,8 +100,9 @@ have **not** been iterated on a broad real evaluation set.
   insights and injection resistance with the real model are NOT VERIFIED. Custom summaries and
   comparisons had one small real check: the comparison was accurate but padded with two
   identical "differences", and the summary invented a "risks" point that fake tests could not
-  reveal. `summary.custom.v2` removed the invented content in one re-test, but the model left the
-  new structured gap list empty.
+  reveal. `summary.custom.v2` removed the invented content in one re-test but left the new gap
+  list empty; v3 (one verdict per focus topic, gaps derived on the server) got it right in one
+  re-test.
 - **Some things it could not do or verify:** record the demo video; test the Stop button against
   a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements
   are design reasoning).
