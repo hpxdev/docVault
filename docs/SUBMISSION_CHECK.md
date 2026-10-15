@@ -94,9 +94,9 @@ results are functional checks, not performance measurements under controlled loa
 
 ## Delivery status and remaining limits
 
-The source and documentation are prepared for GitHub. The developer is responsible for the
-final video review and YouTube upload; no video URL or human video approval has been invented.
-The README will receive that link when it is supplied.
+The source and documentation are published on GitHub. The developer supplied the
+[YouTube demo link](https://youtu.be/usDljevj8is), which is now included in the README.
+This records the supplied link and does not claim an independent review of the uploaded video.
 
 No new real-model evaluation, load test, general injection-resistance assessment, production
 hosting or automated UI regression suite was added. Earlier real-model evidence and its

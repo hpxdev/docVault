@@ -1548,3 +1548,11 @@ MP4/general player compatibility and final human acceptance remain NOT VERIFIED.
 No app tests rerun for media/docs-only changes.
 
 Human review: ___
+
+
+## 2026-10-15: Add developer-supplied YouTube demo link
+
+The developer supplied https://youtu.be/usDljevj8is for the submission. Added it to the
+README, current recording notes and submission evidence. The YouTube page resolved with
+the AI Vault 81-second demo title. This was a link/documentation update, not a full playback
+review or a new application test. No model calls were made.

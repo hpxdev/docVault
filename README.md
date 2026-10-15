@@ -24,12 +24,11 @@ preferences.
 - [Final submission checks](docs/SUBMISSION_CHECK.md): verification of the submission snapshot.
 - [Learning guide](docs/LEARNING_GUIDE.md): a step-by-step explanation of the application.
 
-**Demo:** a short, silent demo is available locally (1:21, 1080p, about 6 MB).
+**Demo: [Watch on YouTube](https://youtu.be/usDljevj8is)** (1:21, silent).
 It shows the working upload, cited chat, summary, version, comparison, metrics and Swagger views.
 Long waits are omitted and selected interactions are accelerated in this edit of real footage.
 [Recording details](docs/REALTIME_VIDEO.md#short-demo) describe the short edit and retained full recording.
-The YouTube link will be added after final review and upload. Earlier narrated edits are
-documented in [the previous recording notes](docs/VIDEO_DELIVERY.md).
+Earlier narrated edits are documented in [the previous recording notes](docs/VIDEO_DELIVERY.md).
 
 **Scope:** this is a local, single-user application with no authentication. Fake mode lets
 reviewers try the workflows without an API key. It does not demonstrate real-model quality.

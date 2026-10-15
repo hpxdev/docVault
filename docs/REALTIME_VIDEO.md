@@ -1,5 +1,7 @@
 # Plain real-time demo
 
+[Watch the published short demo on YouTube](https://youtu.be/usDljevj8is).
+
 ## Short demo
 
 Latest requested edit: `B:\f-work\case study\demo-video\ai-vault-short-demo.webm`.
