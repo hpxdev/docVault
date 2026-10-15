@@ -31,6 +31,9 @@ from the git history. Sections the developer must write in their own words are m
   demo plan that maps required backend/chat evidence before optional and bonus features.
   Codex produced a subsequent 15-second narrated WebM pilot using local Windows speech,
   existing footage, matching captions and verified audio decoding, without paid AI calls.
+  Codex also captured the approved full real demo (25 calls, $0.00391133 estimated), then
+  rebuilt its video for the developer-updated UI using saved real results, local narration,
+  captions, zooms and transitions. The UI remake made no new paid model calls.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

@@ -1337,3 +1337,49 @@ rerun for media/docs-only work. No main-vault mutations or fresh real-model acti
 MP4 and the full six-minute fresh-vault recording remain unverified. Fresh paid capture
 requires the separate bounded approval described in the plan. No publishing.
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex: full demo capture and updated UI video
+
+**Authorization and evidence:** developer approved the bounded isolated real run (maximum
+35 model calls, $0.05 allowance). Completed 25 successful calls, zero failed calls,
+$0.00391133 estimated. Evidence is retained in docs/evaluations/demo-video-2026-10-15.json
+and summarized in EVALUATION.md. The original main ledger remains 43 calls / $0.00674021.
+The first full edit was cancelled when the developer requested design changes.
+
+**Remake:** after the developer changed the frontend, recaptured archived real upload,
+version, summary, comparison and message results through the updated dark UI using local
+browser response replay. The isolated ledger stayed 25 calls / $0.00391133. No fresh paid
+AI/TTS calls, dependencies, publishing or main-data mutations. Saved-result labels and the
+spoken introduction distinguish replay from new generation; edited ingestion timing is not
+a benchmark. No artificial streaming frames were used. Fake operations checks and a retained
+real Stop result are separately labelled. User frontend edits and preview images were
+preserved and left outside this documentation commit. Temporary demo services are stopped;
+volumes and ignored recording evidence are retained.
+
+**Production and corrections:** generated local Microsoft Zira narration, matching captions,
+focused zooms/pans and cross-fades. Existing Pillow, bundled video encoder and Chromium
+WebCodecs produce VP8/Opus WebM through a local mux; no MP4 claim. Two local rendering
+workers render chapters before lossless frame concatenation. Corrected browser replay cache
+by reloading between histories and using saved ready-version data instead of queued upload
+responses. Startup readiness and an earlier metrics read were retried without new ingestion.
+Caught stale fresh-run labels in the first render preview, stopped it and restarted with
+recorded-run labels. Corrected three subtitle character-encoding artifacts before export.
+Backend test counts are historical evidence. No app tests rerun for this media/docs task;
+the developer's redesigned app is visually captured, not claimed fully regression-tested.
+
+**Final verification:** 372.533 s, 1920x1080, 15 fps, 5,588 VP8 frames and 18,628 Opus
+packets. All 22 chapter frames decoded; all 22 speech windows were non-silent. Decoded
+narration correlation to source: 0.972034. Final complete muted browser playback at 4x
+reached ended=true at 372.54 s with no error and 5,048,839 audio decoded bytes. The browser
+reported 679 dropped frames across accelerated playback/seeks, not a smoothness benchmark.
+Visually inspected introduction, source, summary, comparison, operations and closing frames.
+Removed an unfiltered search query from the closing replay shot rather than implying that
+archived list responses demonstrate live filtering. Technical sound checks are not a human
+listening review. Final WebM: 144,100,362 bytes; SHA256
+20bbb5728ecbe59be50e45798100930107fc5b98f71b888f03001c0d8b34697c.
+The output folder includes subtitles, spoken script, feature chapters and poster. Final
+media verification evidence is local; git diff --check passed. No publishing or pushing.
+
+Human review: ___

@@ -214,3 +214,14 @@ zero offset), plus browser playback and sampled rendered frames. This verifies t
 WebM sound route, not human judgement of voice quality or general player compatibility.
 MP4 export remains unverified. Developer voice/pacing review and the bounded live-capture
 approval are still separate steps before the full real-mode recording.
+
+## 12. Full demo and redesigned UI remake (15 October 2026)
+
+The bounded real capture was subsequently approved and completed: 25 successful calls,
+zero failed calls, $0.00391133 estimated. After the developer changed the UI, the full edit
+was rebuilt using those saved real results in the new dark workspace. This remake adds
+no paid model calls. On-screen labels and narration identify the recorded-result replay;
+edited processing timing is not a performance benchmark.
+
+See [VIDEO_DELIVERY.md](VIDEO_DELIVERY.md) for the final files, coverage, disclosures and
+export verification. This status supersedes the earlier planning and pilot-only status.

@@ -26,7 +26,7 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 >   v3 asked for a verdict per focus topic and returned "risks" as not addressed.
 >
 > A broader approved run added 42 calls at $0.00791661 estimated cost. Current demo and
-> evaluation evidence plus the targeted re-tests total $0.01672337; earlier cumulative records differ from the retained
+> evaluation evidence plus the targeted re-tests and video capture total $0.02063470; earlier cumulative records differ from the retained
 > demo snapshot. See [docs/EVALUATION.md](docs/EVALUATION.md) for evidence and limits;
 > retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
@@ -60,6 +60,7 @@ upload/question flows, features, code map, test evidence and limitations. Use th
 [video walkthrough and spoken script](docs/VIDEO_WALKTHROUGH.md) to prepare a recording.
 The current short-video proposal is the [six-minute narrated demo plan](docs/FINAL_DEMO_PLAN.md),
 ordered by the original brief: required backend/chat first, then optional and bonus features.
+See [video delivery notes](docs/VIDEO_DELIVERY.md) for the narrated updated-UI recording and its evidence labels.
 
 ## 1. Features mapped to the brief
 

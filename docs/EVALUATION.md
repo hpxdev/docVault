@@ -638,3 +638,53 @@ five-call and two-call evaluation evidence totals **92 real calls / $0.01672337 
 These are observed ledger snapshots, not invoice totals or a reconstruction of the historical
 accounting discrepancy already documented. The full fake suite remains 152 passed / 3 live
 tests deselected from the preceding code change; this task changed evidence/docs only.
+
+
+# Fresh full-video capture (2026-10-15, approved)
+
+The developer approved a bounded recording run: four small source formats and one revision,
+six chat questions, one focused custom summary and one comparison. Expected about 27 model
+calls, maximum 35 including retries; estimated $0.01–$0.03, allowance $0.05.
+The recording used separate ai-vault-video volumes/ports and existing approved images.
+The main vault was preserved. No publishing or new dependencies.
+
+**Actual:** 25 succeeded real model calls, zero failed calls, **$0.00391133 estimated**.
+Five document embeddings, five insight calls, six answers, two condenser calls, five query
+embeddings, one custom summary and one comparison. A cached query embedding avoided another
+call. Repeating the summary and comparison returned cached=true without new model calls.
+
+[Captured responses and usage](evaluations/demo-video-2026-10-15.json), SHA256
+`4d0003c98f81aef31242eb549e0dc3d93c27ebbaf4cd24ca8976ec36566b06b1`.
+Assessment below is the assistant's review, not developer approval.
+
+| Case | Observed result |
+|---|---|
+| Original budget | 41.5 million euros, page 3 |
+| Approval follow-up | 4 March 2026, page 3 |
+| CFO | not_found, no citations |
+| Two-document question | 27 leave days from handbook section; June 2026 construction from brief page 4 |
+| Whole-vault VPN | Tunnelbear-X, onboarding Accounts section |
+| Latest-version budget | 44.0 million euros from revision, page 3 |
+| Medium/executive budget-and-risks summary | Budget facts plus explicit missing-risks notice; independent risks=false |
+| Comparison | Five source-supported changes: budget, approval date, contingency, construction start, grid target; six literal shared passages |
+
+Read-only database evidence: 5 documents, 21 segments, 21 chunks, 5 insights, 1 custom
+summary, 1 comparison, 4 sessions, 12 messages, 6 citations, 15 processing runs, 25 model calls.
+The main ledger stayed **43 calls / $0.00674021** before and after. Retained main-demo and
+evaluation evidence now totals **117 calls / $0.02063470 estimated**, not an invoice or all
+historical account usage. This video run stayed well below its separate $0.05 guard.
+
+A separate, visibly labelled fake environment verified the UI sequence, reprocessing,
+deletion of a disposable TXT and HTTP 429 with Retry-After=32. Its attempted Stop completed
+too late to save an interrupted message. Therefore the video uses a clearly labelled saved
+real Stop result from the earlier demo; it does not claim that the fake attempt interrupted.
+
+Recording encountered a transient read-only connection reset after upload; resumed from the
+stored documents without uploading or generating their analysis again. A fake rehearsal
+metrics read also timed out; later reads succeeded. No paid reshoots or automatic model retries
+were used. Editing removes waiting; the video is not a response-time benchmark.
+
+These are small, fictional-source demonstrations. They do not establish general accuracy,
+security, held-out reliability or performance at scale. Automatic insights retain their
+previously documented model-quality limits. No application code changed or full suite rerun
+for this media task; the 152-test result in the video is labelled recorded evidence.
