@@ -1,5 +1,8 @@
 # AI Vault demo video delivery
 
+This describes the earlier narrated edit. The latest requested plain, silent live recording
+is documented in [REALTIME_VIDEO.md](REALTIME_VIDEO.md).
+
 The full edit uses the updated dark workspace UI, English narration, matching subtitles,
 stationary detail views, quick cuts and explanatory motion graphics. Required workflow and backend evidence precede
 optional and bonus features. Local output folder: `B:\f-work\case study\demo-video`.

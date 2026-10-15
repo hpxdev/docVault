@@ -94,7 +94,14 @@ Worked examples and changes are in [docs/PROMPTS.md](docs/PROMPTS.md).
 
 ## Demo and remaining limits
 
-The narrated video uses results from an approved real-model run, displayed again in the
+The latest video is a fresh real-time recording, made after the developer requested a plain,
+silent functionality demo. It contains three live recorded segments joined with two plain
+cuts, with no voiceover, zoom effects or time compression. Its approved isolated run used
+30 calls including one failed server response and a diagnostic check; the ledger estimate
+was $0.00430415. Failed takes were excluded from the delivered video and remain recorded
+in the run evidence. The main vault's AI ledger did not change. See [docs/REALTIME_VIDEO.md](docs/REALTIME_VIDEO.md).
+
+The earlier narrated video uses results from an approved real-model run, displayed again in the
 updated interface. Upload and processing chronology are replayed from archived responses.
 The recording discloses this; its edited timings are not a performance benchmark. Narration
 uses the local Microsoft Zira synthetic voice. See [docs/VIDEO_DELIVERY.md](docs/VIDEO_DELIVERY.md).

@@ -1,0 +1,623 @@
+{
+  "file": "B:\\f-work\\case study\\demo-video\\ai-vault-realtime-silent.webm",
+  "duration": 366.747,
+  "frames": 6258,
+  "segment_fps": [
+    25,
+    15,
+    15
+  ],
+  "width": 1920,
+  "height": 1080,
+  "audio_tracks": 0,
+  "segments": 3,
+  "bytes": 37657706,
+  "sha256": "5f50a52b7998e489454ca8c5ac7b1abf8a26e75415d200968924d7972c7b79aa",
+  "editing": "Lossless plain join only. No overlays, zooms, narration, transitions or time compression.",
+  "approval": {
+    "maxCalls": 35,
+    "maxEstimatedUSD": 0.05
+  },
+  "isolated_ledger": {
+    "calls": 30,
+    "failed": 1,
+    "estimated_usd": 0.00430415
+  },
+  "main_ledger_before": {
+    "calls": 43,
+    "failed": 0,
+    "estimated_usd": 0.00674021
+  },
+  "main_ledger_after": {
+    "calls": 43,
+    "failed": 0,
+    "estimated_usd": 0.00674021
+  },
+  "ledger": [
+    {
+      "purpose": "embed_document",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 103,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0.00000206,
+      "created_at": "2026-10-15T14:57:03.066636+00:00"
+    },
+    {
+      "purpose": "embed_document",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 311,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0.00000622,
+      "created_at": "2026-10-15T14:57:03.37535+00:00"
+    },
+    {
+      "purpose": "insights_single",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 987,
+      "output_tokens": 308,
+      "estimated_cost_usd": 0.00033285,
+      "created_at": "2026-10-15T14:57:10.957559+00:00"
+    },
+    {
+      "purpose": "embed_document",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 169,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0.00000338,
+      "created_at": "2026-10-15T14:57:13.810049+00:00"
+    },
+    {
+      "purpose": "insights_single",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 1165,
+      "output_tokens": 674,
+      "estimated_cost_usd": 0.00057915,
+      "created_at": "2026-10-15T14:57:23.994721+00:00"
+    },
+    {
+      "purpose": "embed_document",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 48,
+      "output_tokens": 0,
+      "estimated_cost_usd": 9.6e-7,
+      "created_at": "2026-10-15T14:57:25.729666+00:00"
+    },
+    {
+      "purpose": "insights_single",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 1053,
+      "output_tokens": 370,
+      "estimated_cost_usd": 0.00037995,
+      "created_at": "2026-10-15T14:57:26.81461+00:00"
+    },
+    {
+      "purpose": "insights_single",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 934,
+      "output_tokens": 235,
+      "estimated_cost_usd": 0.0002811,
+      "created_at": "2026-10-15T14:57:31.498586+00:00"
+    },
+    {
+      "purpose": "embed_query",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 7,
+      "output_tokens": 0,
+      "estimated_cost_usd": 1.4e-7,
+      "created_at": "2026-10-15T15:19:27.573246+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 638,
+      "output_tokens": 15,
+      "estimated_cost_usd": 0.0001047,
+      "created_at": "2026-10-15T15:21:58.672283+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "failed",
+      "error_code": "AI_PROVIDER_UNAVAILABLE",
+      "input_tokens": 627,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0.00009405,
+      "created_at": "2026-10-15T15:22:59.278295+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 638,
+      "output_tokens": 15,
+      "estimated_cost_usd": 0.0001047,
+      "created_at": "2026-10-15T15:29:38.03525+00:00"
+    },
+    {
+      "purpose": "condense",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 487,
+      "output_tokens": 8,
+      "estimated_cost_usd": 0.00007785,
+      "created_at": "2026-10-15T15:29:57.852009+00:00"
+    },
+    {
+      "purpose": "embed_query",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 8,
+      "output_tokens": 0,
+      "estimated_cost_usd": 1.6e-7,
+      "created_at": "2026-10-15T15:30:06.658127+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 639,
+      "output_tokens": 17,
+      "estimated_cost_usd": 0.00010605,
+      "created_at": "2026-10-15T15:30:08.517638+00:00"
+    },
+    {
+      "purpose": "condense",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 513,
+      "output_tokens": 5,
+      "estimated_cost_usd": 0.00007995,
+      "created_at": "2026-10-15T15:30:17.312089+00:00"
+    },
+    {
+      "purpose": "embed_query",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 5,
+      "output_tokens": 0,
+      "estimated_cost_usd": 1e-7,
+      "created_at": "2026-10-15T15:30:19.148774+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 636,
+      "output_tokens": 13,
+      "estimated_cost_usd": 0.0001032,
+      "created_at": "2026-10-15T15:30:20.627271+00:00"
+    },
+    {
+      "purpose": "embed_query",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 20,
+      "output_tokens": 0,
+      "estimated_cost_usd": 4e-7,
+      "created_at": "2026-10-15T15:30:41.645448+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 736,
+      "output_tokens": 34,
+      "estimated_cost_usd": 0.0001308,
+      "created_at": "2026-10-15T15:30:45.559624+00:00"
+    },
+    {
+      "purpose": "embed_query",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 7,
+      "output_tokens": 0,
+      "estimated_cost_usd": 1.4e-7,
+      "created_at": "2026-10-15T15:30:54.555227+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 708,
+      "output_tokens": 12,
+      "estimated_cost_usd": 0.0001134,
+      "created_at": "2026-10-15T15:30:56.104466+00:00"
+    },
+    {
+      "purpose": "summary_custom",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 1239,
+      "output_tokens": 135,
+      "estimated_cost_usd": 0.00026685,
+      "created_at": "2026-10-15T15:31:07.360068+00:00"
+    },
+    {
+      "purpose": "embed_document",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 331,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0.00000662,
+      "created_at": "2026-10-15T15:31:32.124735+00:00"
+    },
+    {
+      "purpose": "insights_single",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 1175,
+      "output_tokens": 681,
+      "estimated_cost_usd": 0.00058485,
+      "created_at": "2026-10-15T15:31:43.33961+00:00"
+    },
+    {
+      "purpose": "compare",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 1586,
+      "output_tokens": 638,
+      "estimated_cost_usd": 0.0006207,
+      "created_at": "2026-10-15T15:31:54.974639+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 757,
+      "output_tokens": 15,
+      "estimated_cost_usd": 0.00012255,
+      "created_at": "2026-10-15T15:32:15.725199+00:00"
+    },
+    {
+      "purpose": "condense",
+      "model": "gpt-4o-mini",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 546,
+      "output_tokens": 21,
+      "estimated_cost_usd": 0.0000945,
+      "created_at": "2026-10-15T15:32:27.426205+00:00"
+    },
+    {
+      "purpose": "embed_query",
+      "model": "text-embedding-3-small",
+      "status": "succeeded",
+      "error_code": null,
+      "input_tokens": 21,
+      "output_tokens": 0,
+      "estimated_cost_usd": 4.2e-7,
+      "created_at": "2026-10-15T15:32:28.788704+00:00"
+    },
+    {
+      "purpose": "answer",
+      "model": "gpt-4o-mini",
+      "status": "interrupted",
+      "error_code": null,
+      "input_tokens": 641,
+      "output_tokens": 17,
+      "estimated_cost_usd": 0.00010635,
+      "created_at": "2026-10-15T15:32:30.785435+00:00"
+    }
+  ],
+  "recording_segments": [
+    {
+      "file": "screen.webm",
+      "frames": 1892,
+      "fps": 25,
+      "duration": 75.68,
+      "wallSeconds": 75.68,
+      "bytes": 14006519
+    },
+    {
+      "file": "screen-part2.webm",
+      "frames": 3903,
+      "fps": 15,
+      "duration": 260.2,
+      "wallSeconds": 260.181,
+      "finishOverheadSeconds": 0.244,
+      "bytes": 21515250,
+      "trimEndMs": 241200
+    },
+    {
+      "file": "screen-part3.webm",
+      "frames": 748,
+      "fps": 15,
+      "duration": 49.86666666666667,
+      "wallSeconds": 49.821,
+      "finishOverheadSeconds": 0.054,
+      "bytes": 3649093
+    }
+  ],
+  "steps": [
+    {
+      "name": "01-empty-app",
+      "seconds": 3.017,
+      "url": "http://localhost:15182/"
+    },
+    {
+      "name": "02-empty-library",
+      "seconds": 5.461,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "03-upload-processing",
+      "seconds": 8.309,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "04-ready",
+      "seconds": 53.382,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "05-duplicate",
+      "seconds": 55.883,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "06-pdf-insights",
+      "seconds": 60.694,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "07-document-suggestions",
+      "seconds": 63.489,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "08-word-sections",
+      "seconds": 67.389,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "09-chat-suggestions",
+      "seconds": 70.905,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "09b-ready-chat",
+      "seconds": 77.686,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "10-answer",
+      "seconds": 134.49,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "11-original-source",
+      "seconds": 138.925,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "12-follow-up",
+      "seconds": 162.006,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "13-not-found",
+      "seconds": 173.757,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "14-reopened-history",
+      "seconds": 178.673,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "15-multiple-documents",
+      "seconds": 198.948,
+      "url": "http://localhost:15182/#/chat/bf24aac6-90cf-4ddf-8c83-10795cfa6ad7"
+    },
+    {
+      "name": "16-entire-vault",
+      "seconds": 209.435,
+      "url": "http://localhost:15182/#/chat/7f8f9a0d-b78b-41e1-abed-148c8b575393"
+    },
+    {
+      "name": "17-summary-options",
+      "seconds": 212.554,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "18-summary-result",
+      "seconds": 220.47400000000002,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "19-summary-cache",
+      "seconds": 223.49200000000002,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "20-version-processing",
+      "seconds": 227.126,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "21-version-history",
+      "seconds": 255.28900000000002,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "22-comparison-differences",
+      "seconds": 268.799,
+      "url": "http://localhost:15182/#/compare/47450e30-8872-4e9b-9ab5-3f56728efef6"
+    },
+    {
+      "name": "23-comparison-passages",
+      "seconds": 272.977,
+      "url": "http://localhost:15182/#/compare/47450e30-8872-4e9b-9ab5-3f56728efef6"
+    },
+    {
+      "name": "24-library-filters",
+      "seconds": 277.279,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "25-status-filter",
+      "seconds": 278.913,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "26-latest-version-answer",
+      "seconds": 288.837,
+      "url": "http://localhost:15182/#/chat/bf9d909e-dfd3-4e12-a9a8-62a5af4761ad"
+    },
+    {
+      "name": "27-stop-answer",
+      "seconds": 304.48900000000003,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "28-metrics",
+      "seconds": 310.291,
+      "url": "http://localhost:15182/#/metrics"
+    },
+    {
+      "name": "29-cost-and-chat-metrics",
+      "seconds": 313.392,
+      "url": "http://localhost:15182/#/metrics"
+    },
+    {
+      "name": "30-delete-disposable-file",
+      "seconds": 316.37800000000004,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "34-source-detail",
+      "seconds": 321.20799999999997,
+      "url": "http://localhost:15182/#/chat/dbf023e5-6a4c-4ed5-9e23-758694ffee45"
+    },
+    {
+      "name": "35-duplicate-detail",
+      "seconds": 329.67,
+      "url": "http://localhost:15182/#/chat/ca90c618-122e-4db0-b122-da52807670c2"
+    },
+    {
+      "name": "36-suggestions-detail",
+      "seconds": 333.613,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "37-summary-detail",
+      "seconds": 338.722,
+      "url": "http://localhost:15182/#/library"
+    },
+    {
+      "name": "38-swagger-overview",
+      "seconds": 354.922,
+      "url": "http://localhost:18082/docs"
+    },
+    {
+      "name": "39-swagger-response",
+      "seconds": 361.403,
+      "url": "http://localhost:18082/docs#/documents/get_document_api_v1_documents__document_id__get"
+    },
+    {
+      "name": "40-metrics-final",
+      "seconds": 366.701,
+      "url": "http://localhost:15182/#/metrics"
+    }
+  ],
+  "playback": {
+    "ended": true,
+    "time": 366.747,
+    "totalFrames": 9059,
+    "droppedFrames": 22,
+    "audioDecodedBytes": 0,
+    "error": null
+  },
+  "sampled_frames": 38,
+  "summary": {
+    "id": "5544abac-d90c-4e6f-b937-f4cd7b9f95d7",
+    "prompt_version": "summary.custom.v5",
+    "missing_topics": [
+      "risks"
+    ],
+    "reused": true,
+    "detail_cached": true
+  },
+  "comparison": {
+    "id": "47450e30-8872-4e9b-9ab5-3f56728efef6",
+    "prompt_version": "compare.v2",
+    "shared": 6,
+    "differences": 5
+  },
+  "stop": {
+    "clicked": true,
+    "answer": {
+      "id": "5ce02c25-fcfa-4606-ac94-be1529fcd3a1",
+      "session_id": "dbf023e5-6a4c-4ed5-9e23-758694ffee45",
+      "role": "assistant",
+      "content": "### Overview of the Northwind Solar Farm Project Brief\n\n#### 1. Project Summary",
+      "answer_status": "unsupported",
+      "interrupted": true,
+      "error_code": null,
+      "standalone_query": "Give a detailed section by section overview of the entire document, including all the project facts and budget details.",
+      "scope_document_ids": [
+        "23fcbdf9-a902-4b63-8c54-146d1b5dd5e5"
+      ],
+      "citations": [],
+      "model": "gpt-4o-mini",
+      "prompt_version": "chat.answer.v1",
+      "ai_mode": "openai",
+      "latency_ms": {
+        "first_token": 3913,
+        "total": 4327
+      },
+      "usage": {
+        "input_tokens": 1208,
+        "output_tokens": 38,
+        "estimated_cost_usd": 0.00020127
+      },
+      "created_at": "2026-10-15T15:32:30.792089Z"
+    }
+  },
+  "swagger": {
+    "operations": 28,
+    "response": 200
+  },
+  "recording_notes": "Three actual screen-recording segments with two plain cuts. Static-view recorder lag was found in export inspection; a new final segment shows source, deduplication, saved summary, Swagger and loaded metrics. Earlier failed footage is excluded. No newly generated AI calls for detail recapture.",
+  "not_verified": [
+    "MP4",
+    "General player compatibility",
+    "Human acceptance"
+  ]
+}

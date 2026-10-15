@@ -1478,3 +1478,50 @@ Final evidence is in SUBMISSION_CHECK.md and evaluations/submission-2026-10-15.j
 README/AI_USAGE links resolve, no em dashes remain in those two files, and a limited historical
 credential-pattern scan found no matches in 749 Git objects (400 blobs). The .env file is not
 tracked. No new paid model calls, video review or YouTube upload were performed for this task.
+
+---
+
+## 2026-10-15: Codex plain real-time video
+
+**Request and approval:** developer replaced the narrated/motion edit request with a plain,
+silent functionality recording. Explicit approval covered a fresh isolated real-AI run,
+at most 35 calls and $0.05 including retries. Used 30 ledger calls, 29 successful and one
+OpenAI server failure, estimated $0.00430415. This includes failed recording attempts and
+an off-camera live diagnostic answer. No new AI calls for final detail recapture.
+
+**Produced:** ai-vault-realtime-silent.webm in the sibling demo-video folder; 366.747 seconds,
+1920 x 1080, 6,258 VP8 frames, zero audio tracks, 37,657,706 bytes. Three actual recordings
+are joined with two plain cuts; retained segments run at real time. No captions, effects,
+graphics, zooms, voiceover or time compression. Includes uploads/rejection/deduplication,
+insights and suggestions, fresh cited chat, follow-up, not found, multiple documents,
+whole-vault search, stored history, focused summary/cache, versions, comparison, filters,
+Stop saving partial text, metrics, disposable-file deletion and loaded Swagger/HTTP 200.
+The final segment reopens actual results from this same run; it does not regenerate them.
+
+**Failures found and corrected:** a route-navigation race interrupted the original take
+after successful uploads; retained its upload segment and resumed in a new recorded chat.
+Database recovery and stalled requests interrupted further attempts; their exact cause
+was not established. One provider server failure was retained in the cost accounting.
+Reduced recorder overhead and isolated worker concurrency. The first export review found
+stale static recorder frames; added periodic actual browser captures and recorded a final
+detail segment. A first detail take had a worker-offline banner because only the API/web
+were restarted; restarted the isolated worker and replaced that take. Did not hide the
+banner in CSS or alter app output. Failed takes are excluded from the delivered file.
+
+**Isolation:** main AI ledger stayed 43 successful calls / estimated $0.00674021.
+The separate test container that the developer allowed pausing had already finished; no
+pause occurred and nothing requires resuming. Only the isolated recording stack was stopped
+after capture. Its volumes and local evidence remain. No dependency or application-source
+changes, video publication or Git push were performed for this recording task.
+
+**Verification:** .checks/join-plain-recording.py checked source frame counts and video-only
+tracks and performed a lossless join. .checks/verify-plain-recording.cjs decoded 38 scene
+samples and completed browser playback at 4x: ended=true, no media error, zero decoded audio
+bytes, 22 dropped frames during accelerated checks/seeks. Visually inspected exported source,
+deduplication, summary, loaded Swagger, actual HTTP 200 and final populated metrics screens.
+SHA256 5f50a52b7998e489454ca8c5ac7b1abf8a26e75415d200968924d7972c7b79aa.
+git diff --check passed. App tests were not rerun for this media/documentation-only task.
+Evidence: docs/evaluations/realtime-video-2026-10-15.json. MP4, general player compatibility
+and final human acceptance remain NOT VERIFIED. Updated README, AI_USAGE and delivery notes.
+
+Human review: ___

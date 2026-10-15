@@ -24,9 +24,11 @@ preferences.
 - [Final submission checks](docs/SUBMISSION_CHECK.md): verification of the submission snapshot.
 - [Learning guide](docs/LEARNING_GUIDE.md): a step-by-step explanation of the application.
 
-**Demo:** a narrated recording has been prepared. The YouTube link will be added after
-its final review and upload. [Recording details](docs/VIDEO_DELIVERY.md) explain how saved
-real-model results are displayed in the updated UI and which sequences are replayed.
+**Demo:** a fresh, silent real-time recording is available locally (6:07, 1080p).
+It shows uploads, cited chat, summaries, versions, comparison, metrics and working Swagger.
+[Recording details](docs/REALTIME_VIDEO.md) describe its two recorded segments and checks.
+The YouTube link will be added after final review and upload. Earlier narrated edits are
+documented in [the previous recording notes](docs/VIDEO_DELIVERY.md).
 
 **Scope:** this is a local, single-user application with no authentication. Fake mode lets
 reviewers try the workflows without an API key. It does not demonstrate real-model quality.
