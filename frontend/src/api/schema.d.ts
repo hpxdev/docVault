@@ -1382,6 +1382,9 @@ export interface components {
          *       "document_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
          *       "focus": "budget and risks",
          *       "focus_covered": true,
+         *       "focus_not_addressed": [
+         *         "risks"
+         *       ],
          *       "id": "1c3e5a7b-9d0f-4b2a-8c6e-4f2a0b8d6c1e",
          *       "key_points": [
          *         {
@@ -1393,8 +1396,8 @@ export interface components {
          *       ],
          *       "length": "short",
          *       "model": "gpt-4o-mini",
-         *       "prompt_version": "summary.custom.v1",
-         *       "summary": "The project budget is 41.5 million euros, approved on 4 March 2026…",
+         *       "prompt_version": "summary.custom.v2",
+         *       "summary": "The total capital budget is 44.0 million euros… The document does not address risks.",
          *       "tone": "executive"
          *     }
          */
@@ -1421,9 +1424,14 @@ export interface components {
             key_points: components["schemas"]["KeyPoint"][];
             /**
              * Focus Covered
-             * @description False when the document does not address the focus; null without a focus
+             * @description False when the document addresses none of the focus; null without a focus
              */
             focus_covered: boolean | null;
+            /**
+             * Focus Not Addressed
+             * @description Focus topics the document does not address (summary.custom.v2 onwards)
+             */
+            focus_not_addressed?: string[];
             /**
              * Coverage
              * @description `complete: false` means the document was too long and only the selected parts were summarised

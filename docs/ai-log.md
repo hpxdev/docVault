@@ -845,3 +845,28 @@ The stored comparison from the run predates the fix and is left as it was produc
 it needs another small real run to verify.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · `summary.custom.v2` + real re-test (approved)
+
+**Produced by AI:** `prompts/summary.custom.v2.md` (no inferred risks, opinions or consequences;
+each focus topic handled separately; gaps listed and stated in one closing sentence; a lease
+example from an unrelated domain), schema `CustomSummaryV2LLM` with `focus_not_addressed` placed
+before `summary`, migration `0003` (column `document_summaries.focus_not_addressed`), API field,
+fake support (focus split into topics), UI note "Not in the document: …", new test
+`test_custom_summary_lists_focus_topics_the_document_does_not_address`. `ruff` clean, **143
+passed**; `npm run build` ok; stack rebuilt (`alembic current` = 0003, `VERSION` =
+`summary.custom.v2`).
+
+**Real re-test (approved, 2 calls, $0.00053550; project total $0.00650504):** same request
+(short, executive, *budget and risks*): no invented content, every figure and page right, the
+summary ends "The document does not address specific risks associated with the project."; but
+`focus_not_addressed` was `[]`. Control (*budget and schedule*): correct, no gap.
+
+**Self-critique:** I put the gap in two places (field and sentence) and the model filled only
+one; a per-topic list (`focus_topics: [{topic, addressed}]`) would be harder to skip. Not done:
+needs another real run. The new UI note was checked only by the type-checked build, not in a
+browser (it would not have rendered for this result anyway).
+
+Human review: ___

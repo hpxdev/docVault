@@ -147,7 +147,7 @@ def clip_words(text: str, limit: int, name: str, v: Validation) -> str:
     return " ".join(words[:limit]) + " …"
 
 
-def _clean_list(
+def clean_list(
     values: list[str], limit: int, *, lower: bool = False, max_len: int = 200
 ) -> list[str]:
     out: list[str] = []
@@ -204,11 +204,11 @@ def validate(
 
     e = raw.entities
     entities = {
-        "people": _clean_list(e.people, MAX_ENTITIES),
-        "organizations": _clean_list(e.organizations, MAX_ENTITIES),
-        "locations": _clean_list(e.locations, MAX_ENTITIES),
-        "dates": _clean_list(e.dates, MAX_ENTITIES),
-        "amounts": _clean_list(e.amounts, MAX_ENTITIES),
+        "people": clean_list(e.people, MAX_ENTITIES),
+        "organizations": clean_list(e.organizations, MAX_ENTITIES),
+        "locations": clean_list(e.locations, MAX_ENTITIES),
+        "dates": clean_list(e.dates, MAX_ENTITIES),
+        "amounts": clean_list(e.amounts, MAX_ENTITIES),
     }
     fields = {
         "summary_short": clip_words(raw.summary_short, LIMITS["summary_short"], "summary_short", v),
@@ -217,11 +217,11 @@ def validate(
         ),
         "key_points": key_points,
         "entities": entities,
-        "topics": _clean_list(raw.topics, MAX_TOPICS, max_len=60),
+        "topics": clean_list(raw.topics, MAX_TOPICS, max_len=60),
         "category": category,
-        "tags": _clean_list(raw.tags, MAX_TAGS, lower=True, max_len=40),
+        "tags": clean_list(raw.tags, MAX_TAGS, lower=True, max_len=40),
         "sentiment": {"label": label, "rationale": raw.sentiment.rationale.strip()[:400]},
-        "suggested_questions": _clean_list(raw.suggested_questions, MAX_QUESTIONS, max_len=300),
+        "suggested_questions": clean_list(raw.suggested_questions, MAX_QUESTIONS, max_len=300),
     }
     return fields, v
 

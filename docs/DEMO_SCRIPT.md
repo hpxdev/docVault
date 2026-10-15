@@ -58,7 +58,8 @@ estimated for three documents and six questions (dry-run ledger).
 
 Checked in the UI in fake mode, and once with the real model **through the API** (not the UI):
 the v1 → v2 comparison found all five changes (see EVALUATION.md). Use a focus without "risks"
-for the summary on camera: in the real check, *budget and risks* produced an invented risk point.
+for the summary on camera: with *budget and risks*, v1 invented a risk point; v2 says the
+document does not address risks, but its "Not in the document" note did not appear in the re-test.
 Real cost of the segment: about $0.0015 estimated (v2 ingestion + one summary + one comparison).
 
 | Do | Say / point out |

@@ -48,9 +48,11 @@ class SummaryOut(BaseModel):
                 "length": "short",
                 "tone": "executive",
                 "focus": "budget and risks",
-                "summary": "The project budget is 41.5 million euros, approved on 4 March 2026…",
+                "summary": "The total capital budget is 44.0 million euros… The document does not "
+                "address risks.",
                 "key_points": [{"text": "Contingency of 3.2 million euros.", "pages": [3]}],
                 "focus_covered": True,
+                "focus_not_addressed": ["risks"],
                 "coverage": {
                     "segments_total": 6,
                     "segments_included": 6,
@@ -66,7 +68,7 @@ class SummaryOut(BaseModel):
                 },
                 "ai_mode": "openai",
                 "model": "gpt-4o-mini",
-                "prompt_version": "summary.custom.v1",
+                "prompt_version": "summary.custom.v2",
                 "cached": False,
                 "created_at": "2026-10-15T09:20:00Z",
             }
@@ -81,7 +83,11 @@ class SummaryOut(BaseModel):
     summary: str
     key_points: list[KeyPoint]
     focus_covered: bool | None = Field(
-        description="False when the document does not address the focus; null without a focus"
+        description="False when the document addresses none of the focus; null without a focus"
+    )
+    focus_not_addressed: list[str] = Field(
+        default_factory=list,
+        description="Focus topics the document does not address (summary.custom.v2 onwards)",
     )
     coverage: dict[str, Any] = Field(
         description="`complete: false` means the document was too long and only the selected "
@@ -106,6 +112,7 @@ class SummaryOut(BaseModel):
             summary=row.summary,
             key_points=row.key_points,
             focus_covered=row.focus_covered,
+            focus_not_addressed=row.focus_not_addressed or [],
             coverage=row.coverage,
             ai_mode=_ai_mode(row.model),
             model=row.model,

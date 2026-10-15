@@ -44,13 +44,13 @@ async def test_custom_summary_options_cache_and_ledger(client, enqueued, fake_ch
     assert r.status_code == 200, r.text
     first = r.json()
     assert first["cached"] is False and first["ai_mode"] == "fake"
-    assert first["prompt_version"] == "summary.custom.v1"
+    assert first["prompt_version"] == "summary.custom.v2"
     assert (first["length"], first["tone"], first["focus"]) == (
         "short",
         "executive",
         "approved budget",
     )
-    assert first["focus_covered"] is True
+    assert first["focus_covered"] is True and first["focus_not_addressed"] == []
     assert first["key_points"] and all(kp["pages"] for kp in first["key_points"])
     assert any(3 in kp["pages"] and "4.2 million" in kp["text"] for kp in first["key_points"])
     assert first["coverage"]["complete"] is True and first["coverage"]["selection"] == "all"
@@ -62,7 +62,7 @@ async def test_custom_summary_options_cache_and_ledger(client, enqueued, fake_ch
     assert "at most 80 words; give at most 3 key points" in fake_chat.calls[-1][1][0].content
 
     [call] = _calls("summary_custom")
-    assert str(call.document_id) == doc and call.prompt_version == "summary.custom.v1"
+    assert str(call.document_id) == doc and call.prompt_version == "summary.custom.v2"
 
     # Same options (focus differs only in case and spacing): stored result, no AI call.
     again = await client.post(
@@ -89,12 +89,50 @@ async def test_custom_summary_focus_not_in_document(client, enqueued):
     assert "does not mention" in body["summary"]
 
 
+async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
+    client, enqueued, fake_chat
+):
+    """summary.custom.v2: the real v1 filled a missing "risks" topic with invented content."""
+    doc = await _upload(client, "falcon.pdf", fixtures.five_page_pdf())
+    run_queued(enqueued)
+    body = (
+        await client.post(
+            f"/documents/{doc}/summaries", json={"focus": "approved budget and submarine volcanoes"}
+        )
+    ).json()
+    assert body["prompt_version"] == "summary.custom.v2"
+    assert body["focus_covered"] is True
+    assert body["focus_not_addressed"] == ["submarine volcanoes"]
+    assert body["summary"].endswith("The document does not address submarine volcanoes.")
+    assert any("4.2 million" in kp["text"] for kp in body["key_points"])
+    system = fake_chat.calls[-1][1][0].content
+    assert "never add risks, problems, benefits, opinions" in system
+    assert "treat each topic separately" in system and "`focus_not_addressed`" in system
+
+    # The model's list is cleaned (whitespace, duplicates, length) like other list fields.
+    fake_chat.push(
+        {
+            "focus_covered": True,
+            "focus_not_addressed": ["  risks ", "Risks", "x" * 150],
+            "summary": "Budget approved. The document does not address risks.",
+            "key_points": [{"text": "Budget approved.", "refs": [3]}],
+        }
+    )
+    body = (
+        await client.post(f"/documents/{doc}/summaries", json={"focus": "budget and risks"})
+    ).json()
+    assert body["focus_not_addressed"] == ["risks", "x" * 100]
+    listed = (await client.get(f"/documents/{doc}/summaries")).json()["items"]
+    assert listed[0]["focus_not_addressed"] == ["risks", "x" * 100]
+
+
 async def test_custom_summary_validates_model_output(client, enqueued, fake_chat):
     doc = await _upload(client, "falcon.pdf", fixtures.five_page_pdf())
     run_queued(enqueued)
     fake_chat.push(
         {
             "focus_covered": True,
+            "focus_not_addressed": ["ignored without a focus"],
             "summary": " ".join(["word"] * 120),  # over the 80-word limit for "short"
             "key_points": [
                 {"text": "Budget approved.", "refs": [3, 99]},  # 99 is not a page
@@ -107,6 +145,7 @@ async def test_custom_summary_validates_model_output(client, enqueued, fake_chat
     )
     body = (await client.post(f"/documents/{doc}/summaries", json={"length": "short"})).json()
     assert len(body["summary"].split()) == 81 and body["summary"].endswith("…")
+    assert body["focus_not_addressed"] == []  # no focus requested
     assert [kp["pages"] for kp in body["key_points"]] == [[3], [1], [2]]
     validation = body["coverage"]["validation"]
     assert validation["dropped_refs"] == 2 and validation["dropped_key_points"] == 1

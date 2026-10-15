@@ -24,6 +24,7 @@ from app.ai.providers import StreamResult, Usage
 from app.ai.schemas import (
     ComparisonLLM,
     CustomSummaryLLM,
+    CustomSummaryV2LLM,
     DocumentInsightsLLM,
     SectionNotesLLM,
 )
@@ -288,6 +289,7 @@ def _top_words(text: str, k: int) -> list[str]:
 
 _DELIMITED = re.compile(r"<(document|part|section_notes)>\n?(.*?)\n?</\1>", re.S)
 _FOCUS = re.compile(r"<focus>\n?(.*?)\n?</focus>", re.S)
+_TOPIC_SPLIT = re.compile(r",|;|/|&|\band\b|\bor\b", re.I)
 _DOC_BLOCK = re.compile(r'<document label="(D\d+)"[^>]*>\n(.*?)\n</document>', re.S)
 _LIMITS = re.compile(r"at most (\d+) words; give at most (\d+) key points")
 
@@ -313,26 +315,39 @@ def _best_sentence(body: str, terms: set[str]) -> tuple[int, str] | None:
 
 
 def fake_custom_summary(prompt: str) -> dict[str, Any]:
-    """Extractive stand-in for summary.custom.v1: one sentence per section, filtered by focus."""
-    terms = _focus_terms(prompt)
+    """Extractive stand-in for summary.custom.v2: one sentence per section, filtered by the focus
+    topics the text mentions; topics it never mentions are listed as not addressed."""
+    focus_match = _FOCUS.search(prompt)
+    focus = focus_match.group(1).strip() if focus_match else ""
     match = _DELIMITED.search(prompt)
     text = match.group(2) if match else ""
+    text_words = set(content_words(text))
+    topics = [t.strip() for t in _TOPIC_SPLIT.split(focus) if t.strip()]
+    missing = [t for t in topics if not set(content_words(t)) & text_words]
+    terms = {w for t in topics if t not in missing for w in content_words(t)}
     limits = _LIMITS.search(prompt)
     words, n_points = (int(limits.group(1)), int(limits.group(2))) if limits else (200, 5)
     points = []
-    for ref, body in _blocks(text):
-        best = _best_sentence(body, terms)
-        if best and (best[0] > 0 or not terms):
-            points.append((best[1], [ref]))
-    covered = bool(points) or not terms
+    if terms or not topics:
+        for ref, body in _blocks(text):
+            best = _best_sentence(body, terms)
+            if best and (best[0] > 0 or not terms):
+                points.append((best[1], [ref]))
+    covered = bool(points) or not topics
     points = _spread(points, n_points)
+    gap = f" The document does not address {' or '.join(missing)}." if missing and covered else ""
     if not covered:
         summary = f"{FAKE_LABEL}: the document does not mention the requested focus."
     else:
         body = " ".join(t for t, _ in points).split()
-        summary = f"{FAKE_LABEL} summary (not model-generated): " + " ".join(body[: words - 6])
+        summary = (
+            f"{FAKE_LABEL} summary (not model-generated): "
+            + " ".join(body[: max(1, words - 6 - len(gap.split()))])
+            + gap
+        )
     return {
         "focus_covered": covered,
+        "focus_not_addressed": missing,
         "summary": summary,
         "key_points": [{"text": t[:300], "refs": refs} for t, refs in points],
     }
@@ -398,8 +413,12 @@ def fake_comparison(prompt: str) -> dict[str, Any]:
 
 def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessage]) -> M:
     prompt = _human_text(messages)
-    if schema is CustomSummaryLLM:
+    if schema is CustomSummaryV2LLM:
         return schema.model_validate(fake_custom_summary(prompt))
+    if schema is CustomSummaryLLM:  # v1: same output without the gaps
+        out = fake_custom_summary(prompt)
+        out.pop("focus_not_addressed")
+        return schema.model_validate(out)
     if schema is ComparisonLLM:
         return schema.model_validate(fake_comparison(prompt))
     # Only the delimited document text, never the prompt's own header lines.

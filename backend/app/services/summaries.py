@@ -14,13 +14,14 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.registry import async_ai
-from app.ai.schemas import CustomSummaryLLM
+from app.ai.schemas import CustomSummaryV2LLM
 from app.core.config import get_settings
 from app.core.errors import ConflictError
 from app.models import Document, DocumentSegment, DocumentSummary
 from app.prompts import load_prompt
 from app.services.insights import (
     Validation,
+    clean_list,
     clip_words,
     marked_segments,
     render,
@@ -28,7 +29,9 @@ from app.services.insights import (
 )
 from app.services.selection import select_parts
 
-VERSION = "summary.custom.v1"
+# v1 (kept for history) invented a "risks" point in the first real check; see docs/PROMPTS.md.
+VERSION = "summary.custom.v2"
+MAX_GAPS = 5
 MAX_OUTPUT_TOKENS = 1200
 
 LENGTHS = {
@@ -45,6 +48,21 @@ TONES = {
     "plain": "Plain language for a non-expert: short sentences, everyday words, and a brief "
     "explanation of any necessary term.",
 }
+
+
+FOCUS_RULE = (
+    'the focus inside <focus> may name several topics (for example "budget and schedule"); '
+    "treat each topic separately. Summarise only what the document states about the topics it "
+    "addresses and leave out unrelated content. Put every topic the document does not address in "
+    "`focus_not_addressed`, in the reader's words, and end the summary with one sentence saying "
+    "the document does not address it; never fill a missing topic with inferred content. Set "
+    "focus_covered to false only if the document addresses none of the topics, and then write "
+    "one sentence saying so instead of summarising other content."
+)
+NO_FOCUS_RULE = (
+    "none requested (the <focus> block is empty): cover the whole text you were given; set "
+    "focus_covered to true and focus_not_addressed to []."
+)
 
 
 def normalise_focus(focus: str | None) -> str | None:
@@ -122,7 +140,7 @@ async def get_or_create_summary(
     rules = LENGTHS[length]
     prompt = load_prompt(VERSION)
     raw, _ = await ai.structured(
-        CustomSummaryLLM,
+        CustomSummaryV2LLM,
         prompt.messages(
             filename=filename,
             marker_kind="[Page N] = physical page N" if pdf else "[Section N: heading] = section N",
@@ -130,12 +148,7 @@ async def get_or_create_summary(
             length_rule=f"the summary has at most {rules['words']} words; give at most "
             f"{rules['points']} key points.",
             tone_rule=TONES[tone],
-            focus_rule="concentrate on the topic inside <focus>; leave out unrelated content. If "
-            "the document says nothing about it, set focus_covered to false and say so in one "
-            "sentence instead of summarising other content."
-            if focus
-            else "none requested (the <focus> block is empty): cover the whole text you were "
-            "given; set focus_covered to true.",
+            focus_rule=FOCUS_RULE if focus else NO_FOCUS_RULE,
             focus=focus or "",
             document_text=render(chosen),
         ),
@@ -165,13 +178,19 @@ async def get_or_create_summary(
         "summary": clip_words(raw.summary, rules["words"], "summary", v),
         "key_points": key_points,
         "focus_covered": raw.focus_covered if focus else None,
+        "focus_not_addressed": clean_list(raw.focus_not_addressed, MAX_GAPS, max_len=100)
+        if focus
+        else [],
         "coverage": {**coverage, "validation": v.as_dict()},
     }
     stmt = insert(DocumentSummary).values(**values)
     # A concurrent identical request may have stored the same options first: keep the newest.
     stmt = stmt.on_conflict_do_update(
         index_elements=["document_id", "params_key", "prompt_version", "model"],
-        set_={k: stmt.excluded[k] for k in ("summary", "key_points", "focus_covered", "coverage")},
+        set_={
+            k: stmt.excluded[k]
+            for k in ("summary", "key_points", "focus_covered", "focus_not_addressed", "coverage")
+        },
     ).returning(DocumentSummary)
     row = (await db.scalars(stmt)).one()
     await db.commit()

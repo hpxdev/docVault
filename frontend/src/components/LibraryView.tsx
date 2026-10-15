@@ -480,6 +480,11 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
               The document does not address "{result.focus}".
             </div>
           )}
+          {result.focus_covered !== false && (result.focus_not_addressed ?? []).length > 0 && (
+            <div className="rounded bg-amber-50 px-2 py-1 text-amber-900">
+              Not in the document: {(result.focus_not_addressed ?? []).join(", ")}
+            </div>
+          )}
           <p className="whitespace-pre-wrap">{result.summary}</p>
           {result.key_points.length > 0 && (
             <ul className="space-y-1.5">

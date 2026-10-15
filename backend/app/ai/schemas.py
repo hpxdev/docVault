@@ -104,3 +104,19 @@ class ComparisonLLM(_Strict):
     overview: str = Field(description="At most 120 words")
     similarities: list[SimilarityLLM] = Field(description="Up to 6 shared points")
     differences: list[DifferenceLLM] = Field(description="Up to 8 differences or conflicts")
+
+
+class CustomSummaryV2LLM(_Strict):
+    """summary.custom.v2. The gaps come before the summary so the model decides what the document
+    does not cover before writing (fields are generated in order)."""
+
+    focus_covered: bool = Field(
+        description="False only if the document addresses none of the focus topics (true when no "
+        "focus was requested)"
+    )
+    focus_not_addressed: list[str] = Field(
+        description="Focus topics the document does not address, in the reader's words; empty if "
+        "every topic is addressed or no focus was requested"
+    )
+    summary: str = Field(description="The summary, within the requested word limit")
+    key_points: list[KeyPointLLM] = Field(description="Key points, within the requested count")

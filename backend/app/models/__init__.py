@@ -177,6 +177,10 @@ class DocumentSummary(Base):
     summary: Mapped[str] = mapped_column(Text)
     key_points: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
     focus_covered: Mapped[bool | None] = mapped_column(Boolean)
+    # Focus topics the document does not address (summary.custom.v2 onwards).
+    focus_not_addressed: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
     coverage: Mapped[dict[str, Any]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

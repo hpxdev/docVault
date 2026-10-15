@@ -304,3 +304,43 @@ Stored output (verbatim):
 One document pair and one summary. Long documents (partial coverage), comparisons of different
 documents, comparisons with a focus, other lengths and tones, and the UI in real mode were not
 exercised with the real model.
+
+---
+
+# `summary.custom.v2` re-test (2026-10-15, approved)
+
+Why: in the first real check `summary.custom.v1` invented a "risks" key point for the focus
+*budget and risks* and reported the focus as covered. v2 (active; v1 kept) adds: never infer
+risks, problems, benefits, opinions, consequences or recommendations; treat each focus topic
+separately; list topics the document does not address in a new structured field
+`focus_not_addressed` (placed **before** the summary in the schema, so the model decides the gaps
+first) and end the summary with one sentence saying so; an example from an unrelated domain (a
+lease, "rent and penalties"). Migration 0003 adds the column. Run: real mode, API only, the same
+document (`northwind-brief-v2.pdf`) and options as before, plus one control whose topics are all
+in the document. v2 has a new cache key, so both were real calls.
+
+| Request (short, executive) | Summary (verbatim) | Key points (pages) | `focus_not_addressed` | Verdict |
+|---|---|---|---|---|
+| focus *budget and risks* (same as the v1 run) | The Northwind Solar Farm project has a total capital budget of 44.0 million euros, approved on 12 May 2026, which includes a contingency reserve of 3.6 million euros. Construction is set to begin in September 2026, with grid connection expected in Q4 2027. The document does not address specific risks associated with the project. | budget + contingency (3); construction + grid (4); approval 12 May 2026 (3) | `[]` | ✓ **invented risk gone**, gap stated in the text; ✗ the structured list is **empty** although the text names the gap |
+| focus *budget and schedule* (control) | The Northwind Solar Farm project has a total capital budget of 44.0 million euros, approved on 12 May 2026, including a contingency reserve of 3.6 million euros. Construction is scheduled to begin in September 2026, with grid connection targeted for the fourth quarter of 2027. | budget + approval + contingency (3); construction + grid (4) | `[]` | ✓ correct, no gap sentence |
+
+- Every figure, date and page is correct in both; 54 and 45 words (limit 80); no refs dropped.
+- **What v2 fixed:** the content problem. The model no longer fills a missing topic with an
+  inference; it says the document does not address it.
+- **What it did not fix:** the structured field. With one run, the model wrote the gap sentence
+  but returned `focus_not_addressed: []`, so the UI's "Not in the document: …" note would not
+  appear for this summary (the summary text still says it). `focus_covered: true` is correct
+  under v2's definition (one of the two topics is addressed).
+- **Possible next step (not done):** ask for one entry per focus topic
+  (`focus_topics: [{topic, addressed}]`), which is harder to skip than an optional list, and
+  derive the gaps on the server. That would need another small real run to verify.
+- Not shown: other documents, focuses, lengths and tones; one run per request (no repeat runs,
+  so no evidence on variance); the UI in real mode.
+
+| Purpose | Prompt | Input tokens | Output tokens | Latency | Estimated cost (USD) |
+|---|---|---|---|---|---|
+| summary_custom | summary.custom.v2 | 1,125 | 176 | 4.1 s | 0.00027435 |
+| summary_custom | summary.custom.v2 | 1,125 | 154 | 2.6 s | 0.00026115 |
+| **Total** | | | | | **0.00053550** (2 calls) |
+
+**Project AI spend so far (estimated):** $0.00596954 + $0.00053550 = **$0.00650504**.
