@@ -27,6 +27,8 @@ from the git history. Sections the developer must write in their own words are m
   instructions in the earlier demo script. No new model evaluation ran for that documentation.
   Codex subsequently recorded a short captioned browser preview using saved real-model
   results, with no new model calls; video capture/export limitations are logged.
+  Codex reviewed all four original case-study PDF pages and prepared a shorter narrated
+  demo plan that maps required backend/chat evidence before optional and bonus features.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

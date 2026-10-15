@@ -1,5 +1,8 @@
 # AI Vault video preparation and spoken script
 
+> The current submission target is the [six-minute narrated plan](FINAL_DEMO_PLAN.md).
+> The longer script below remains a learning/reference version.
+
 Use [LEARNING_GUIDE.md](LEARNING_GUIDE.md) first. This is a recording plan and reusable spoken
 script, not evidence that a new recording or live run has already happened.
 

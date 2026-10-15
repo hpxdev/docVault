@@ -1266,3 +1266,38 @@ so application test suite not rerun. git diff --check passed before local commit
 all-features recording. This is a captioned sample using previous model outputs, not a new
 real-model evaluation. No publishing, new dependencies or data deletion.
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex: original-brief-driven six-minute narrated demo plan
+
+**Request / produced:** developer requested planning first, all built features, required
+items before optional/extras, backend evidence, shorter than 12 minutes and sound. Created
+docs/FINAL_DEMO_PLAN.md with a six-minute target/6:30 ceiling, timeline, per-requirement
+proof matrix, all-feature coverage, exact sample facts, backend data/API evidence,
+voice/export checks, isolated fresh-vault workflow, spend proposal and delivery criteria.
+Marked the previous longer script as reference and linked the new plan from README.
+Updated AI_USAGE; no app behaviour changed.
+
+**Source / decisions:** copied the original company PDF into a fresh ignored review folder,
+extracted all four pages with existing pypdf and rendered/visually inspected all four with
+existing Poppler. Brief prioritises backend/RAG and weights AI-first, product and technical
+criteria equally. Show core upload/analysis/chat/context/history plus actual metrics/API/
+storage evidence first, then group extras into short demonstrations or explicit code/evidence
+inserts. SSE is not WebSocket; current suggestions come from document insights, not new
+turn-specific generation. Batch code is not a throughput benchmark; no authentication or
+per-user quotas claimed. Fresh recording uses isolated data, never clearing the main vault.
+
+**Verified / limits:** original brief categories checked against actual pages; metrics and
+suggestion code read. Enumerated installed English Windows voices (David/Hazel/Zira) without
+generating audio. Existing silent WebM playback remains the prior evidence. Sound quality,
+audio/video export, fresh model outputs and final six-minute timing remain NOT VERIFIED.
+MP4 was not promised: prior recorder probes produced zero bytes, so an audio/export pilot
+is required before the full capture. New dependency requires explicit project-rule approval.
+No paid calls, narration, new environments, feature changes or recording this task.
+Docs-only: no application suite rerun. git diff --check passed before commit.
+
+**Spend / next:** $0 new paid spend. Proposed future 30–40 model calls, $0.01–$0.03 estimate,
+$0.05 allowance, to be refined and explicitly approved only after plan/audio preparation.
+User requested plan first, so execution remains pending their direction. No publishing.
+Human review: ___

@@ -58,6 +58,8 @@ matching can omit valid differently worded similarities.
 Read the [beginner learning guide](docs/LEARNING_GUIDE.md) for the product, terminology,
 upload/question flows, features, code map, test evidence and limitations. Use the
 [video walkthrough and spoken script](docs/VIDEO_WALKTHROUGH.md) to prepare a recording.
+The current short-video proposal is the [six-minute narrated demo plan](docs/FINAL_DEMO_PLAN.md),
+ordered by the original brief: required backend/chat first, then optional and bonus features.
 
 ## 1. Features mapped to the brief
 
