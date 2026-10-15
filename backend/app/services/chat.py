@@ -216,7 +216,8 @@ async def prepare_ask(db: AsyncSession, session_id: uuid.UUID, content: str) -> 
     )
     db.add(user_msg)
     if not chat.title_is_custom and not previous and chat.title == DEFAULT_TITLE:
-        chat.title = question[:60] + ("…" if len(question) > 60 else "")
+        one_line = " ".join(question.split())
+        chat.title = one_line[:60] + ("…" if len(one_line) > 60 else "")
     chat.updated_at = _now()
     await db.commit()
     return PreparedAsk(

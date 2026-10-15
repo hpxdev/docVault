@@ -552,3 +552,68 @@ start in fake mode).
 `docs/evaluation/live_eval_2026-10-15.json` (checked: no key in it), README status updated.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T20–T23 — ChatGPT-style React frontend
+
+Built together (one screen tree sharing the API client and status hooks); one commit.
+
+**Produced by AI**
+- `frontend/`: Vite 8.3.4, React 19.3.1, TypeScript 5.9.3 (strict), Tailwind 4.3.3, TanStack
+  Query 5.104.2, react-markdown 10.1.0, openapi-typescript 7.13.0. Versions checked on npm on
+  2026-10-15. TypeScript 7.0.2 is the npm `latest`, but `openapi-typescript` declares a peer of
+  `typescript ^5.x`, so 5.9.3 was pinned. No router, SSE or typography libraries were added:
+  views are plain state, the POST chat stream is read with a small `fetch` SSE parser, and
+  Markdown styling is a few CSS rules.
+- **T20:** generated API types (`npm run gen:api`), typed client mapping the error envelope to
+  `ApiError`, layout (dark sidebar: New chat, sessions with rename/delete, Library, Metrics;
+  main thread; composer), FAKE AI MODE / API-down / no-worker / AI-not-configured banners from
+  `/health/ready`.
+- **T21:** drag-and-drop of multiple files anywhere on the chat area plus a "+" picker; sessions
+  are created lazily on first drop or question; batches of ≤ 10 files; chips with live status
+  over `EventSource` (`/documents/events`), failure reasons, "already in vault", remove; Send
+  disabled with a reason until documents are chat-ready (failed ones must be removed).
+- **T22:** streamed Markdown answers with Stop (AbortController); `[S#]` markers become citation
+  chips; a source panel shows document, location, stored excerpt, similarity and an "open
+  original" link; distinct styles for `not_found` / `unsupported` / `error` / stopped; empty-chat
+  suggested questions from the attached documents' insights; Enter / Shift+Enter.
+- **T23:** Library (status/name filters, live refresh while processing, insights drawer,
+  reprocess, delete, upload), Metrics page (cost, calls by purpose/model, chat rates, stage
+  table with rates and percentiles), "Search entire vault" toggle.
+- `web` Compose service (Node 24.22 image, production build + `vite preview` proxying `/api` to
+  the api service), so `docker compose up` serves the UI on :5173.
+
+**Problems found and fixes (all found by using the UI in the browser pane)**
+- Two copies of a *new* file in one drop showed "already in vault" (accepted + duplicate for the
+  same document). Fix: only documents not accepted in the same batch are flagged.
+- The chat header stayed "New chat" after the server auto-titled the session. Fix: refetch the
+  session after each answer.
+- The vault checkbox's accessible name was "on". Fix: explicit `aria-label`.
+- Fake insights' summary included the prompt header ("Document name: … Markers: …"). Fix
+  (backend fake): read only the `<document>/<part>/<section_notes>` content.
+- A multi-line first question produced a session title with a line break. Fix (backend):
+  whitespace collapsed in auto-titles; test added.
+- `tsc` failed on `process` in `vite.config.ts` (no Node types); kept `@types/node` out by
+  type-checking `src/` only (Vite compiles its own config).
+
+**Verification (actually run, fake mode, live stack with real worker)**
+- `npm run build` → strict type-check + build OK. Backend: `ruff` clean, 124 passed.
+- Browser pane, dev server and then the `web` container: FAKE AI MODE banner present; real
+  `DragEvent` drop of 3 files → guide accepted and Ready via SSE, binary rejected "Unsupported
+  file type"; suggested questions shown; typed question + Enter → streamed answer with a citation
+  chip; chip opens the source panel with the original excerpt and similarity; "Who is the CFO?"
+  → amber not-found box; damaged PDF in a chat → red chip "File is damaged or unreadable",
+  Send disabled with hint, enabled after removing it; new chat + "Search entire vault" → answer
+  from another document with a line-range citation; Shift+Enter adds a newline; Library row,
+  insights drawer (section refs § 1–4, coverage 4/4), Reprocess (worker log shows a second
+  `CORRUPT_DOCUMENT` run), Delete; Metrics page renders ledger/rates/percentiles.
+- Through the `web` container: UI 200, `/api` proxied, status SSE and chat SSE
+  (`meta`, 34 `token`, `citations`, `done`) stream through the preview proxy.
+
+**Not verified:** the Stop button against a real slow stream (fake answers finish in
+milliseconds, so the abort path could not be observed in the UI); the UI with real OpenAI
+output; mobile layouts beyond the responsive classes (not checked at narrow widths); browsers
+other than the Chromium-based pane; no automated frontend tests.
+
+Human review: ___

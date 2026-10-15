@@ -292,3 +292,12 @@ async def test_standalone_follow_up_is_not_rewritten(client, enqueued):
     msg = (await _ask(client, sid, "Who is the CFO?")).json()["assistant_message"]
     assert msg["standalone_query"] == "Who is the CFO?"
     assert msg["answer_status"] == "not_found"
+
+
+async def test_auto_title_is_one_line(client, enqueued):
+    [doc] = await _ingest(client, enqueued, ("plan.pdf", fixtures.five_page_pdf()))
+    sid = await _session(client, [doc])
+    await _ask(client, sid, "What is the budget?\nAnswer briefly.")
+    assert (await client.get(f"/chat/sessions/{sid}")).json()["title"] == (
+        "What is the budget? Answer briefly."
+    )

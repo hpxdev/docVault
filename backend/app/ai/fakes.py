@@ -281,8 +281,14 @@ def _top_words(text: str, k: int) -> list[str]:
     return [w for w, _ in Counter(words).most_common(k)]
 
 
+_DELIMITED = re.compile(r"<(document|part|section_notes)>\n?(.*?)\n?</\1>", re.S)
+
+
 def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessage]) -> M:
-    text = _human_text(messages)
+    prompt = _human_text(messages)
+    # Only the delimited document text, never the prompt's own header lines.
+    match = _DELIMITED.search(prompt)
+    text = match.group(2) if match else prompt
     points = _points_from_text(text)
     key_points = [{"text": t[:300], "refs": refs} for t, refs in _spread(points, 8)]
     entities = _entities(text)

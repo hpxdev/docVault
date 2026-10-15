@@ -61,6 +61,18 @@ services:
       api:
         condition: service_healthy
 
+  web:
+    # ChatGPT-style UI (production build) at http://localhost:5173; proxies /api to the api service.
+    build:
+      context: ./frontend
+    image: ai-vault-web:local
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
   storage:

@@ -6,11 +6,12 @@ generates AI insights; then you chat with one or more documents and get **stream
 citations are checked by the server** (document, page/section, original excerpt), or an explicit
 "not found".
 
-> **Status (2026-10-15):** backend complete; 123 fake-mode tests. One approved live run with
+> **Status (2026-10-15):** backend complete; 124 fake-mode backend tests. One approved live run with
 > `gpt-4o-mini` + `text-embedding-3-small` scored 10/10 on a small single-document smoke test
 > (7 cited answers on the right page, 3 correct "not found") for an estimated $0.0016; see
 > [docs/EVALUATION.md](docs/EVALUATION.md) for what that does **not** show (retrieval at scale,
-> multi-document, follow-ups). The React UI (Phase 3) is not built yet.
+> multi-document, follow-ups). A ChatGPT-style React UI is included (http://localhost:5173);
+> it has been checked by hand in fake mode only.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
 
 ## 1. Features mapped to the brief
@@ -26,11 +27,11 @@ citations are checked by the server** (document, page/section, original excerpt)
 | Document statistics / processing metrics APIs (REQ) | Done | `api/metrics.py` |
 | Data storage for all listed entities (REQ) | Done | `models/__init__.py`, Alembic `0001` |
 | LangChain, embeddings, auto API docs, pytest (REC) | Done | Swagger at `/docs` |
-| Frontend (OPT) | **Not built yet** (Phase 3) | — |
+| Frontend (OPT/BONUS) | Done: ChatGPT-style React UI (sessions, multi-file drag-and-drop with live status chips, streamed cited answers + source panel, library with insights, metrics) | `frontend/` |
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 122 tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 124 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
 | Summary customisation, comparative analysis (BONUS) | Not done (P2) | |
 | Rate limiting, document versioning (BONUS) | Not done (future work) | |
@@ -52,6 +53,8 @@ Edit `.env`:
 docker compose up --build
 ```
 
+- **Web UI: http://localhost:5173** (the `web` container serves the production build and
+  proxies `/api` to the API)
 - API + Swagger UI: http://localhost:8000/docs (OpenAPI JSON at `/api/v1/openapi.json`)
 - Readiness: http://localhost:8000/api/v1/health/ready
 - Migrations run automatically when the API container starts.
@@ -259,6 +262,37 @@ flight. Embedding tokens are counted locally with the model's tokenizer (LangCha
 return embedding usage). **All cost figures are estimates**, not invoice amounts. Rough design
 estimates (not measured): ~$0.01–0.02 per 100-page document, ~$0.001 per question.
 
+## Web UI
+
+`frontend/`: Vite + React 19 + TypeScript (strict) + Tailwind CSS 4 + TanStack Query +
+react-markdown. API types are generated from the backend's OpenAPI schema
+(`npm run gen:api` → `src/api/schema.d.ts`).
+
+- **Chat:** sidebar with "New chat" and sessions (rename, delete); drop several files anywhere
+  on the chat (or use **+**): each gets a chip with live status from the SSE status stream,
+  the failure reason, "already in vault" for duplicates, and a remove button. Send stays disabled,
+  with a hint, until the attached documents are chat-ready. Answers stream token by token
+  (**Stop** closes the stream; the server saves the partial answer). Citation chips open a side
+  panel with the document, page/section and the stored original excerpt. `not_found`,
+  `unsupported` and failed answers are styled differently. An empty chat offers the attached
+  documents' suggested questions. "Search entire vault" switches the session's scope.
+  Enter sends, Shift+Enter adds a line.
+- **Library:** all documents with status, filters, insights drawer (summary, key points with
+  pages/sections, entities, tags, tone), reprocess and delete.
+- **Metrics:** document statistics, AI usage and estimated cost, chat rates and latency,
+  per-stage processing.
+- A yellow **FAKE AI MODE** banner shows whenever the backend runs with `AI_PROVIDER=fake`.
+- The chat stream is a POST, which the browser's `EventSource` cannot do, so it is read from
+  the `fetch` body with a small SSE parser (`src/api/sse.ts`); document status uses
+  `EventSource`.
+
+Development (hot reload, proxying to the API on :8000):
+
+```bash
+cd frontend && npm install && npm run dev      # http://localhost:5173 (stop the web container first)
+npm run build                                  # strict type-check + production build
+```
+
 ## 11. Testing
 
 ```bash
@@ -266,7 +300,7 @@ docker compose -f compose.test.yml run --rm tests                  # full fake-m
 docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff format --check ."
 ```
 
-- **Fake-mode suite (122 tests)** runs against real Postgres + pgvector and Redis containers.
+- **Fake-mode suite (124 tests)** runs against real Postgres + pgvector and Redis containers.
   `FakeEmbeddings` is a hashed bag-of-words (lexical similarity is real, so retrieval tests mean
   something); `FakeChatModel` is scripted. It proves the plumbing: upload rules, extraction codes
   and locators, state machine and retries, idempotency, concurrency, retrieval scope and fusion,
@@ -275,6 +309,9 @@ docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff fo
 - **Live tests** (`tests/live/`, `pytest -m live`) call OpenAI and run only with
   `RUN_LIVE_AI_TESTS=1`, `TEST_AI_PROVIDER=openai` and approved spend; results go to
   `docs/EVALUATION.md`.
+
+- **Frontend:** no automated UI tests; `npm run build` (strict type-check) plus manual checks in
+  a browser against the running stack in fake mode (see docs/ai-log.md, T20–T23).
 
 ## 12. Known limitations
 
