@@ -335,5 +335,13 @@ Authentication and multi-tenant ownership; S3-compatible storage; document versi
 limiting; OCR; WebSocket only if a two-way need appears; cursor pagination; summary
 customisation and comparative analysis (P2).
 
+Prompt work:
+- **`chat.condense.v3`.** Give the follow-up rewriter the names of the documents in scope, and
+  tell it to leave a reference unresolved when the conversation does not name what it points to.
+  v2 (active) fixed "When was it approved?" but bound "its" to the wrong noun when the solar farm
+  had never been mentioned ([docs/EVALUATION.md](docs/EVALUATION.md)).
+- **A broader evaluation set** (multi-document, follow-ups, long documents, injection) to compare
+  prompt versions on more than a handful of questions.
+
 AI-assisted development is documented in [AI_USAGE.md](AI_USAGE.md) and the running log
 [docs/ai-log.md](docs/ai-log.md).

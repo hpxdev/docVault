@@ -750,3 +750,13 @@ rewrite again; avoid follow-ups whose referent was never named), README status a
 AI_USAGE.md limits.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Decision: keep `chat.condense.v2`
+
+The developer chose to keep v2 active and leave v3 as future work. No code change was needed (v2
+was already active). README "Future work" now lists `chat.condense.v3` (document names in the
+condense prompt; leave unresolvable references alone) and a broader evaluation set. No spend.
+
+Human review: ___
