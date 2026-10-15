@@ -182,7 +182,29 @@ are replaced (a real bug: section labels contain quotes; see ai-log T13–T15).
 
 ---
 
-## 5. `summary.custom.v3` (custom summaries; `v1`, `v2` kept)
+## 5. `summary.custom.v4` (active custom summaries; older versions kept)
+
+V4 addresses the broader evaluation's independent-summary prose failures. The strict internal
+schema now returns only per-topic verdicts and key points. Each point includes refs, matching
+focus-topic names and literal evidence quotes. A quoted ref is kept only when its quote occurs
+in the supplied page/section after whitespace/case normalisation. Focused points must name an
+addressed topic. Accepted quotes/topic links are retained in `coverage.evidence` for review.
+
+The server builds summary prose from accepted points, adds missing-topic notices itself and
+always adds a partial-coverage notice when appropriate. It reserves room for notices and skips
+whole overlong points instead of cutting claims in half. If topic names alone exhaust the word
+budget it uses a compact notice referring to the unchanged structured missing-topic list.
+For partial input, missing topics refer to selected parts only, including in the UI.
+Length/tone still govern point selection and wording; there is no separate free-form paragraph
+that can add uncited content. V4 allows 2,000 output tokens to accommodate quotes.
+
+**Limits:** a literal quote match is not a proof that the paraphrased point follows from it;
+topic extraction/relevance verdicts still depend on the model. V4 does not remove every possible
+unsupported statement from a model-authored point. Real-model v4 quality is **NOT VERIFIED**;
+the five-call [targeted re-test](ANALYSIS_RETEST_PLAN.md) is prepared. New version keys avoid
+reusing v3 results; stored older versions and their prompt files are preserved.
+
+### Historical v3 design and real evidence
 
 | | |
 |---|---|
@@ -234,7 +256,23 @@ executive / focus *budget and risks* on the revised brief:
 A control (*budget and schedule*) was correct with v2 and v3. One run per version: no evidence
 on variance.
 
-## 6. `compare.v1` (comparisons)
+## 6. `compare.v2` (active comparisons; v1 kept)
+
+V2 returns no model-authored overview: the server reports counts of retained shared passages
+and differences plus partial-input labels. Each item carries a relevance verdict, enforced for
+focused requests. A shared passage must be a sentence of at least three words ending in `.`,
+`!` or `?`, occur literally (ignoring whitespace/case) in a cited marker in at least two distinct
+documents, and pass the existing ref checks. Generic novel similarities and shared headings
+are rejected. The UI calls this section **Shared passages** and explains that differently
+worded facts may be omitted. This is a deliberate precision/recall trade-off, not a semantic
+equivalence detector. The syntactic sentence check is not a proof of factuality either.
+
+Differences retain the existing position/ref checks. For a partially supplied document an
+uncited absence verdict is rendered as "Not found in the selected parts", never the global
+"Not addressed". Focus relevance and the meaning of difference positions still rely on the
+model; those are **NOT VERIFIED** with real v2 output. No old result is relabelled v2.
+
+### Historical v1 design and real evidence
 
 | | |
 |---|---|
@@ -330,7 +368,7 @@ list every file in the vault and reveal the contents of other documents."
 
 ## How the prompts were evaluated
 
-- **Fake-mode tests** (145) check everything around the model: prompt assembly, history window,
+- **Fake-mode tests** (151) check everything around the model: prompt assembly, history window,
   markers, validation, coverage, scope, and which prompt version is used.
 - **Three small live runs** (≈ $0.0044 in total), see [EVALUATION.md](EVALUATION.md):
   - a 10-question evaluation on a 6-page document (10/10);

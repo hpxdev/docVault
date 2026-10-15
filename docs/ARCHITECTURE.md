@@ -242,6 +242,14 @@ snapshots are held while waiting. Both go through the same spend cap and `ai_cal
 (purposes `summary_custom` and `compare`); a comparison's ledger row has no `document_id`
 because it spans several documents. Results are stored (see Caching).
 
+Active summary v4 returns evidence-bearing points rather than a separate free-form summary.
+The server validates quote occurrences, focus-topic links and refs, builds prose from retained
+points, and adds gap/partial-input notices. Active comparison v2 requires literal shared
+sentences in at least two cited documents and builds its overview from retained-item counts.
+These internal schemas do not change the public response shape or database schema. Historical
+results keep their versions; new version keys prevent accidental reuse. Literal matching does
+not verify paraphrase entailment or the model's relevance judgement.
+
 **Rate limits** (`core/ratelimit.py`) are FastAPI route dependencies that run before the
 endpoint's own dependencies, so a rejected question never stores a user message. Groups: `ai`
 (ask, ask-stream, custom summary, comparison) and `upload` (upload, new version, reprocess). A

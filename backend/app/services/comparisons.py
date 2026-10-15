@@ -17,16 +17,17 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.registry import async_ai
-from app.ai.schemas import ComparisonLLM
+from app.ai.schemas import ComparisonLLM, ComparisonV2LLM
 from app.core.config import get_settings
 from app.core.errors import ConflictError, NotFoundError
 from app.models import Document, DocumentComparison
 from app.prompts import load_prompt
-from app.services.insights import Validation, clip_words, ref_fields, render
+from app.services.grounding import contains_passage
+from app.services.insights import Validation, ref_fields, render
 from app.services.selection import select_parts
 from app.services.summaries import load_parts, normalise_focus
 
-VERSION = "compare.v1"
+VERSION = "compare.v2"
 MAX_OUTPUT_TOKENS = 1600
 MAX_SIMILARITIES, MAX_DIFFERENCES = 6, 8
 NOT_ADDRESSED = "Not addressed"
@@ -66,7 +67,13 @@ async def load_documents(db: AsyncSession, ids: list[uuid.UUID]) -> list[Documen
 
 
 def _positions_valid(
-    raw: ComparisonLLM, labels: dict[str, dict[str, Any]], valid_refs: dict[str, set[int]]
+    raw: ComparisonLLM | ComparisonV2LLM,
+    labels: dict[str, dict[str, Any]],
+    valid_refs: dict[str, set[int]],
+    *,
+    source_text: dict[str, dict[int, str]] | None = None,
+    focus: str | None = None,
+    partial: set[str] | None = None,
 ) -> tuple[list[dict], list[dict], Validation]:
     v = Validation()
 
@@ -78,6 +85,14 @@ def _positions_valid(
 
     similarities = []
     for sim in raw.similarities:
+        if source_text is not None and (
+            len(sim.text.split()) < 3 or not sim.text.rstrip().endswith((".", "!", "?"))
+        ):
+            v.dropped_key_points += 1  # shared headings/keywords are not factual sentences
+            continue
+        if focus and not getattr(sim, "relevant_to_focus", True):
+            v.dropped_key_points += 1
+            continue
         sources = []
         for src in sim.sources:
             label = src.document.strip().upper()
@@ -85,6 +100,14 @@ def _positions_valid(
                 v.dropped_refs += len(src.refs) or 1
                 continue
             refs = refs_for(label, src.refs)
+            if source_text is not None:
+                supported = [
+                    ref
+                    for ref in refs
+                    if contains_passage(source_text.get(label, {}).get(ref, ""), sim.text)
+                ]
+                v.dropped_refs += len(refs) - len(supported)
+                refs = supported
             if refs and all(s["label"] != label for s in sources):
                 sources.append({**_public(labels[label]), **ref_fields(refs, labels[label]["pdf"])})
         if len(sources) < 2 or not sim.text.strip():
@@ -97,6 +120,9 @@ def _positions_valid(
 
     differences = []
     for diff in raw.differences:
+        if focus and not getattr(diff, "relevant_to_focus", True):
+            v.dropped_key_points += 1
+            continue
         positions: dict[str, dict] = {}
         for pos in diff.positions:
             label = pos.document.strip().upper()
@@ -108,6 +134,11 @@ def _positions_valid(
             if not refs:  # an uncited claim is never shown as the document's position
                 said_not_addressed = statement.lower().startswith(NOT_ADDRESSED.lower())
                 statement = NOT_ADDRESSED if said_not_addressed else UNCITED
+                if label in (partial or set()) and (
+                    said_not_addressed
+                    or pos.statement.strip().lower().startswith("not found in the selected parts")
+                ):
+                    statement = "Not found in the selected parts."
             positions[label] = {
                 **_public(labels[label]),
                 "statement": statement,
@@ -174,13 +205,14 @@ async def get_or_create_comparison(
 
     budget = get_settings().on_demand_max_input_tokens // len(docs)
     labels: dict[str, dict[str, Any]] = {}
-    snapshot, blocks, coverage, valid_refs = [], [], {}, {}
+    snapshot, blocks, coverage, valid_refs, source_text = [], [], {}, {}, {}
     for n, doc in enumerate(docs, start=1):
         label = f"D{n}"
         pdf = doc.file_type == "pdf"
         chosen, cov = select_parts(await load_parts(db, doc), budget, focus)
         labels[label] = {"label": label, "document_id": str(doc.id), "pdf": pdf}
         valid_refs[label] = {p.ref for p in chosen}
+        source_text[label] = {p.ref: p.text for p in chosen}
         coverage[label] = cov
         snapshot.append(
             {
@@ -208,7 +240,7 @@ async def get_or_create_comparison(
     if same_group:
         document_list += ". These are versions of the same document, oldest first."
     raw, _ = await ai.structured(
-        ComparisonLLM,
+        ComparisonV2LLM,
         load_prompt(VERSION).messages(
             document_list=document_list,
             coverage_note="every document is included in full."
@@ -229,9 +261,18 @@ async def get_or_create_comparison(
         max_tokens=MAX_OUTPUT_TOKENS,
     )
 
-    similarities, differences, v = _positions_valid(raw, labels, valid_refs)
+    similarities, differences, v = _positions_valid(
+        raw, labels, valid_refs, source_text=source_text, focus=focus, partial=set(partial)
+    )
+    overview = (
+        f"Compared {len(docs)} documents: {len(similarities)} shared "
+        f"{'passage' if len(similarities) == 1 else 'passages'} and "
+        f"{len(differences)} {'difference' if len(differences) == 1 else 'differences'}."
+    )
+    if partial:
+        overview += f" {', '.join(partial)} use selected parts only."
     result = {
-        "overview": clip_words(raw.overview, 120, "overview", v),
+        "overview": overview,
         "focus_covered": raw.focus_covered if focus else None,
         "similarities": similarities,
         "differences": differences,

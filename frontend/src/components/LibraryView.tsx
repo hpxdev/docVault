@@ -477,12 +477,16 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
           )}
           {result.focus && result.focus_covered === false && (
             <div className="rounded bg-amber-50 px-2 py-1 text-amber-900">
-              The document does not address "{result.focus}".
+              {result.coverage.complete === false ? "The selected parts do not" : "The document does not"}
+              {" "}address "{result.focus}".
             </div>
           )}
           {result.focus_covered !== false && (result.focus_not_addressed ?? []).length > 0 && (
             <div className="rounded bg-amber-50 px-2 py-1 text-amber-900">
-              Not in the document: {(result.focus_not_addressed ?? []).join(", ")}
+              {result.coverage.complete === false
+                ? "Not found in the selected parts:"
+                : "Not in the document:"}{" "}
+              {(result.focus_not_addressed ?? []).join(", ")}
             </div>
           )}
           <p className="whitespace-pre-wrap">{result.summary}</p>

@@ -497,3 +497,38 @@ this run; that differs from the retained demo snapshot and has not been silently
 Still not verified: general injection resistance, default-threshold long-token behaviour,
 scale, slow-stream Stop, summary/comparison repeat variability, or broad grounding quality
 across real-world documents. This run was API-based, not a new browser evaluation.
+## Summary v4 / comparison v2 corrections (2026-10-15; no new paid calls)
+
+Following the broader run, Codex added versioned corrections without editing older prompts:
+summary v4 returns cited points with exact evidence quotes and topic links; the server builds
+prose and missing-topic/partial-input notices. Comparison v2 retains only identical cited
+shared sentences and builds its overview from retained counts. The UI scopes partial-input
+gaps to selected parts and labels similarities Shared passages, with a recall-limit note.
+See [PROMPTS.md](PROMPTS.md) for exact rules and remaining semantic risks.
+
+**Verification:** 151 passed, 3 live tests deselected in 59.22 s; ruff passed; frontend
+TypeScript/Vite build passed. The targeted extraction-only re-test harness passed in fake
+mode (5 calls, $0, 3.91 s). Integration regressions cover invented evidence quotes, unrelated
+or unaddressed topic links, missing-gap prose, partial-input notices/word limits, generic
+similarities, shared-heading fragments, relevance flags, partial absence wording and cache
+version isolation. Old results/prompts are preserved and historical keys are not reused.
+
+The expanded walkthrough passed on a separate fake stack. Browser inspection showed the
+selected-parts gap note and full server notice (43/101 sections) on a generated Markdown
+fixture, plus the shared-passage UI. Screenshot: `.checks/summary-v4-fake-ui.png` (clearly fake).
+The final shared-sentence syntax refinement was subsequently covered by the full suite and
+five-call fake re-test. No test double output is evidence of real-model quality.
+
+Main API/worker/web rebuilt; readiness ready, real mode, worker OK; running API imports report
+summary.custom.v4 / compare.v2. Main ledger remained 43 calls / $0.00674021. New paid spend: $0.
+The prior real evaluation evidence is unchanged. Temporary fake containers, volumes and
+image tags were removed; main demo data was preserved.
+
+**NOT VERIFIED:** acceptance/quality of the new internal schemas with the real model, actual
+focus adherence or paraphrase entailment. Quote matches prove occurrence, not support for a
+paraphrase. Focus verdicts/relevance flags still come from the model. A conservative literal
+shared-sentence check can omit real similarities expressed differently; sentence punctuation
+is not a factuality proof. Map/reduce insight prompts were not changed.
+
+A five-call real re-test is prepared in [ANALYSIS_RETEST_PLAN.md](ANALYSIS_RETEST_PLAN.md),
+estimated about $0.003 with proposed allowance $0.008. It needs fresh explicit approval.

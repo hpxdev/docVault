@@ -23,9 +23,11 @@ from pydantic import BaseModel
 from app.ai.providers import StreamResult, Usage
 from app.ai.schemas import (
     ComparisonLLM,
+    ComparisonV2LLM,
     CustomSummaryLLM,
     CustomSummaryV2LLM,
     CustomSummaryV3LLM,
+    CustomSummaryV4LLM,
     DocumentInsightsLLM,
     SectionNotesLLM,
 )
@@ -422,6 +424,61 @@ _SUMMARY_FIELDS: dict[type[BaseModel], tuple[str, ...]] = {
 
 def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessage]) -> M:
     prompt = _human_text(messages)
+    if schema is CustomSummaryV4LLM:
+        out = fake_custom_summary(prompt)
+        points = []
+        for point in out["key_points"]:
+            points.append(
+                {
+                    **point,
+                    "focus_topics": [
+                        t["topic"]
+                        for t in out["focus_topics"]
+                        if t["addressed"]
+                        and set(content_words(t["topic"])) & set(content_words(point["text"]))
+                    ],
+                    "evidence": [{"ref": ref, "quote": point["text"]} for ref in point["refs"]],
+                }
+            )
+        return schema.model_validate({"focus_topics": out["focus_topics"], "key_points": points})
+    if schema is ComparisonV2LLM:
+        out = fake_comparison(prompt)
+        docs = [(label, _blocks(body)) for label, body in _DOC_BLOCK.findall(prompt)]
+        shared = (
+            set.intersection(
+                *[
+                    {sentence for _, body in blocks for sentence in _sentences(body)}
+                    for _, blocks in docs
+                ]
+            )
+            if docs
+            else set()
+        )
+        terms = _focus_terms(prompt)
+        similarities = [
+            {
+                "text": sentence,
+                "relevant_to_focus": True,
+                "sources": [
+                    {
+                        "document": label,
+                        "refs": [next(ref for ref, body in blocks if sentence in body)],
+                    }
+                    for label, blocks in docs
+                ],
+            }
+            for sentence in sorted(shared)
+            if len(sentence.split()) >= 3
+            and sentence.endswith((".", "!", "?"))
+            and (not terms or terms & set(content_words(sentence)))
+        ]
+        return schema.model_validate(
+            {
+                "focus_covered": out["focus_covered"],
+                "similarities": similarities,
+                "differences": [{**d, "relevant_to_focus": True} for d in out["differences"]],
+            }
+        )
     if schema in _SUMMARY_FIELDS:  # each summary version gets only its own fields
         out = fake_custom_summary(prompt)
         return schema.model_validate({k: out[k] for k in _SUMMARY_FIELDS[schema]})

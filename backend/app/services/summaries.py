@@ -14,14 +14,14 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.registry import async_ai
-from app.ai.schemas import CustomSummaryV3LLM
+from app.ai.schemas import CustomSummaryV4LLM
 from app.core.config import get_settings
 from app.core.errors import ConflictError
 from app.models import Document, DocumentSegment, DocumentSummary
 from app.prompts import load_prompt
+from app.services.grounding import contains_passage
 from app.services.insights import (
     Validation,
-    clip_words,
     marked_segments,
     render,
     validate_key_points,
@@ -30,9 +30,9 @@ from app.services.selection import select_parts
 
 # v1 invented a "risks" point in the first real check; v2 stopped that but left its optional
 # gap list empty; v3 asks for a verdict per focus topic. See docs/PROMPTS.md.
-VERSION = "summary.custom.v3"
+VERSION = "summary.custom.v4"
 MAX_TOPICS = 5
-MAX_OUTPUT_TOKENS = 1200
+MAX_OUTPUT_TOKENS = 2000
 
 LENGTHS = {
     "short": {"words": 80, "points": 3},
@@ -82,7 +82,49 @@ FOCUS_RULES = {
         "none requested (the <focus> block is empty): cover the whole text you were given; "
         "return `focus_topics` as [].",
     ),
+    "summary.custom.v4": (
+        "return one verdict per requested focus topic; include only factual points directly "
+        "about addressed topics, and name those topics on each point. Missing-topic notices "
+        "are added by the server, never by the model.",
+        "no focus requested: cover the supplied text; return focus_topics as [] both at the "
+        "top level and on each point.",
+    ),
 }
+
+
+def summary_text(points: list[dict], missing: list[str], coverage: dict, words: int, v) -> str:
+    """No independent model prose can introduce a new unsupported claim or absence notice."""
+    notices = []
+    if missing:
+        subject = "The document" if coverage["complete"] else "The selected parts"
+        notices.append(
+            f"{subject} {'does' if coverage['complete'] else 'do'} not address "
+            f"{', '.join(missing)}."
+        )
+    if not coverage["complete"]:
+        notices.append(
+            f"This summary uses selected parts of the document "
+            f"({coverage['segments_included']} of {coverage['segments_total']} pages/sections)."
+        )
+    if missing and sum(len(n.split()) for n in notices) > words:
+        location = "the document" if coverage["complete"] else "the selected parts"
+        notices[0] = (
+            f"Some requested topics were not found in {location}. See the missing-topic list."
+        )
+        v.truncated_fields.append("summary_notice")
+    remaining = max(0, words - sum(len(n.split()) for n in notices))
+    sentences = []
+    for point in points:
+        text = point["text"].strip()
+        if len(text.split()) > remaining:
+            if "summary" not in v.truncated_fields:
+                v.truncated_fields.append("summary")
+            continue  # omit a whole point rather than cutting a claim in half
+        sentences.append(text)
+        remaining -= len(text.split())
+    if not sentences and not notices:
+        return "No cited summary points were returned."
+    return " ".join([*sentences, *notices])
 
 
 def focus_verdicts(
@@ -181,13 +223,13 @@ async def get_or_create_summary(
     rules = LENGTHS[length]
     prompt = load_prompt(VERSION)
     raw, _ = await ai.structured(
-        CustomSummaryV3LLM,
+        CustomSummaryV4LLM,
         prompt.messages(
             filename=filename,
             marker_kind="[Page N] = physical page N" if pdf else "[Section N: heading] = section N",
             coverage_note=coverage_note(coverage),
-            length_rule=f"the summary has at most {rules['words']} words; give at most "
-            f"{rules['points']} key points.",
+            length_rule=f"the key point texts together have at most {rules['words']} words; "
+            f"give at most {rules['points']} key points.",
             tone_rule=TONES[tone],
             focus_rule=FOCUS_RULES[VERSION][0 if focus else 1],
             focus=focus or "",
@@ -200,14 +242,35 @@ async def get_or_create_summary(
     )
 
     v = Validation()
+    topics, missing, covered = focus_verdicts(raw.focus_topics, focus)
+    addressed = {str(t["topic"]).casefold() for t in topics if t["addressed"]}
+    supplied = {p.ref: p.text for p in chosen}
+    grounded = []
+    for point in raw.key_points:
+        if focus and not addressed.intersection(t.strip().casefold() for t in point.focus_topics):
+            v.dropped_key_points += 1
+            continue
+        refs = sorted(
+            {
+                q.ref
+                for q in point.evidence
+                if q.ref in point.refs
+                and q.ref in supplied
+                and contains_passage(supplied[q.ref], q.quote)
+            }
+        )
+        v.dropped_refs += len(set(point.refs) - set(refs))
+        if not refs:
+            v.dropped_key_points += 1
+            continue
+        grounded.append(point.model_copy(update={"refs": refs}))
     key_points = validate_key_points(
-        raw.key_points,
+        grounded,
         valid_refs={p.ref for p in chosen},
         pdf=pdf,
         limit=rules["points"],
         v=v,
     )
-    topics, missing, covered = focus_verdicts(raw.focus_topics, focus)
     values = {
         "id": uuid.uuid4(),
         "document_id": doc_id,
@@ -217,11 +280,27 @@ async def get_or_create_summary(
         "focus": focus,
         "prompt_version": VERSION,
         "model": ai.chat.name,
-        "summary": clip_words(raw.summary, rules["words"], "summary", v),
+        "summary": summary_text(key_points, missing, coverage, rules["words"], v),
         "key_points": key_points,
         "focus_covered": covered,
         "focus_not_addressed": missing,
-        "coverage": {**coverage, "focus_topics": topics, "validation": v.as_dict()},
+        "coverage": {
+            **coverage,
+            "focus_topics": topics,
+            "evidence": [
+                {
+                    "text": point.text,
+                    "focus_topics": point.focus_topics,
+                    "sources": [
+                        q.model_dump()
+                        for q in point.evidence
+                        if q.ref in point.refs and contains_passage(supplied[q.ref], q.quote)
+                    ],
+                }
+                for point in grounded[: rules["points"]]
+            ],
+            "validation": v.as_dict(),
+        },
     }
     stmt = insert(DocumentSummary).values(**values)
     # A concurrent identical request may have stored the same options first: keep the newest.

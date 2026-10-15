@@ -16,6 +16,8 @@ from the git history. Sections the developer must write in their own words are m
 - **OpenAI Codex**: continued development from the 2026-10-15 handover: expanded the bonus-feature
   walkthrough, refreshed documentation, implemented v3 follow-up rewriting, and ran/reviewed
   the explicitly approved broader real evaluation.
+  After reviewing its failures, Codex added summary v4 / comparison v2 validation, regression
+  checks, coverage-aware UI wording and a five-call re-test harness (fake rehearsal only so far).
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

@@ -135,9 +135,20 @@ function ComparisonBody({ data }: { data: ComparisonOut }) {
         )}
       </section>
       <section>
-        <h2 className="mb-2 text-xs font-semibold uppercase text-neutral-500">In common</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase text-neutral-500">
+          {data.prompt_version === "compare.v1" ? "In common" : "Shared passages"}
+        </h2>
+        {data.prompt_version !== "compare.v1" && (
+          <p className="mb-2 text-sm text-neutral-500">
+            Matching factual passages from at least two documents. Facts worded differently may be omitted.
+          </p>
+        )}
         {data.similarities.length === 0 ? (
-          <p className="text-neutral-500">No verifiable similarities were found.</p>
+          <p className="text-neutral-500">
+            {data.prompt_version === "compare.v1"
+              ? "No verifiable similarities were found."
+              : "No matching factual passages were retained."}
+          </p>
         ) : (
           <ul className="space-y-2">
             {data.similarities.map((s, i) => (

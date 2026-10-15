@@ -138,3 +138,42 @@ class CustomSummaryV3LLM(_Strict):
     )
     summary: str = Field(description="The summary, within the requested word limit")
     key_points: list[KeyPointLLM] = Field(description="Key points, within the requested count")
+
+
+class QuoteLLM(_Strict):
+    ref: int = Field(description="A supplied page/section marker number")
+    quote: str = Field(description="An exact supporting passage copied from that marker")
+
+
+class SummaryPointV4LLM(KeyPointLLM):
+    focus_topics: list[str] = Field(
+        description="Addressed focus topic names this fact directly concerns; empty with no focus"
+    )
+    evidence: list[QuoteLLM] = Field(description="Exact supporting passages for the cited refs")
+
+
+class CustomSummaryV4LLM(_Strict):
+    focus_topics: list[FocusTopicLLM]
+    key_points: list[SummaryPointV4LLM] = Field(
+        description="Only relevant cited facts; the server constructs the summary and gap notices"
+    )
+
+
+class SimilarityV2LLM(SimilarityLLM):
+    relevant_to_focus: bool = Field(
+        description="Directly concerns the requested focus, or no focus"
+    )
+
+
+class DifferenceV2LLM(DifferenceLLM):
+    relevant_to_focus: bool = Field(
+        description="Directly concerns the requested focus, or no focus"
+    )
+
+
+class ComparisonV2LLM(_Strict):
+    focus_covered: bool
+    similarities: list[SimilarityV2LLM] = Field(
+        description="Exact shared factual passages copied verbatim from at least two documents"
+    )
+    differences: list[DifferenceV2LLM]

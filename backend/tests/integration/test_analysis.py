@@ -32,6 +32,15 @@ def _last_prompt(fake_chat) -> str:
     return "\n".join(str(m.content) for m in messages)
 
 
+def _point(text, refs, quote=None, topics=()):
+    return {
+        "text": text,
+        "refs": refs,
+        "focus_topics": list(topics),
+        "evidence": [{"ref": ref, "quote": quote or text} for ref in refs],
+    }
+
+
 # ---------------------------------------------------------------- custom summaries
 
 
@@ -44,7 +53,7 @@ async def test_custom_summary_options_cache_and_ledger(client, enqueued, fake_ch
     assert r.status_code == 200, r.text
     first = r.json()
     assert first["cached"] is False and first["ai_mode"] == "fake"
-    assert first["prompt_version"] == "summary.custom.v3"
+    assert first["prompt_version"] == "summary.custom.v4"
     assert (first["length"], first["tone"], first["focus"]) == (
         "short",
         "executive",
@@ -62,7 +71,7 @@ async def test_custom_summary_options_cache_and_ledger(client, enqueued, fake_ch
     assert "at most 80 words; give at most 3 key points" in fake_chat.calls[-1][1][0].content
 
     [call] = _calls("summary_custom")
-    assert str(call.document_id) == doc and call.prompt_version == "summary.custom.v3"
+    assert str(call.document_id) == doc and call.prompt_version == "summary.custom.v4"
 
     # Same options (focus differs only in case and spacing): stored result, no AI call.
     again = await client.post(
@@ -86,7 +95,7 @@ async def test_custom_summary_focus_not_in_document(client, enqueued):
     r = await client.post(f"/documents/{doc}/summaries", json={"focus": "submarine volcanoes"})
     body = r.json()
     assert body["focus_covered"] is False and body["key_points"] == []
-    assert "does not mention" in body["summary"]
+    assert body["summary"] == "The document does not address submarine volcanoes."
 
 
 async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
@@ -101,14 +110,14 @@ async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
             f"/documents/{doc}/summaries", json={"focus": "approved budget and submarine volcanoes"}
         )
     ).json()
-    assert body["prompt_version"] == "summary.custom.v3"
+    assert body["prompt_version"] == "summary.custom.v4"
     assert body["focus_covered"] is True
     assert body["focus_not_addressed"] == ["submarine volcanoes"]
     assert body["summary"].endswith("The document does not address submarine volcanoes.")
     assert any("4.2 million" in kp["text"] for kp in body["key_points"])
     system = fake_chat.calls[-1][1][0].content
-    assert "never add risks, problems, benefits, opinions" in system
-    assert "one `focus_topics` entry per topic" in system
+    assert "never add risks, opinions" in system.lower()
+    assert "one focus_topics verdict per requested topic" in system
     assert body["coverage"]["focus_topics"] == [
         {"topic": "approved budget", "addressed": True},
         {"topic": "submarine volcanoes", "addressed": False},
@@ -124,8 +133,7 @@ async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
                 {"topic": "risks", "addressed": False},
                 {"topic": "x" * 150, "addressed": False},
             ],
-            "summary": "Budget approved. The document does not address risks.",
-            "key_points": [{"text": "Budget approved.", "refs": [3]}],
+            "key_points": [_point("Budget approved.", [3], fixtures.FACT_PAGE3, ["budget"])],
         }
     )
     body = (
@@ -140,10 +148,9 @@ async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
     fake_chat.push(
         {
             "focus_topics": [{"topic": "risks", "addressed": False}],
-            "summary": "…",
             "key_points": [],
         },
-        {"focus_topics": [], "summary": "Some text.", "key_points": []},
+        {"focus_topics": [], "key_points": []},
     )
     none = (await client.post(f"/documents/{doc}/summaries", json={"focus": "risks"})).json()
     assert none["focus_covered"] is False and none["focus_not_addressed"] == ["risks"]
@@ -177,23 +184,26 @@ async def test_custom_summary_validates_model_output(client, enqueued, fake_chat
     fake_chat.push(
         {
             "focus_topics": [{"topic": "ignored without a focus", "addressed": False}],
-            "summary": " ".join(["word"] * 120),  # over the 80-word limit for "short"
             "key_points": [
-                {"text": "Budget approved.", "refs": [3, 99]},  # 99 is not a page
-                {"text": "Invented point.", "refs": [42]},  # no valid ref: dropped
-                {"text": "Point 3.", "refs": [1]},
-                {"text": "Point 4.", "refs": [2]},
-                {"text": "Point 5.", "refs": [4]},  # over the 3-point limit
+                _point(fixtures.FACT_PAGE3, [3, 99]),  # 99 is not a page
+                _point("Invented point.", [42]),  # no valid ref: dropped
+                _point("Teams met weekly to review progress, risks and upcoming milestones.", [1]),
+                _point("Further details are available from the programme office on request.", [2]),
+                _point(
+                    "This section describes routine operational matters for the reporting period.",
+                    [4],
+                ),
             ],
         }
     )
     body = (await client.post(f"/documents/{doc}/summaries", json={"length": "short"})).json()
-    assert len(body["summary"].split()) == 81 and body["summary"].endswith("…")
+    assert len(body["summary"].split()) <= 80
+    assert body["summary"] == " ".join(p["text"] for p in body["key_points"])
     assert body["focus_not_addressed"] == []  # no focus requested
     assert [kp["pages"] for kp in body["key_points"]] == [[3], [1], [2]]
     validation = body["coverage"]["validation"]
     assert validation["dropped_refs"] == 2 and validation["dropped_key_points"] == 1
-    assert set(validation["truncated_fields"]) == {"key_points", "summary"}
+    assert set(validation["truncated_fields"]) == {"key_points"}
 
 
 async def test_custom_summary_of_long_document_selects_focus_parts(
@@ -217,6 +227,84 @@ async def test_custom_summary_of_long_document_selects_focus_parts(
     assert spread["selection"] == "spread" and spread["complete"] is False
     prompt = _last_prompt(fake_chat)
     assert all(f"[Page {n}]\n" in prompt for n in (1, 31, 61, 91))  # spread over the document
+
+
+async def test_summary_rejects_invented_quotes_and_unaddressed_or_unrelated_topics(
+    client, enqueued, fake_chat
+):
+    doc = await _upload(client, "falcon.pdf", fixtures.five_page_pdf())
+    run_queued(enqueued)
+    fake_chat.push(
+        {
+            "focus_topics": [
+                {"topic": "budget", "addressed": True},
+                {"topic": "risks", "addressed": False},
+            ],
+            "key_points": [
+                _point(fixtures.FACT_PAGE3, [3], topics=["budget"]),
+                _point("An invented risk.", [3], fixtures.FACT_PAGE3, ["risks"]),
+                _point(
+                    "Progress is reviewed weekly.",
+                    [1],
+                    "Teams met weekly to review progress, risks and upcoming milestones.",
+                    ["operations"],
+                ),
+                _point(
+                    "The budget is nine million.", [3], "The budget is nine million.", ["budget"]
+                ),
+            ],
+        }
+    )
+    body = (
+        await client.post(f"/documents/{doc}/summaries", json={"focus": "budget and risks"})
+    ).json()
+    assert body["summary"] == fixtures.FACT_PAGE3 + " The document does not address risks."
+    assert len(body["key_points"]) == 1
+    assert body["coverage"]["validation"]["dropped_key_points"] == 3
+    assert body["coverage"]["evidence"][0]["sources"] == [{"ref": 3, "quote": fixtures.FACT_PAGE3}]
+
+
+async def test_partial_summary_missing_topic_is_scoped_to_supplied_parts(
+    client, enqueued, fake_chat, monkeypatch
+):
+    monkeypatch.setattr(get_settings(), "on_demand_max_input_tokens", 500)
+    doc = await _upload(client, "heron.pdf", fixtures.long_pdf(30))
+    run_queued(enqueued)
+    fake_chat.push({"focus_topics": [{"topic": "volcanoes", "addressed": False}], "key_points": []})
+    body = (
+        await client.post(
+            f"/documents/{doc}/summaries", json={"focus": "volcanoes", "length": "short"}
+        )
+    ).json()
+    assert body["coverage"]["complete"] is False
+    assert body["summary"].startswith("The selected parts do not address volcanoes.")
+    assert "This summary uses selected parts" in body["summary"]
+    assert "The document does not address" not in body["summary"]
+    assert len(body["summary"].split()) <= 80
+
+
+def test_summary_word_budget_preserves_notices_and_drops_whole_overlong_point():
+    from app.services.insights import Validation
+    from app.services.summaries import summary_text
+
+    v = Validation()
+    text = summary_text(
+        [{"text": "word " * 81}, {"text": "The budget is approved."}],
+        ["risks"],
+        {"complete": False, "segments_included": 2, "segments_total": 20},
+        80,
+        v,
+    )
+    assert text.startswith("The budget is approved.")
+    assert "word" not in text and not text.endswith("…")
+    assert "selected parts do not address risks" in text
+    assert text.endswith("(2 of 20 pages/sections).")
+    assert len(text.split()) <= 80 and v.truncated_fields == ["summary"]
+
+    v = Validation()
+    compact = summary_text([], ["a b " * 20] * 5, {"complete": True}, 80, v)
+    assert "See the missing-topic list." in compact
+    assert len(compact.split()) <= 80 and v.truncated_fields == ["summary_notice"]
 
 
 async def test_custom_summary_errors(client, enqueued, monkeypatch):
@@ -260,7 +348,7 @@ async def test_compare_two_versions(client, enqueued, fake_chat):
         ("D1", v1, 1),
         ("D2", v2, 2),
     ]  # oldest first, whatever the request order
-    assert body["similarities"]
+    assert body["similarities"] == []  # changed year/days; no identical full factual sentence
     for sim in body["similarities"]:
         assert {s["label"] for s in sim["sources"]} == {"D1", "D2"}
         assert all(s["sections"] and s["pages"] == [] for s in sim["sources"])
@@ -273,7 +361,7 @@ async def test_compare_two_versions(client, enqueued, fake_chat):
     assert "versions of the same document, oldest first" in prompt
     assert '<document label="D1" name="leave-2025.txt" version="1"' in prompt
     [call] = _calls("compare")
-    assert call.document_id is None and call.prompt_version == "compare.v1"
+    assert call.document_id is None and call.prompt_version == "compare.v2"
 
     again = (await client.post("/comparisons", json={"document_ids": [v1, v2]})).json()
     assert again["cached"] is True and again["id"] == body["id"]
@@ -288,10 +376,10 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
     fake_chat.push(
         {
             "focus_covered": True,
-            "overview": "Two documents.",
             "similarities": [
                 {  # both sources valid
                     "text": "Both are dated.",
+                    "relevant_to_focus": True,
                     "sources": [
                         {"document": "D1", "refs": [1]},
                         {"document": "d2", "refs": [1]},
@@ -299,10 +387,12 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
                 },
                 {  # only one document: not a similarity
                     "text": "Only one.",
+                    "relevant_to_focus": True,
                     "sources": [{"document": "D1", "refs": [2]}],
                 },
                 {  # unknown label and invalid ref
                     "text": "Bad refs.",
+                    "relevant_to_focus": True,
                     "sources": [
                         {"document": "D9", "refs": [1]},
                         {"document": "D1", "refs": [77]},
@@ -312,6 +402,7 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
             "differences": [
                 {
                     "aspect": "Budget",
+                    "relevant_to_focus": True,
                     "positions": [
                         {"document": "D1", "statement": "4.2 million dollars.", "refs": [3]},
                         {"document": "D2", "statement": "It costs 9 million.", "refs": []},
@@ -319,14 +410,17 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
                 },
                 {
                     "aspect": "Leave",
+                    "relevant_to_focus": True,
                     "positions": [{"document": "D2", "statement": "25 days.", "refs": [2]}],
                 },
                 {
                     "aspect": "Nothing cited",
+                    "relevant_to_focus": True,
                     "positions": [{"document": "D1", "statement": "Claim.", "refs": [50]}],
                 },
                 {  # the same statement in every document is not a difference (live finding)
                     "aspect": "Main contractor",
+                    "relevant_to_focus": True,
                     "positions": [
                         {"document": "D1", "statement": "Brightline Builders.", "refs": [4]},
                         {"document": "D2", "statement": "brightline  builders", "refs": [1]},
@@ -336,7 +430,7 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
         }
     )
     body = (await client.post("/comparisons", json={"document_ids": [a, b]})).json()
-    assert [s["text"] for s in body["similarities"]] == ["Both are dated."]
+    assert body["similarities"] == []  # valid refs do not establish the generic claim
     budget, leave = body["differences"]
     assert budget["positions"][0]["pages"] == [3] and budget["positions"][0]["addressed"]
     uncited = budget["positions"][1]
@@ -346,8 +440,96 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
     assert leave["positions"][0]["statement"] == "No position given."
     assert leave["positions"][1]["sections"] == [2]
     validation = body["coverage"]["validation"]
-    assert validation["dropped_key_points"] == 4  # 2 similarities + 2 differences
+    assert validation["dropped_key_points"] == 5  # 3 similarities + 2 differences
     assert body["same_document_versions"] is False
+
+
+async def test_compare_shared_passages_and_focus_filter(client, enqueued, fake_chat):
+    common = "The lease term is five years."
+    other = "The office is in Riverside."
+    a = await _upload(client, "first.txt", f"{common}\n{other}\nRent is 100 euros.".encode())
+    b = await _upload(client, "second.txt", f"{common}\n{other}\nRent is 200 euros.".encode())
+    run_queued(enqueued)
+    sources = [{"document": "D1", "refs": [1]}, {"document": "D2", "refs": [1]}]
+    fake_chat.push(
+        {
+            "focus_covered": True,
+            "similarities": [
+                {"text": common, "sources": sources, "relevant_to_focus": True},
+                {"text": "lease", "sources": sources, "relevant_to_focus": True},
+                {"text": other, "sources": sources, "relevant_to_focus": False},
+                {
+                    "text": "Both documents provide structured information.",
+                    "sources": sources,
+                    "relevant_to_focus": True,
+                },
+            ],
+            "differences": [
+                {
+                    "aspect": "Location",
+                    "relevant_to_focus": False,
+                    "positions": [
+                        {"document": "D1", "statement": other, "refs": [1]},
+                    ],
+                }
+            ],
+        }
+    )
+    body = (
+        await client.post("/comparisons", json={"document_ids": [a, b], "focus": "lease term"})
+    ).json()
+    assert [p["text"] for p in body["similarities"]] == [common]
+    assert body["differences"] == []
+    assert body["overview"] == "Compared 2 documents: 1 shared passage and 0 differences."
+    assert body["coverage"]["validation"]["dropped_key_points"] == 4
+
+
+def test_partial_comparison_does_not_turn_absence_into_whole_document_claim():
+    from app.ai.schemas import ComparisonV2LLM
+    from app.services.comparisons import _positions_valid
+
+    raw = ComparisonV2LLM.model_validate(
+        {
+            "focus_covered": True,
+            "similarities": [],
+            "differences": [
+                {
+                    "aspect": "Budget",
+                    "relevant_to_focus": True,
+                    "positions": [
+                        {"document": "D1", "statement": "Ten euros.", "refs": [1]},
+                        {"document": "D2", "statement": "Not addressed", "refs": []},
+                    ],
+                }
+            ],
+        }
+    )
+    labels = {key: {"label": key, "document_id": key, "pdf": True} for key in ("D1", "D2")}
+    _, differences, _ = _positions_valid(raw, labels, {"D1": {1}, "D2": {1}}, partial={"D2"})
+    assert differences[0]["positions"][1]["statement"] == "Not found in the selected parts."
+
+
+async def test_new_prompt_versions_do_not_reuse_old_cached_results(client, enqueued):
+    from app.models import DocumentComparison, DocumentSummary
+
+    a = await _upload(client, "a.txt", V1_TEXT)
+    b = await _upload(client, "b.txt", V2_TEXT)
+    run_queued(enqueued)
+    first = (await client.post(f"/documents/{a}/summaries", json={})).json()
+    comparison = (await client.post("/comparisons", json={"document_ids": [a, b]})).json()
+    with sync_session() as db:
+        db.get(DocumentSummary, uuid.UUID(first["id"])).prompt_version = "summary.custom.v3"
+        db.get(DocumentComparison, uuid.UUID(comparison["id"])).prompt_version = "compare.v1"
+        db.commit()
+    second = (await client.post(f"/documents/{a}/summaries", json={})).json()
+    updated = (await client.post("/comparisons", json={"document_ids": [a, b]})).json()
+    assert second["id"] != first["id"] and not second["cached"]
+    assert updated["id"] != comparison["id"] and not updated["cached"]
+    assert (await client.get(f"/comparisons/{comparison['id']}")).json()[
+        "prompt_version"
+    ] == "compare.v1"
+    listed = (await client.get(f"/documents/{a}/summaries")).json()["items"]
+    assert {row["prompt_version"] for row in listed} == {"summary.custom.v3", "summary.custom.v4"}
 
 
 async def test_compare_errors_and_cleanup(client, enqueued):

@@ -12,7 +12,7 @@ citations are checked by the server** (document, page/section, original excerpt)
 amber "not found", a two-document answer, and the source panel showing page 4's original text.*
 
 > **Status (2026-10-15):** backend and ChatGPT-style UI complete, plus custom summaries,
-> comparisons, document versions and rate limiting; 145 fake-mode backend tests.
+> comparisons, document versions and rate limiting; 151 fake-mode backend tests.
 > Earlier approved real-model checks:
 > - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
 > - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
@@ -40,6 +40,14 @@ a missing gap sentence, and an unsupported claim about a partially included docu
 Comparisons contained off-focus or generic similarities. Passing API tests does not mean
 every generated statement is grounded. [Results and raw evidence](docs/EVALUATION.md#broader-real-evaluation-2026-10-15-approved).
 
+**Corrections prepared:** active `summary.custom.v4` builds prose from cited points, adds
+missing-topic/partial-coverage notices on the server, and requires literal evidence quotes.
+Active `compare.v2` retains matching shared sentences rather than generic similarities and
+builds its overview on the server. These changes passed fake-mode checks; real-model quality
+is **NOT VERIFIED** pending the [five-call targeted re-test](docs/ANALYSIS_RETEST_PLAN.md).
+Literal quote checks do not establish semantic entailment, and conservative shared-sentence
+matching can omit valid differently worded similarities.
+
 ## 1. Features mapped to the brief
 
 | Brief item | Status | Where |
@@ -57,10 +65,10 @@ every generated statement is grounded. [Results and raw evidence](docs/EVALUATIO
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 145 backend tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 151 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
-| Summary customisation: length, focus, tone (BONUS) | Implemented and checked with fake/real models and UI; v3 structured gaps work, but focus drift, missing gap prose and partial-summary overclaims remain; [details](docs/EVALUATION.md#broader-real-evaluation-2026-10-15-approved) | `services/summaries.py`, `POST /documents/{id}/summaries` |
-| Comparative analysis between documents (BONUS) | Implemented for 2–4 documents or versions; real checks found correct changes/locations, plus off-focus and generic unsupported similarities; [details](docs/EVALUATION.md#broader-real-evaluation-2026-10-15-approved) | `services/comparisons.py`, `POST /comparisons` |
+| Summary customisation: length, focus, tone (BONUS) | Implemented; v3 real checks exposed focus/prose issues. V4 adds evidence quotes and server-rendered notices/prose; real v4 quality pending; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
+| Comparative analysis between documents (BONUS) | Implemented for 2–4 documents or versions; v2 conservatively requires identical cited shared sentences; real v2 quality pending; [details](docs/PROMPTS.md) | `services/comparisons.py`, `POST /comparisons` |
 | Rate limiting and quota management (BONUS) | Done: per-client limits in Redis (`429 RATE_LIMITED` + `Retry-After`) next to the spend cap | `core/ratelimit.py` |
 | Document version tracking (BONUS) | Done: new versions keep history; vault-wide chat uses the latest | `POST /documents/{id}/versions` |
 
@@ -429,10 +437,10 @@ Prompt work:
   outputs in a small real A/B check, including two repeats of the known ambiguous-capacity
   case. Add held-out histories, named referents, competing referents and document names
   beyond this one budget history before claiming general disambiguation quality.
-- **Summary and comparison grounding.** The broader run exposed missing gap prose, irrelevant
-  focused-summary/comparison content, a partial-summary overclaim and a generic unsupported
-  similarity. These remain documented limitations; citation-location validation cannot
-  establish that a claim is supported by its cited text.
+- **Validate summary v4 and comparison v2.** The broader run exposed missing gap prose,
+  irrelevant content, a partial-summary overclaim and a generic unsupported similarity in
+  older versions. New server checks address those paths but still require the targeted real
+  re-test; paraphrase support and relevance remain model judgements.
 - **A broader evaluation set** (multi-document, follow-ups, long documents, injection) to compare
   prompt versions on more than a handful of questions.
 

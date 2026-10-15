@@ -1052,3 +1052,67 @@ repeat variance, scale and slow real-stream Stop. Further summary/compare correc
 fresh evaluation would be separate work. No dependencies, publishing, or developer-owned
 review/experience fields changed.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: summary v4 / comparison v2 grounding corrections
+
+**Task:** address the broader evaluation's summary/compare weaknesses, verify unpaid paths,
+and prepare a targeted paid re-test; do not assume the previous run's approval covers it.
+
+**Produced by AI (OpenAI Codex):** added immutable summary.custom.v4 and compare.v2 prompts
+and strict internal schemas. Summary v4 emits per-topic verdicts and points with refs, exact
+supporting quotes and focus-topic links, not a separate free-form paragraph. Server checks
+quote occurrence in supplied parts, requires addressed-topic links for focused points, builds
+prose from accepted points, and appends mandatory gap/partial notices. It reserves notice
+space, omits whole overlong points and compacts excessive notice text while retaining the
+structured missing-topic list. Accepted evidence/topic links are stored in coverage JSON.
+
+Comparison v2 accepts shared sentences only when the same passage occurs in valid cited
+markers from at least two distinct documents (case/whitespace normalised, >=3 words and
+sentence punctuation); rejects shared keywords/headings and items flagged off focus. Overview
+uses retained counts rather than independent model prose. Partial-document absence positions
+are labelled selected parts only. Differences retain their prior ref validation; semantic
+support/relevance remain model-dependent. Older prompt/schema files and results are retained;
+new version keys isolate caches. No public response shape or DB migration changed.
+
+**UI/docs/harness:** coverage-aware summary notices, Shared passages heading/recall explanation
+for v2 (legacy v1 display preserved); updated README, architecture, prompts, evaluation,
+AI_USAGE and demo count. Added extraction-only five-call opt-in re-test and
+ANALYSIS_RETEST_PLAN.md. Fake helpers for the new schemas remain clearly labelled by mode/model.
+
+**What broke / how found:** initial lint found overlong lines, corrected/formatter applied.
+The temporary UI stack rejected ON_DEMAND_MAX_INPUT_TOKENS=1800 at startup (minimum is 2000);
+read API logs and corrected the override, without changing validation or the main environment.
+The targeted harness was also moved to the valid 2000-token budget. UI inspection showed the
+fake shared-passage heuristic could include headings; added sentence-shaped passage rejection
+in server/fake and a regression for a literal but non-factual keyword. No paid calls involved.
+
+**Verification actually run:**
+- Initial analysis integration suite: 10 passed; after added regressions: 16 passed (5.32 s),
+  and 16 passed again (6.71 s) after overview grammar changes.
+- Full suite passed 151 tests / 3 live tests deselected (26.84 s). After notice compaction and
+  shared-sentence refinements, final full run: 151 passed / 3 deselected in 59.22 s.
+- Final ruff check passed; formatter reported 110 files already/currently formatted after
+  formatting the changed files. Host npm run build passed (tsc -b + Vite, 232 modules).
+- Five-call fake re-test passed after final changes: 1 passed in 3.91 s, 5 ledger calls, $0,
+  all summary_custom/compare; no embeddings or insights executed.
+- Isolated fake Compose build/start healthy. Expanded walkthrough exited 0. UI inspection
+  showed gap notice scoped to selected parts, server summary with 43/101 coverage and section
+  101 source, and Shared passages/recall explanation. Saved/visually checked clearly fake
+  proof at .checks/summary-v4-fake-ui.png. Final sentence refinement then covered by full
+  suite and final fake re-test; older cached fake display data was discarded on cleanup.
+- Main API/worker/web rebuilt. Readiness ready / openai / worker OK; API import reports
+  summary.custom.v4 compare.v2; web HTTP 200. Main ledger unchanged at 43 rows / $0.00674021.
+- Dedicated fake stack/volumes/images removed and temporary tab closed; .checks artifacts
+  retained, main demo data preserved. git diff --check passed. No old prompt/lockfile changes.
+
+**Spend:** new paid spend $0. Prior approved broader run remains $0.00791661, and preserved
+main snapshot $0.00674021. No new dependency or publishing; developer review fields left blank.
+
+**NOT VERIFIED / needs developer:** actual OpenAI acceptance/quality of v4/v2; quote occurrence
+is not paraphrase entailment and relevance/absence verdicts can still be wrong. Literal shared
+sentences deliberately lose differently worded similarities. Model-authored point/difference
+claims and unchanged map/reduce prose can still need correction. Five logical calls proposed,
+estimated about $0.003 with allowance $0.008; isolated guard $0.006 (pre-call, no reservation).
+Real re-test awaits fresh approval; no automatic paid iteration is authorised.
+Human review: ___
