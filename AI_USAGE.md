@@ -14,7 +14,8 @@ from the git history. Sections the developer must write in their own words are m
   coding tool). Real calls were made during the explicitly approved evaluations and demo
   checks documented in `docs/EVALUATION.md`.
 - **OpenAI Codex**: continued development from the 2026-10-15 handover: expanded the bonus-feature
-  walkthrough, refreshed documentation, and prepared follow-up rewriting and evaluation work.
+  walkthrough, refreshed documentation, implemented v3 follow-up rewriting, and ran/reviewed
+  the explicitly approved broader real evaluation.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method
@@ -91,8 +92,10 @@ labels: [docs/PROMPTS.md](docs/PROMPTS.md). In short:
 
 They were evaluated with the fake-mode suite (plumbing), the initial live run (10/10),
 and the later small checks recorded in EVALUATION.md. Codex added a broader opt-in harness
-and v3 follow-up rewriting; the harness has passed only in fake mode so far. They have
-**not** been evaluated on a broad real evaluation set.
+and v3 follow-up rewriting, then ran the developer-approved broader synthetic evaluation:
+42 real calls, $0.00791661 estimated cost. It checked the known v3 failure case twice and
+exposed summary/compare grounding limitations. This remains a small synthetic evaluation,
+not evidence of quality across arbitrary documents.
 
 ## Limits of the AI assistance
 
@@ -101,13 +104,18 @@ and v3 follow-up rewriting; the harness has passed only in fake mode so far. The
 - **Fake-model tests prove plumbing, not quality.** Real-model behaviour was checked in two
   small runs plus a prompt re-test. The dry run showed the follow-up rewrite does not work with
   `chat.condense.v1`, which fake tests could not reveal; v2 fixed that case but mis-resolved a
-  reference the conversation never named. Map-reduce
-  insights and injection resistance with the real model are NOT VERIFIED. Custom summaries and
+  reference the conversation never named. The broader run showed v3 leaving that ambiguous
+  question unchanged twice, a two-group map-reduce result retaining a last-page fact, and one
+  injection-scope check returning not_found. These narrow checks do not establish general
+  quality or injection resistance. Custom summaries and
   comparisons had one small real check: the comparison was accurate but padded with two
   identical "differences", and the summary invented a "risks" point that fake tests could not
   reveal. `summary.custom.v2` removed the invented content in one re-test but left the new gap
   list empty; v3 (one verdict per focus topic, gaps derived on the server) got it right in one
-  re-test.
+  re-test. The broader run exposed further limitations: missing gap prose and unrelated content
+  in a focused summary, an unsupported whole-document claim from a partial summary, off-focus
+  similarities and a generic unsupported comparison similarity. These are recorded, not
+  hidden by the passing API test; no additional paid prompt iterations were made.
 - **Some things it could not do or verify:** record the demo video; test the Stop button against
   a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements
   are design reasoning).

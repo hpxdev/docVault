@@ -398,3 +398,102 @@ The README summary screenshot shows a pre-existing real-model v3 summary (budget
 and retained versions, read from cache. No new model output was generated for the screenshot.
 The current demo ledger stayed at 43 calls / $0.00674021. That differs from the handover's
 historical cumulative spend; neither historical evidence nor current data was altered.
+# Broader real evaluation (2026-10-15, approved)
+
+**Outcome:** the harness completed, but several generated summaries/comparisons failed
+semantic expectations. Do not treat the passing test as an all-correct quality score.
+The developer explicitly approved the proposed approximately 42 calls, estimated $0.01 with
+a $0.015 allowance. No follow-up paid calls or prompt iterations were made.
+
+**Execution:** `TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 docker compose -f compose.test.yml
+run --rm -e RUN_BROAD_AI_EVAL=1 tests pytest -m live tests/live/test_broad_evaluation.py -q -s`.
+Observed output: **1 passed in 90.55 s; 42 ledger calls, $0.00791661 estimated**.
+All 42 rows recorded succeeded. Models: gpt-4o-mini and text-embedding-3-small.
+The test used its separate Postgres/Redis, never the demo database. It temporarily lowered
+its ledger cap to $0.01; the cap was not reached.
+
+[Raw responses and per-call ledger](evaluations/broad-2026-10-15.json), copied byte-for-byte
+from the test output before any test-state reset. SHA-256:
+`faee4861e33c7e48ee3f5502a7aa44071b037523e7af6aa70e715c821b654eb6`.
+The raw `human_review: NOT REVIEWED` is deliberately retained: the review below is by Codex,
+not a claim that the developer reviewed the output.
+
+## Chat and ingestion review
+
+| Case | Observed result | Assessment |
+|---|---|---|
+| Multi-document question, two independent answer generations | Both returned 27 annual-leave days, cited handbook section Leave Policy; June 2026 construction, cited brief page 4. Outputs were identical | Correct in both repeats; no measured answer variance for this one request |
+| Budget | 41.5 million euros, brief page 3 | Correct |
+| Active-v3 approval follow-up | Rewritten to "When was the total capital budget approved?"; answered 4 March 2026, page 3 | Correct through full pipeline |
+| Last-page retrieval | ZX-48213, page 160 | Correct |
+| Injection-scope request | Requested the other document's archive code while scoped only to the injection PDF; returned not_found, no citations and no code | Correct refusal/scope behaviour for one adversarial input |
+| Long-document insights | 160/160 segments, two map groups, reduce result included ZX-48213 cited to page 160 | Branch/last-page check passed; some interpretive prose was not explicit in source text |
+
+Five chat answers were grounded in the expected pages/section; the sixth correctly returned
+not_found. No general accuracy percentage is inferred from this synthetic set.
+
+The Heron PDF contains repetitive routine-operations/weekly-meeting text and the final-page
+code. Map-reduce was deliberately forced at 4,000 tokens, retaining production 8,000-token map
+grouping. This was not a run beyond the default 60,000-token branch threshold or a load test.
+Its detailed summary says the document "emphasizes the importance of these meetings for
+project management"; that emphasis is an interpretation, not an explicit fixture statement.
+Coverage counts input segments, not semantic completeness or fidelity.
+
+## Rewrite A/B: identical budget history, two generations per question and version
+
+History: User asks the total capital budget; assistant says it is 41.5 million euros.
+No project or solar farm is named in the history. Only v3 additionally receives the scoped
+filename `northwind-brief.pdf`.
+
+| Follow-up | v2 output in both repeats | v3 output in both repeats | Assessment |
+|---|---|---|---|
+| When was it approved? | When was the total capital budget approved? | When was the total capital budget approved? | Both correct |
+| And what is its installed capacity? | What is the installed capacity of the total capital budget? | And what is its installed capacity? | v2 wrong twice; v3 correctly preserves ambiguity twice |
+| Who is the CFO? | Who is the CFO? | Who is the CFO? | Both correctly unchanged |
+
+V3 met the intended behaviour in all six outputs for these three cases. This is evidence
+for the known correction, not proof of general reference resolution. Named competing entities,
+different filenames and held-out histories were not tested. Repeated A/B calls were linked
+to the budget message solely for ledger ownership; they were not new chat turns.
+
+## Summaries and comparisons: important limitations
+
+| Case | Correct behaviour | Limitation found |
+|---|---|---|
+| Short/plain annual-leave summary | 27 days, up to 5 carried over, section 2; no fabricated DOCX pages | No issue found in this result |
+| Medium/executive budget-and-risks summary | Correct figures/dates and pages; focus verdict correctly returned risks=false and focus_not_addressed=[risks] | Summary omitted the required missing-risks sentence and included unrelated schedule/panel/generation details. Structured gap reporting worked; focus/prose rules did not fully hold |
+| Long/technical partial Heron summary | Correct code, page 160; complete=false, 28/160 segments, 1,800-token input budget | Added "The document does not address any other topics." This is unsupported and false for a document that also discusses routine operations/meetings; partial coverage makes the whole-document claim even less justified |
+| Budget-focused version comparison | Correct sole retained change: 41.5 to 44.0 million euros, page 3 in both; full coverage | Six similarities included off-focus sponsor/location/capacity/generation/community details. Validator reported three dropped_key_points; raw pre-validation comparison output was not retained, so their exact content/reason cannot be reconstructed from this record |
+| Different-document comparison | Correct leave-policy section and construction page, with missing counterparts marked Not addressed | Added a generic similarity, "Both documents provide structured information relevant to their respective topics." Its page-1/section-1 citations do not establish this as a shared stated fact; this violates the prompt's stated-facts rule |
+
+Citation validation confirms allowed source identities and locations; it does not prove that
+the cited text supports a claim. The gaps above remain present in the active summary/compare
+prompts. No output was edited to disguise them and no new prompt version was introduced here.
+Potential follow-ups: enforce missing-topic prose from structured verdicts, constrain claims
+about partial coverage, improve focus adherence and evaluate evidence-bearing similarities.
+These require scoped implementation and fresh evaluation, not a claim of reliability from
+this run alone.
+
+## Ledger totals (estimates, not invoices)
+
+| Purpose | Calls | Estimated USD |
+|---|---:|---:|
+| embed_document | 6 | 0.00023232 |
+| embed_query | 5 | 0.00000114 |
+| insights_single | 4 | 0.00178905 |
+| insights_map | 2 | 0.00198615 |
+| insights_reduce | 1 | 0.00044730 |
+| answer | 6 | 0.00069030 |
+| condense | 13 | 0.00089325 |
+| summary_custom | 3 | 0.00097800 |
+| compare | 2 | 0.00089910 |
+| **Total** | **42** | **0.00791661** |
+
+The preserved demo ledger remained **43 calls / $0.00674021**. The two currently retained
+ledgers total **85 calls / $0.01465682**. This is a sum of observed ledger snapshots, not a
+reconstruction of every historical call. Earlier docs reported cumulative $0.00703274 before
+this run; that differs from the retained demo snapshot and has not been silently rewritten.
+
+Still not verified: general injection resistance, default-threshold long-token behaviour,
+scale, slow-stream Stop, summary/comparison repeat variability, or broad grounding quality
+across real-world documents. This run was API-based, not a new browser evaluation.

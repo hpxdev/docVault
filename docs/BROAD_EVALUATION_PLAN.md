@@ -1,6 +1,11 @@
-# Broader evaluation: prepared, awaiting spend approval
+# Broader evaluation: completed with approval
 
-Prepared by OpenAI Codex on 2026-10-15. **No real run yet.**
+Prepared and run by OpenAI Codex on 2026-10-15 after the developer replied "Approve" to
+the proposed approximately 42 calls, estimated $0.01 with a $0.015 allowance.
+**Actual result: 42 calls, $0.00791661 estimated cost, 90.55 s; test passed.**
+Semantic review found limitations in summaries and comparisons, despite the passing test.
+See [EVALUATION.md](EVALUATION.md#broader-real-evaluation-2026-10-15-approved) and the
+[raw record](evaluations/broad-2026-10-15.json). The plan below is preserved for reproducibility.
 Harness: `backend/tests/live/test_broad_evaluation.py`.
 
 The fake rehearsal completed with 42 ledger calls and zero cost. This verifies the harness

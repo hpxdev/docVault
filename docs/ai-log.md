@@ -1000,3 +1000,55 @@ attribution. Developer-owned review/experience fields remain blank. Local commit
 explicit approval of about 42 calls, estimated about $0.01 (proposed allowance $0.015).
 No load testing or default-60000-token evaluation. No new dependencies or publishing.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: approved broader real evaluation and evidence review
+
+**Authorization:** developer replied "Approve" to the proposed approximately 42 real calls,
+estimated $0.01 with a $0.015 allowance. This was the first paid run by Codex in this
+continuation. No additional live iterations were run after the evaluation.
+
+**Produced by AI (OpenAI Codex):** executed the prepared test against the isolated test
+Postgres/Redis, reviewed generated answers/locations, summaries, comparisons and rewrite A/B
+outputs against the synthetic fixtures, and preserved the raw JSON under
+`docs/evaluations/broad-2026-10-15.json`. Updated EVALUATION.md, README, PROMPTS.md,
+BROAD_EVALUATION_PLAN.md and AI_USAGE.md with outcomes and remaining quality limitations.
+No application code or prompt versions changed in this task.
+
+**Commands / observed results:**
+`TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 docker compose -f compose.test.yml run --rm
+-e RUN_BROAD_AI_EVAL=1 tests pytest -m live tests/live/test_broad_evaluation.py -q -s`:
+**1 passed in 90.55 s; 42 real ledger rows, all succeeded; $0.00791661 estimated**.
+The isolated $0.01 guard was not reached. Direct ledger aggregation confirmed purpose costs
+and the exact total. Evidence integrity checks passed: raw/copy hashes identical, exactly
+42 real succeeded rows, 12 A/B observations, cost within $0.015. `git diff --check` passed.
+No backend suite rerun was needed for documentation/evidence-only edits; the prior 145-test
+clean-clone result remains the most recent full-suite result.
+
+**Outcomes:** both multi-document answers identical and correct (27 days / handbook Leave
+Policy; June 2026 / brief p4). Budget and approval follow-up correct on p3. Heron code found
+on p160. Injection-scope request returned not_found, no code/citations. Forced map-reduce
+used two groups and reported 160/160; retained last-page code. V2/V3 A/B: both versions
+correct on approval/CFO twice, v2 wrong on unnamed installed capacity twice, v3 preserved
+the question unchanged twice. This verifies the known v3 correction on one history only.
+
+**Quality issues found despite the passing test:** budget-and-risks summary correctly
+reported risks absent as structured data but omitted the required gap sentence and added
+unrelated content. Partial Heron summary correctly reported 28/160 coverage and p160 code
+but falsely claimed the document addresses no other topics. Budget comparison retained the
+correct one changed budget but six off-focus similarities; three dropped_key_points were
+reported, with no raw pre-validation output to determine their exact contents/reasons.
+Different-document comparison added a generic unsupported similarity. Reduced insights also
+used interpretive prose about meeting importance. These are documented limitations, not
+hidden test successes. No further paid prompt iterations or fixes were made.
+
+**Spend:** new run $0.00791661. Main demo remained 43 calls / $0.00674021. Current retained
+ledgers combined: 85 calls / $0.01465682. Earlier historical cumulative $0.00703274 differs
+from the preserved demo snapshot; historical accounting was not silently rewritten.
+
+**NOT VERIFIED / next:** held-out rewrite histories and competing entities, general injection
+resistance, default-60000-token map-reduce, arbitrary-document grounding, summary/comparison
+repeat variance, scale and slow real-stream Stop. Further summary/compare corrections and
+fresh evaluation would be separate work. No dependencies, publishing, or developer-owned
+review/experience fields changed.
+Human review: ___
