@@ -29,6 +29,8 @@ from the git history. Sections the developer must write in their own words are m
   results, with no new model calls; video capture/export limitations are logged.
   Codex reviewed all four original case-study PDF pages and prepared a shorter narrated
   demo plan that maps required backend/chat evidence before optional and bonus features.
+  Codex produced a subsequent 15-second narrated WebM pilot using local Windows speech,
+  existing footage, matching captions and verified audio decoding, without paid AI calls.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

@@ -200,3 +200,17 @@ installation, environment setup or full recording performed for this planning ta
 Unverified: voice quality, audio/video mux route, final MP4 compatibility, exact narration
 timing, final captured results and any fresh model cost. The short target is achievable by
 editing/grouping, not by pretending every feature has been exhaustively demonstrated.
+
+## 11. Narrated pilot completed (15 October 2026)
+
+The developer authorised the free sound/export pilot. Produced a 15.0-second 1920x1080 WebM
+excerpt with local Microsoft Zira English narration, embedded matching captions, a sidecar
+SRT and spoken-script text. Files are in B:\f-work\case study\demo-video, with the main file
+named ai-vault-narrated-sample.webm. Existing real-mode results are labelled as saved output.
+No new model call, paid TTS, app change, dependency installation or main-data mutation.
+
+Verified Opus audio decoding, speech levels and correlation to source narration (about 0.976,
+zero offset), plus browser playback and sampled rendered frames. This verifies the local
+WebM sound route, not human judgement of voice quality or general player compatibility.
+MP4 export remains unverified. Developer voice/pacing review and the bounded live-capture
+approval are still separate steps before the full real-mode recording.

@@ -1301,3 +1301,39 @@ Docs-only: no application suite rerun. git diff --check passed before commit.
 $0.05 allowance, to be refined and explicitly approved only after plan/audio preparation.
 User requested plan first, so execution remains pending their direction. No publishing.
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex: narrated audio/export pilot
+
+**Authorization / produced:** developer said do that after the plan identified a free
+15-second sound/export sample as the next step. Created
+B:\f-work\case study\demo-video\ai-vault-narrated-sample.webm, 15.0 s / 1920x1080, VP8 video
+and Opus audio, using an excerpt of previously recorded actual UI/saved real-mode answers.
+Generated narration locally with installed Microsoft Zira at rate -1. Embedded matching
+captions and supplied sidecar SRT and spoken-script text; updated the preview README and
+FINAL_DEMO_PLAN pilot status. AI_USAGE records the assistance. Local scripts/evidence stay
+in ignored .checks/narrated-sample; no application-code or dependency changes.
+
+**Export decisions / problems:** MediaRecorder canvas probes still produced empty output.
+Used existing Playwright FFmpeg for video extraction, existing Pillow to render captions,
+Chromium WebCodecs to encode local narration as Opus, and a small local EBML mux script.
+An initial about:blank AudioEncoder check lacked a secure context; localhost worked. The
+minimal bundled FFmpeg lacks the image2pipe output muxer, so the PNG decode stream used its
+existing image2 muxer with update enabled. Removed intermediate Opus flushes so the final
+track has one continuous stream. No external services, model calls or encoder installs.
+MP4 export is still NOT VERIFIED; delivered actual WebM, not a renamed extension.
+
+**Verified:** processed 375 captioned frames and 751 Opus packets. Exported browser metadata:
+15.0 s, 1920x1080. Exported audio decodes to 15.0135 s / 48 kHz mono; RMS 0.0900, peak 0.6948,
+correlation 0.97568 to source narration at zero offset. Complete muted browser playback
+reached ended=true at 15 s without error and decoded audio bytes; sampled frames at 1, 6,
+11 and 14.5 s, with key source/caption frames visually inspected without player overlays.
+This checks audio presence/content, not a human listening judgement. Speech is synthetic,
+not a claimed human recording. git diff --check passed before commit. No application tests
+rerun for media/docs-only work. No main-vault mutations or fresh real-model actions.
+
+**Spend / remaining:** $0 paid AI/TTS. Human voice/pacing preference, general player support,
+MP4 and the full six-minute fresh-vault recording remain unverified. Fresh paid capture
+requires the separate bounded approval described in the plan. No publishing.
+Human review: ___
