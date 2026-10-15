@@ -1,0 +1,684 @@
+{
+  "date_utc": "2026-10-15T11:29:48.619320+00:00",
+  "mode": "openai",
+  "human_review": "NOT REVIEWED",
+  "cases": [
+    {
+      "case": "upload:northwind-brief.pdf",
+      "http_status": 202,
+      "response": {
+        "results": [
+          {
+            "filename": "northwind-brief.pdf",
+            "outcome": "accepted",
+            "duplicate": false,
+            "document": {
+              "id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+              "filename": "northwind-brief.pdf",
+              "file_type": "pdf",
+              "mime_type": "application/pdf",
+              "size_bytes": 4542,
+              "sha256": "f294ebac4bbeafc619310a6b070efa385deb75d926f4056891a9e411b921d4d1",
+              "status": "queued",
+              "stages": {
+                "extract": "pending",
+                "index": "pending",
+                "insights": "pending"
+              },
+              "chat_ready": false,
+              "page_count": null,
+              "segment_count": null,
+              "char_count": null,
+              "token_count": null,
+              "warnings": [],
+              "error": null,
+              "category": null,
+              "version": 1,
+              "version_group_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+              "is_latest": true,
+              "created_at": "2026-10-15T11:29:48.689359Z",
+              "updated_at": "2026-10-15T11:29:48.689364Z",
+              "chat_ready_at": null,
+              "ready_at": null
+            },
+            "error": null
+          }
+        ],
+        "accepted": 1,
+        "duplicates": 0,
+        "rejected": 0
+      }
+    },
+    {
+      "case": "version",
+      "http_status": 202,
+      "response": {
+        "id": "a86ed0d4-2d21-4484-95a4-41247c8abedd",
+        "filename": "northwind-revised.pdf",
+        "file_type": "pdf",
+        "mime_type": "application/pdf",
+        "size_bytes": 4542,
+        "sha256": "9cf602c354d3d28a5d68acfb1930077a7737918b391218ca42dedfdffb12a134",
+        "status": "queued",
+        "stages": {
+          "extract": "pending",
+          "index": "pending",
+          "insights": "pending"
+        },
+        "chat_ready": false,
+        "page_count": null,
+        "segment_count": null,
+        "char_count": null,
+        "token_count": null,
+        "warnings": [],
+        "error": null,
+        "category": null,
+        "version": 2,
+        "version_group_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+        "is_latest": true,
+        "created_at": "2026-10-15T11:29:51.027272Z",
+        "updated_at": "2026-10-15T11:29:51.027278Z",
+        "chat_ready_at": null,
+        "ready_at": null
+      }
+    },
+    {
+      "case": "upload:employee-handbook.docx",
+      "http_status": 202,
+      "response": {
+        "results": [
+          {
+            "filename": "employee-handbook.docx",
+            "outcome": "accepted",
+            "duplicate": false,
+            "document": {
+              "id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609",
+              "filename": "employee-handbook.docx",
+              "file_type": "docx",
+              "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "size_bytes": 36962,
+              "sha256": "7b9079250d6bd8cc12fb291933b0dd5b04bb5cef94cfd7c464af8ee0ca6fbc3d",
+              "status": "queued",
+              "stages": {
+                "extract": "pending",
+                "index": "pending",
+                "insights": "pending"
+              },
+              "chat_ready": false,
+              "page_count": null,
+              "segment_count": null,
+              "char_count": null,
+              "token_count": null,
+              "warnings": [],
+              "error": null,
+              "category": null,
+              "version": 1,
+              "version_group_id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609",
+              "is_latest": true,
+              "created_at": "2026-10-15T11:29:51.198105Z",
+              "updated_at": "2026-10-15T11:29:51.198112Z",
+              "chat_ready_at": null,
+              "ready_at": null
+            },
+            "error": null
+          }
+        ],
+        "accepted": 1,
+        "duplicates": 0,
+        "rejected": 0
+      }
+    },
+    {
+      "case": "upload:heron-160-pages.pdf",
+      "http_status": 202,
+      "response": {
+        "results": [
+          {
+            "filename": "heron-160-pages.pdf",
+            "outcome": "accepted",
+            "duplicate": false,
+            "document": {
+              "id": "dabfec01-07db-4907-9e69-420e00d01898",
+              "filename": "heron-160-pages.pdf",
+              "file_type": "pdf",
+              "mime_type": "application/pdf",
+              "size_bytes": 108889,
+              "sha256": "046dd0181924d04c4c2150bcdbb7952605ba5bf6bdc3c897d3f26197506c2646",
+              "status": "queued",
+              "stages": {
+                "extract": "pending",
+                "index": "pending",
+                "insights": "pending"
+              },
+              "chat_ready": false,
+              "page_count": null,
+              "segment_count": null,
+              "char_count": null,
+              "token_count": null,
+              "warnings": [],
+              "error": null,
+              "category": null,
+              "version": 1,
+              "version_group_id": "dabfec01-07db-4907-9e69-420e00d01898",
+              "is_latest": true,
+              "created_at": "2026-10-15T11:29:51.453254Z",
+              "updated_at": "2026-10-15T11:29:51.453258Z",
+              "chat_ready_at": null,
+              "ready_at": null
+            },
+            "error": null
+          }
+        ],
+        "accepted": 1,
+        "duplicates": 0,
+        "rejected": 0
+      }
+    },
+    {
+      "case": "budget_and_risks",
+      "http_status": 200,
+      "response": {
+        "id": "f9d2d89b-48f4-481b-8e07-6e81b41225d0",
+        "document_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+        "length": "medium",
+        "tone": "executive",
+        "focus": "budget and risks",
+        "summary": "The total capital budget for the Northwind Solar Farm project is 41.5 million euros. A contingency reserve of 3.2 million euros is included in the total budget.",
+        "key_points": [
+          {
+            "text": "The total capital budget for the Northwind Solar Farm project is 41.5 million euros.",
+            "pages": [
+              3
+            ],
+            "sections": null
+          },
+          {
+            "text": "A contingency reserve of 3.2 million euros is included in the total budget.",
+            "pages": [
+              3
+            ],
+            "sections": null
+          }
+        ],
+        "focus_covered": true,
+        "focus_not_addressed": [],
+        "coverage": {
+          "complete": true,
+          "evidence": [
+            {
+              "text": "The total capital budget for the Northwind Solar Farm project is 41.5 million euros.",
+              "sources": [
+                {
+                  "ref": 3,
+                  "quote": "The total capital budget is 41.5 million euros."
+                }
+              ],
+              "focus_topics": [
+                "budget and risks"
+              ]
+            },
+            {
+              "text": "A contingency reserve of 3.2 million euros is included in the total budget.",
+              "sources": [
+                {
+                  "ref": 3,
+                  "quote": "A contingency reserve of 3.2 million euros is included in the total."
+                }
+              ],
+              "focus_topics": [
+                "budget and risks"
+              ]
+            }
+          ],
+          "selection": "all",
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 0
+          },
+          "focus_topics": [
+            {
+              "topic": "budget and risks",
+              "addressed": true
+            }
+          ],
+          "segments_total": 6,
+          "segments_included": 6,
+          "input_token_budget": 40000
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "summary.custom.v4",
+        "cached": false,
+        "created_at": "2026-10-15T11:29:55.027545Z"
+      }
+    },
+    {
+      "case": "plain_leave",
+      "http_status": 200,
+      "response": {
+        "id": "5bc82597-33cd-4b29-a1f0-36d4e4f32032",
+        "document_id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609",
+        "length": "short",
+        "tone": "plain",
+        "focus": "annual leave",
+        "summary": "Employees receive 27 days of paid annual leave per year. Unused leave of up to 5 days may be carried over.",
+        "key_points": [
+          {
+            "text": "Employees receive 27 days of paid annual leave per year.",
+            "pages": [],
+            "sections": [
+              2
+            ]
+          },
+          {
+            "text": "Unused leave of up to 5 days may be carried over.",
+            "pages": [],
+            "sections": [
+              2
+            ]
+          }
+        ],
+        "focus_covered": true,
+        "focus_not_addressed": [],
+        "coverage": {
+          "complete": true,
+          "evidence": [
+            {
+              "text": "Employees receive 27 days of paid annual leave per year.",
+              "sources": [
+                {
+                  "ref": 2,
+                  "quote": "Employees receive 27 days of paid annual leave per year."
+                }
+              ],
+              "focus_topics": [
+                "annual leave"
+              ]
+            },
+            {
+              "text": "Unused leave of up to 5 days may be carried over.",
+              "sources": [
+                {
+                  "ref": 2,
+                  "quote": "Unused leave of up to 5 days may be carried over."
+                }
+              ],
+              "focus_topics": [
+                "annual leave"
+              ]
+            }
+          ],
+          "selection": "all",
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 0
+          },
+          "focus_topics": [
+            {
+              "topic": "annual leave",
+              "addressed": true
+            }
+          ],
+          "segments_total": 3,
+          "segments_included": 3,
+          "input_token_budget": 40000
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "summary.custom.v4",
+        "cached": false,
+        "created_at": "2026-10-15T11:29:56.858621Z"
+      }
+    },
+    {
+      "case": "partial_archive",
+      "http_status": 200,
+      "response": {
+        "id": "a089bc79-9e8b-461f-bd5f-54003753e334",
+        "document_id": "dabfec01-07db-4907-9e69-420e00d01898",
+        "length": "long",
+        "tone": "technical",
+        "focus": "archive code",
+        "summary": "The secret archive code for the Heron programme is ZX-48213. This summary uses selected parts of the document (31 of 160 pages/sections).",
+        "key_points": [
+          {
+            "text": "The secret archive code for the Heron programme is ZX-48213.",
+            "pages": [
+              160
+            ],
+            "sections": null
+          }
+        ],
+        "focus_covered": true,
+        "focus_not_addressed": [],
+        "coverage": {
+          "complete": false,
+          "evidence": [
+            {
+              "text": "The secret archive code for the Heron programme is ZX-48213.",
+              "sources": [
+                {
+                  "ref": 160,
+                  "quote": "The secret archive code for the Heron programme is ZX-48213."
+                }
+              ],
+              "focus_topics": [
+                "archive code"
+              ]
+            }
+          ],
+          "selection": "focus",
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 0
+          },
+          "focus_topics": [
+            {
+              "topic": "archive code",
+              "addressed": true
+            }
+          ],
+          "segments_total": 160,
+          "segments_included": 31,
+          "input_token_budget": 2000
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "summary.custom.v4",
+        "cached": false,
+        "created_at": "2026-10-15T11:29:58.331149Z"
+      }
+    },
+    {
+      "case": "budget_comparison",
+      "http_status": 200,
+      "response": {
+        "id": "37e24a15-ccd0-4b83-b2db-6a505b44203f",
+        "documents": [
+          {
+            "label": "D1",
+            "id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+            "filename": "northwind-brief.pdf",
+            "file_type": "pdf",
+            "version": 1,
+            "version_group_id": "0dbcdd3f-2752-4384-855a-a5274ce87711"
+          },
+          {
+            "label": "D2",
+            "id": "a86ed0d4-2d21-4484-95a4-41247c8abedd",
+            "filename": "northwind-revised.pdf",
+            "file_type": "pdf",
+            "version": 2,
+            "version_group_id": "0dbcdd3f-2752-4384-855a-a5274ce87711"
+          }
+        ],
+        "focus": "capital budget",
+        "overview": "Compared 2 documents: 2 shared passages and 1 difference.",
+        "focus_covered": true,
+        "same_document_versions": true,
+        "similarities": [
+          {
+            "text": "The steering committee approved the budget on 4 March 2026.",
+            "sources": [
+              {
+                "label": "D1",
+                "document_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+                "pages": [
+                  3
+                ],
+                "sections": null
+              },
+              {
+                "label": "D2",
+                "document_id": "a86ed0d4-2d21-4484-95a4-41247c8abedd",
+                "pages": [
+                  3
+                ],
+                "sections": null
+              }
+            ]
+          },
+          {
+            "text": "A contingency reserve of 3.2 million euros is included in the total.",
+            "sources": [
+              {
+                "label": "D1",
+                "document_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+                "pages": [
+                  3
+                ],
+                "sections": null
+              },
+              {
+                "label": "D2",
+                "document_id": "a86ed0d4-2d21-4484-95a4-41247c8abedd",
+                "pages": [
+                  3
+                ],
+                "sections": null
+              }
+            ]
+          }
+        ],
+        "differences": [
+          {
+            "aspect": "capital budget amount",
+            "positions": [
+              {
+                "label": "D1",
+                "document_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+                "pages": [
+                  3
+                ],
+                "sections": null,
+                "statement": "The total capital budget is 41.5 million euros.",
+                "addressed": true
+              },
+              {
+                "label": "D2",
+                "document_id": "a86ed0d4-2d21-4484-95a4-41247c8abedd",
+                "pages": [
+                  3
+                ],
+                "sections": null,
+                "statement": "The total capital budget is 44.0 million euros.",
+                "addressed": true
+              }
+            ]
+          }
+        ],
+        "coverage": {
+          "documents": {
+            "D1": {
+              "complete": true,
+              "selection": "all",
+              "segments_total": 6,
+              "segments_included": 6,
+              "input_token_budget": 20000
+            },
+            "D2": {
+              "complete": true,
+              "selection": "all",
+              "segments_total": 6,
+              "segments_included": 6,
+              "input_token_budget": 20000
+            }
+          },
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 0
+          }
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "compare.v2",
+        "cached": false,
+        "created_at": "2026-10-15T11:30:00.698231Z"
+      }
+    },
+    {
+      "case": "different_documents",
+      "http_status": 200,
+      "response": {
+        "id": "6bff6363-514f-46e8-98b2-f907f768945e",
+        "documents": [
+          {
+            "label": "D1",
+            "id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+            "filename": "northwind-brief.pdf",
+            "file_type": "pdf",
+            "version": 1,
+            "version_group_id": "0dbcdd3f-2752-4384-855a-a5274ce87711"
+          },
+          {
+            "label": "D2",
+            "id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609",
+            "filename": "employee-handbook.docx",
+            "file_type": "docx",
+            "version": 1,
+            "version_group_id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609"
+          }
+        ],
+        "focus": "leave policy and construction",
+        "overview": "Compared 2 documents: 0 shared passages and 2 differences.",
+        "focus_covered": true,
+        "same_document_versions": false,
+        "similarities": [],
+        "differences": [
+          {
+            "aspect": "Leave Policy",
+            "positions": [
+              {
+                "label": "D1",
+                "document_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+                "pages": [],
+                "sections": null,
+                "statement": "Not addressed",
+                "addressed": false
+              },
+              {
+                "label": "D2",
+                "document_id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609",
+                "pages": [],
+                "sections": [
+                  2
+                ],
+                "statement": "Employees receive 27 days of paid annual leave per year.",
+                "addressed": true
+              }
+            ]
+          },
+          {
+            "aspect": "Construction",
+            "positions": [
+              {
+                "label": "D1",
+                "document_id": "0dbcdd3f-2752-4384-855a-a5274ce87711",
+                "pages": [
+                  4
+                ],
+                "sections": null,
+                "statement": "Construction is planned to start in June 2026.",
+                "addressed": true
+              },
+              {
+                "label": "D2",
+                "document_id": "5b5ace3d-90d3-44fb-abbf-ede5216a2609",
+                "pages": [],
+                "sections": [],
+                "statement": "Not addressed",
+                "addressed": false
+              }
+            ]
+          }
+        ],
+        "coverage": {
+          "documents": {
+            "D1": {
+              "complete": true,
+              "selection": "all",
+              "segments_total": 6,
+              "segments_included": 6,
+              "input_token_budget": 20000
+            },
+            "D2": {
+              "complete": true,
+              "selection": "all",
+              "segments_total": 3,
+              "segments_included": 3,
+              "input_token_budget": 20000
+            }
+          },
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 1
+          }
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "compare.v2",
+        "cached": false,
+        "created_at": "2026-10-15T11:30:02.931305Z"
+      }
+    }
+  ],
+  "ledger": [
+    {
+      "purpose": "summary_custom",
+      "model": "gpt-4o-mini",
+      "prompt_version": "summary.custom.v4",
+      "input_tokens": 1115,
+      "output_tokens": 138,
+      "estimated_cost_usd": "0.00025005",
+      "status": "succeeded"
+    },
+    {
+      "purpose": "summary_custom",
+      "model": "gpt-4o-mini",
+      "prompt_version": "summary.custom.v4",
+      "input_tokens": 936,
+      "output_tokens": 121,
+      "estimated_cost_usd": "0.00021300",
+      "status": "succeeded"
+    },
+    {
+      "purpose": "summary_custom",
+      "model": "gpt-4o-mini",
+      "prompt_version": "summary.custom.v4",
+      "input_tokens": 2756,
+      "output_tokens": 76,
+      "estimated_cost_usd": "0.00045900",
+      "status": "succeeded"
+    },
+    {
+      "purpose": "compare",
+      "model": "gpt-4o-mini",
+      "prompt_version": "compare.v2",
+      "input_tokens": 1574,
+      "output_tokens": 175,
+      "estimated_cost_usd": "0.00034110",
+      "status": "succeeded"
+    },
+    {
+      "purpose": "compare",
+      "model": "gpt-4o-mini",
+      "prompt_version": "compare.v2",
+      "input_tokens": 1388,
+      "output_tokens": 152,
+      "estimated_cost_usd": "0.00029940",
+      "status": "succeeded"
+    }
+  ],
+  "estimated_cost_usd": "0.00156255",
+  "call_count": 5
+}

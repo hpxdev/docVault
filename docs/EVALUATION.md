@@ -532,3 +532,42 @@ is not a factuality proof. Map/reduce insight prompts were not changed.
 
 A five-call real re-test is prepared in [ANALYSIS_RETEST_PLAN.md](ANALYSIS_RETEST_PLAN.md),
 estimated about $0.003 with proposed allowance $0.008. It needs fresh explicit approval.
+# Targeted summary v4 / comparison v2 re-test (2026-10-15, approved)
+
+**Actual execution:** the developer approved five calls with an estimated $0.003 and $0.008
+allowance. `TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 docker compose -f compose.test.yml
+run --rm -e RUN_ANALYSIS_RETEST=1 tests pytest -m live tests/live/test_analysis_retest.py -q -s`
+completed **1 passed in 15.93 s; 5 real calls, $0.00156255 estimated**. All rows succeeded,
+all were gpt-4o-mini: three summary_custom and two compare. Extraction-only setup made no
+embedding/insights calls. This confirms schema acceptance/transport, not all quality checks.
+
+[Raw responses and ledger](evaluations/analysis-2026-10-15-v4-v2.json) are preserved unchanged;
+`human_review: NOT REVIEWED` remains the developer-owned status. Codex's review follows.
+
+| Case | Observed outcome | Review |
+|---|---|---|
+| Medium/executive budget and risks | Correct 41.5m budget and 3.2m contingency, p3 and matching evidence quotes; no unrelated schedule/generation claims. But one verdict `budget and risks: true`, empty missing-topic list and no gap sentence | **Failed independent-topic/gap expectation.** The model merged two requested topics into one. Server rendering cannot recover a missing verdict from this output |
+| Short/plain leave | 27 days, up to 5 carried over, section 2, matching quotes | Correct in this run |
+| Long/technical partial Heron | ZX-48213, p160; explicit selected-parts notice, 31/160 coverage, no invented whole-document absence claim | Correct in this run |
+| Capital-budget version comparison | Exactly one changed amount, 41.5m to 44.0m, p3. Two legitimate budget-related shared sentences (approval date and contingency). No off-focus retained content | Correct in this run |
+| Brief vs handbook | No retained shared passages; correct leave/construction positions and absent counterparts, section 2 / p4 | Correct retained result. Validator reported one dropped point; pre-validation model content was not saved, so its exact identity is unknown |
+
+The five output lengths/tones/locations were inspected; no additional content was invented
+in the retained results reviewed here. The missing risks classification remains a meaningful
+failure: a passing API test must not conceal it. One generation per request is not evidence
+about repeat stability or general grounding quality. Literal evidence still does not prove
+paraphrase entailment. No extra paid iteration was made.
+
+| Purpose / case | Input tokens | Output tokens | Estimated USD |
+|---|---:|---:|---:|
+| summary_custom / budget and risks | 1115 | 138 | 0.00025005 |
+| summary_custom / plain leave | 936 | 121 | 0.00021300 |
+| summary_custom / partial archive | 2756 | 76 | 0.00045900 |
+| compare / budget versions | 1574 | 175 | 0.00034110 |
+| compare / different documents | 1388 | 152 | 0.00029940 |
+| **Total** | | | **0.00156255** |
+
+Main demo ledger stayed 43 calls / $0.00674021. Retained evidence across demo + broader run +
+this re-test totals 90 real calls / $0.01621937 estimated. These are observed snapshots;
+historical-accounting discrepancies described above were not rewritten. Next correction:
+make requested-topic identities server-owned and require one independent verdict per identity.

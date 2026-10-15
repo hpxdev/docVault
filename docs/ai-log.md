@@ -1116,3 +1116,23 @@ claims and unchanged map/reduce prose can still need correction. Five logical ca
 estimated about $0.003 with allowance $0.008; isolated guard $0.006 (pre-call, no reservation).
 Real re-test awaits fresh approval; no automatic paid iteration is authorised.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: approved five-call real re-test
+
+**Authorization:** developer replied approve to five calls, estimated $0.003, allowance $0.008.
+Ran the extraction-only targeted harness with real mode, RUN_LIVE_AI_TESTS=1 and
+RUN_ANALYSIS_RETEST=1 against the separate test DB. No other paid calls.
+
+**Observed:** 1 passed in 15.93 s; 5 succeeded gpt-4o-mini calls, $0.00156255 estimated.
+Preserved raw JSON as docs/evaluations/analysis-2026-10-15-v4-v2.json; detailed review/token
+ledger in EVALUATION.md. Four retained results met the specific checks (leave, partial code,
+budget comparison, different-doc comparison). Budget/risks output stayed on budget with valid
+quotes but merged the two topics into one addressed label, so gaps=[] and gap prose absent.
+This is a real quality failure despite the passing harness; explicitly recorded, not masked.
+
+**Decision / next:** repair requested-topic identities at the server/schema boundary under
+existing summary-correction scope. Any new paid validation still needs fresh approval.
+No app code changed in this result-recording commit. Main demo stayed 43 calls/$0.00674021;
+three retained ledgers total 90 real calls/$0.01621937. Human review field left unchanged.
+Human review: ___
