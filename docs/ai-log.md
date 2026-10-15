@@ -681,3 +681,41 @@ final screenshot is the browser pane's own capture at a 1440×900 viewport, capt
 script); video recording (the developer's task).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Demo dry run in real mode (approved) + two fixes
+
+**Approval:** the user asked to switch the stack to real mode and do one dry run (~6 questions,
+< $0.01 estimated). `.env`: only the `AI_PROVIDER` line was changed (`fake` → `openai`; key not
+printed); api and worker recreated; `/health/ready` → `ai_mode: openai`, key present.
+
+**Run (actually executed, UI in the browser pane, fresh volumes):** steps 2–7 of DEMO_SCRIPT:
+real `DragEvent` drops of the sample files (served by a temporary local CORS file server, stopped
+afterwards), six typed questions incl. a follow-up, "Who is the CFO?", a two-document question,
+Stop on a long question, and a whole-vault question. Full results, latencies and the ledger are in
+docs/EVALUATION.md. 22 AI calls, **$0.00217732** estimated; project total **$0.00382340**.
+
+**Findings (recorded, not hidden):**
+- `chat.condense.v1` returned "When was it approved?" unchanged (all 4 condense calls returned
+  the input); the answer was right only because "approved" retrieves page 3. Not fixed: a v2
+  prompt needs a re-test (spend).
+- The two-document answer cited both documents correctly but didn't name them in the text (rule 6).
+- Stop: the server stopped at the first token and saved `interrupted: true` with an `interrupted`
+  ledger row. But the stop came before generation, and condense/embedding/answer still ran.
+- A stopped one-character answer ("[") was shown with the "no verifiable citation" warning.
+- An already open tab kept the FAKE banner for up to 30 s after the mode switch (polling).
+
+**Fixes made after the run (no spend):** the stop flag is now checked before the embedding and
+before the answer call (an early Stop skips them and saves an empty interrupted message with
+`retrieval.stopped_before_generation`); new test
+`test_stop_before_generation_skips_remaining_ai_calls`. UI: interrupted answers show "Stopped" (and
+"Stopped before the answer started." when empty) instead of status warnings; checked in the
+browser on the stored stopped message. `ruff` clean, 125 passed; `npm run build` OK; stack rebuilt.
+
+**Docs updated from the actual results:** EVALUATION.md (new section), PROMPTS.md (Example 4 is
+now REAL and shows the weakness; condense evidence; evaluation summary), DEMO_SCRIPT.md
+(real-run status; step 5 no longer promises a visible rewrite), README (real-mode screenshot
+replaces the fake-mode one; status and spend), AI_USAGE.md (new correction row; limits).
+
+Human review: ___

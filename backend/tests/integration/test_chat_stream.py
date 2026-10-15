@@ -126,3 +126,27 @@ async def test_client_disconnect_stops_generation_and_saves_partial(client, enqu
             select(AICall).where(AICall.message_id == msg.id, AICall.purpose == "answer")
         ).one()
         assert call.status == "interrupted" and call.output_tokens > 0
+
+
+async def test_stop_before_generation_skips_remaining_ai_calls(client, enqueued, fake_chat):
+    """Found in the real-mode dry run: a Stop pressed before the first token still paid for the
+    embedding and answer calls. The stop flag is now checked between steps."""
+    from app.db.session import async_session_factory
+    from app.services.chat import answer_events, prepare_ask
+
+    sid, _ = await _ready_session(client, enqueued)
+    stop = asyncio.Event()
+    stop.set()  # the client went away right after sending
+    async with async_session_factory()() as db:
+        prep = await prepare_ask(db, uuid.UUID(sid), BUDGET_Q)
+    events = [e async for e in answer_events(prep, stop)]
+    assert [e["event"] for e in events] == ["meta", "citations", "done"]
+    assert events[-1]["data"]["interrupted"] is True
+    assert [p for p, _ in fake_chat.calls if p == "answer"] == []
+    with sync_session() as s:
+        msg = s.scalars(
+            select(Message).where(Message.session_id == uuid.UUID(sid), Message.role == "assistant")
+        ).one()
+        assert msg.interrupted and msg.content == ""
+        assert msg.retrieval["stopped_before_generation"] is True
+        assert s.scalars(select(AICall).where(AICall.message_id == msg.id)).all() == []

@@ -1,6 +1,9 @@
 # Live evaluation (real OpenAI models)
 
-**Status: run once, 2026-10-15 05:41 UTC, with the user's approval.** Everything below is the
+**Status: two approved real-model runs on 2026-10-15**: the 10-question evaluation below, and a
+[demo dry run through the UI](#demo-dry-run-in-real-mode-2026-10-15-approved) further down.
+
+**Evaluation run: 2026-10-15 05:41 UTC.** Everything below is the
 actual output of that run. Raw results: [evaluation/live_eval_2026-10-15.json](evaluation/live_eval_2026-10-15.json).
 
 | | |
@@ -92,3 +95,77 @@ embedding + answer): 6,496 input tokens in total = 6,403 (answer) + 93 (embed_qu
 - Behaviour under OpenAI errors (rate limits, timeouts) against the real API; covered only by
   fake-mode tests.
 - Answer quality in general: 10 easy questions on one clean document is not a quality claim.
+
+---
+
+# Demo dry run in real mode (2026-10-15, approved)
+
+Run through the UI (http://localhost:5173, `docker compose` stack, `AI_PROVIDER=openai`, fresh
+volumes) following [DEMO_SCRIPT.md](DEMO_SCRIPT.md). Files were dropped with real browser drag
+events; questions were typed into the composer. Six questions in total. Everything below is from
+that run's API responses and `ai_calls` ledger.
+
+## Ingestion (step 2–3)
+
+| File | Outcome | Upload → chat-ready | Upload → ready (insights) |
+|---|---|---|---|
+| `northwind-brief.pdf` | accepted; dropped again → "already in vault" | 4.1 s | 14.8 s |
+| `employee-handbook.docx` | accepted | 3.8 s | 9.5 s |
+| `not-a-document.exe` | rejected `UNSUPPORTED_FILE_TYPE` | — | — |
+| `onboarding-guide.md` (step 7 extra) | accepted | 1.4 s | 6.3 s |
+
+Insights (real model): PDF → category `report`, 9 key points each with one correct page, 6/6
+pages covered; DOCX → category `manual`, 4 key points referencing sections 2–3 (no pages),
+3/3 sections covered; nothing dropped by validation. The PDF summary again wrote "15-meter" for
+"15-metre". The DOCX key point "The company provides a home office equipment allowance of 450 EUR"
+paraphrases a table row ("Home office | 450 EUR").
+
+## Questions
+
+| # | Question (session) | Status | Answer (stored, verbatim) | Citations | First token / total |
+|---|---|---|---|---|---|
+| 1 | What is the total capital budget? (demo chat) | answered | The total capital budget is 41.5 million euros [S1]. | brief p3 | 2.0 s / 2.2 s |
+| 2 | When was it approved? (demo chat, follow-up) | answered | The budget was approved on 4 March 2026 [S2]. | brief p3 | 3.5 s / 3.7 s |
+| 3 | Who is the CFO? (demo chat) | not_found | The sources do not provide information about the CFO. | — | 2.4 s / 2.6 s |
+| 4 | How many days of annual leave do employees get, and when does construction of the solar farm start? (demo chat) | answered | Employees receive 27 days of paid annual leave per year [S1]. Construction of the solar farm is planned to start in June 2026 [S2]. | handbook "Leave Policy"; brief p4 | 2.3 s / 2.6 s |
+| 5 | Give a detailed, section by section overview of everything both documents say. (demo chat; **Stop** pressed) | unsupported, `interrupted: true` | `[` (first token only) | — | 2.7 s / 3.4 s |
+| 6 | What is the VPN client called? (new chat, **Search entire vault**, 3 documents in scope) | answered | The VPN client is called Tunnelbear-X [S1]. | onboarding guide "Onboarding Guide > Accounts" | 2.3 s / 2.3 s |
+
+Latency is measured by the server from receiving the question (condense + embedding +
+retrieval + generation), with the browser on the same machine.
+
+## Findings
+
+1. **Follow-up not rewritten.** For question 2 the condense call ran (170 input tokens) and
+   returned the question unchanged (5 output tokens), so `standalone_query` was "When was it
+   approved?". The answer was still correct because "approved" alone retrieves page 3, but
+   `chat.condense.v1` did not resolve "it" with `gpt-4o-mini`. All four condense calls in this
+   run (questions 2–5) returned the question unchanged; the other three were already standalone. Its rule "if the question is
+   already standalone, return it unchanged" probably wins here. Not fixed in this run; a
+   `chat.condense.v2` with an explicit example would need a re-test.
+2. **Multi-document answer cited both documents** (two citations, correct section and page), but
+   did not name the documents in the text as rule 6 of `chat.answer.v1` asks. The citation chips
+   carry the document names.
+3. **Stop works over a real stream:** the stop flag was set within 66 ms of sending; the server
+   stopped at the first token and saved the partial answer (`interrupted: true`). The ledger row
+   for that answer has `status = interrupted` (728 input tokens counted locally, 1 output).
+   Two follow-up fixes were made after this run (see ai-log): the stop flag is now checked
+   before the embedding and answer calls (an early Stop paid for them here), and the UI shows a
+   stopped answer as "Stopped" instead of the "no verifiable citation" warning.
+4. The UI's FAKE AI MODE banner stayed visible for up to 30 s after the mode switch in an
+   already open tab (readiness is polled every 30 s); a reload cleared it.
+
+## Ledger for this run
+
+| Purpose | Model | Status | Calls | Input tokens | Output tokens | Estimated cost (USD) |
+|---|---|---|---|---|---|---|
+| insights_single | gpt-4o-mini | succeeded | 3 | 3,205 | 1,375 | 0.00130575 |
+| answer | gpt-4o-mini | succeeded | 5 | 3,608 | 91 | 0.00059580 |
+| answer | gpt-4o-mini | interrupted | 1 | 728 | 1 | 0.00010980 |
+| condense | gpt-4o-mini | succeeded | 4 | 845 | 44 | 0.00015315 |
+| embed_document | text-embedding-3-small | succeeded | 3 | 583 | 0 | 0.00001166 |
+| embed_query | text-embedding-3-small | succeeded | 6 | 58 | 0 | 0.00000116 |
+| **Total** | | | **22** | | | **0.00217732** |
+
+**Project AI spend so far (sum of both ledgers):** $0.00164608 (evaluation) + $0.00217732
+(dry run) = **$0.00382340**, estimated.

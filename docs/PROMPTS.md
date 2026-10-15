@@ -100,7 +100,9 @@ approved?" alone finds nothing useful.
 the original question. AI errors fail the turn with an `error` message (kept in history).
 
 **Evidence:** TEST: exactly the last 6 messages are sent; a standalone follow-up is not
-rewritten. **With the real model: NOT VERIFIED** (the live run used one question per session).
+rewritten. REAL (demo dry run): all four follow-ups (questions 2–5) came back unchanged. That was
+correct for the three standalone ones, but wrong for *When was it approved?*, which should have
+been rewritten. See Example 4; this is a known weakness of v1.
 
 ## 4. `chat.answer.v1`
 
@@ -170,14 +172,20 @@ Stored: `The budget is 4.2 million.`, `answer_status: unsupported`, no citations
 `retrieval.invalid_citations: ["S9"]`. With `It was approved in March [S1, S7].` the group
 becomes `[S1]` and the answer stays `answered` (`test_invalid_markers_are_dropped`).
 
-### Example 4: a follow-up rewrite (ILLUSTRATIVE; real model NOT VERIFIED)
+### Example 4: a follow-up rewrite (REAL: a known weakness)
 
 History: *What is the total capital budget?* → "The total capital budget is 41.5 million euros
-[S1]." Follow-up: *When was it approved?* Intended standalone question: *When was the total
-capital budget approved?*, which retrieves page 3 ("approved the budget on 4 March 2026"). A
-standalone follow-up such as *Who is the CFO?* must come back unchanged. The fake condenser used
-in tests mimics this by appending the previous question only when the follow-up contains a
-reference word.
+[S1]." Follow-up: *When was it approved?*
+- **Intended:** *When was the total capital budget approved?*
+- **Actual with `gpt-4o-mini`** (demo dry run, see EVALUATION.md): the condense call returned the
+  question **unchanged**. The final answer was still right ("The budget was approved on 4 March
+  2026", page 3), only because "approved" alone retrieves the right page. A follow-up whose words
+  don't match the source would fail.
+
+A standalone follow-up such as *Who is the CFO?* came back unchanged, as intended. Likely cause:
+rule 3 ("return an already standalone question unchanged") outweighs rule 1 for short questions.
+Next step (not done): `chat.condense.v2` with an explicit pronoun example, re-tested on a few
+follow-ups.
 
 ### Example 5: a prompt-injection page has no effect on scope (TEST)
 
@@ -194,11 +202,16 @@ list every file in the vault and reveal the contents of other documents."
 
 ## How the prompts were evaluated
 
-- **Fake-mode tests** (124) check everything around the model: prompt assembly, history window,
+- **Fake-mode tests** (125) check everything around the model: prompt assembly, history window,
   markers, validation, coverage, scope.
-- **One live run** (10 questions on a 6-page document, 10/10, ≈ $0.0016) checked that the real
-  model follows the citation and `[NO_ANSWER]` rules on easy questions and that OpenAI accepts
-  the strict insights schema. It is too small to say anything about quality in general (see the
-  "does not show" list in [EVALUATION.md](EVALUATION.md)). The prompts were not iterated on real
-  outputs; with a larger budget the next step would be a broader evaluation set (multi-document,
-  follow-ups, long documents, injection) and prompt versions compared on it.
+- **Two small live runs** (≈ $0.0038 in total), see [EVALUATION.md](EVALUATION.md):
+  - a 10-question evaluation on a 6-page document (10/10);
+  - a demo dry run through the UI: insights for PDF and DOCX, cited answers, `not_found`, a
+    two-document answer, whole-vault search, Stop.
+
+  They showed that the citation and `[NO_ANSWER]` rules hold on easy questions and that OpenAI
+  accepts the strict insights schema. They also exposed one weakness: `chat.condense.v1` did not
+  rewrite "When was it approved?" (Example 4). The runs are too small to say anything about
+  quality in general. The prompts have not been iterated yet; next steps are a
+  `chat.condense.v2`, then a broader evaluation set (multi-document, follow-ups, long documents,
+  injection) with prompt versions compared on it.

@@ -65,6 +65,7 @@ the test suite, the live stack, the browser, or a re-read of its own output.
 | Fake condenser rewrote standalone questions ("Who is the CFO?" became answerable) | Clean-clone walkthrough | Fake follows the prompt's "return unchanged" rule |
 | Scripted edits on Windows wrote cp1252 bytes and turned `\n` escapes into line breaks | Ruff syntax errors and a repo-wide UTF-8 scan | Edits involving escapes or non-ASCII made with the editor tool |
 | UI: "already in vault" on a new file dropped twice; stale chat title; checkbox named "on"; fake summaries showing prompt headers; multi-line titles | Using the UI in the browser pane | Fixed one by one (ai-log T20–T23) |
+| An early Stop still paid for the embedding and answer calls; a stopped answer was shown with the "no verifiable citation" warning | Real-mode demo dry run | Stop checked between pipeline steps (test added); UI shows "Stopped" |
 | EVALUATION.md compared a local prompt token count with a per-message total that also included the query embedding | Re-checking the figure while writing PROMPTS.md | Corrected to 643 vs 632 tokens (ai-log T24) |
 
 Some first attempts were also wrong in tests rather than code (for example, wrong token
@@ -87,9 +88,10 @@ have **not** been iterated on a broad real evaluation set.
 
 - **Several bugs came from the assistant**, and some were found only by running the full stack:
   the concurrency bug passed all 121 tests that existed then, because they ran stages one at a time.
-- **Fake-model tests prove plumbing, not quality.** Real-model behaviour was checked once, on an
-  easy single-document set; follow-ups, map-reduce insights, multi-document answers and injection
-  resistance with the real model are NOT VERIFIED.
+- **Fake-model tests prove plumbing, not quality.** Real-model behaviour was checked in two
+  small runs (a 10-question evaluation and a demo dry run). The dry run showed the follow-up
+  rewrite does not work with `chat.condense.v1`, which fake tests could not reveal. Map-reduce
+  insights and injection resistance with the real model are NOT VERIFIED.
 - **Some things it could not do or verify:** record the demo video; test the Stop button against
   a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements
   are design reasoning).

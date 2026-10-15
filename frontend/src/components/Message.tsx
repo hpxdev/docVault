@@ -105,7 +105,8 @@ export function AssistantMessage({
   message: MessageOut;
   onOpenCitation: (c: CitationOut) => void;
 }) {
-  const style = STATUS_STYLE[message.answer_status ?? ""];
+  // A stopped answer is partial by definition: show "Stopped", not a missing-citation warning.
+  const style = message.interrupted ? undefined : STATUS_STYLE[message.answer_status ?? ""];
   return (
     <div className={`rounded-2xl ${style ? `${style.box} px-4 py-3` : "px-1"}`}>
       {style && (
@@ -114,11 +115,15 @@ export function AssistantMessage({
           {message.error_code ? ` (${message.error_code})` : ""}
         </div>
       )}
-      <AnswerText
-        content={message.content}
-        citations={message.citations}
-        onOpenCitation={onOpenCitation}
-      />
+      {message.content ? (
+        <AnswerText
+          content={message.content}
+          citations={message.citations}
+          onOpenCitation={onOpenCitation}
+        />
+      ) : (
+        <div className="italic text-neutral-500">Stopped before the answer started.</div>
+      )}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
         {message.interrupted && (
           <span className="rounded bg-neutral-200 px-1.5 py-0.5">Stopped</span>

@@ -367,43 +367,54 @@ async def answer_events(
             },
         )
 
-        vector, cache_hit = await cached_query_embedding(ai, standalone, message_id=message_id)
-        result = await retrieve(
-            standalone,
-            vector,
-            prep.scope_ids,
-            vault_wide=prep.vault_wide,
-            embedding_model=ai.embeddings.name,
-            top_k=settings.retrieval_top_k,
-        )
-        sources = result.chunks
-        retrieval_trace = {**result.trace, "query_embedding_cache_hit": cache_hit}
+        def stopped() -> bool:
+            return stop is not None and stop.is_set()
 
-        names = sorted({c.document_name for c in sources} or set(prep.document_names.values()))
-        messages = load_prompt(ANSWER_VERSION).messages(
-            document_names=", ".join(names),
-            sources=format_sources(sources),
-            question=standalone,
-        )
-        interrupted = False
-        agen = ai.stream(
-            messages,
-            purpose="answer",
-            prompt_version=ANSWER_VERSION,
-            message_id=message_id,
-            max_tokens=ANSWER_MAX_TOKENS,
-            result=stream,
-        )
-        try:
-            async for delta in agen:
-                if first_token_ms is None:
-                    first_token_ms = elapsed_ms()
-                yield _event("token", {"delta": delta})
-                if stop is not None and stop.is_set():
-                    interrupted = True
-                    break
-        finally:
-            await agen.aclose()  # records the ledger row (interrupted or not)
+        # Stop is honoured between steps too, so an early Stop skips the remaining AI calls
+        # (found in the real-mode dry run: Stop before the first token still paid for them).
+        sources: list[Candidate] = []
+        retrieval_trace = {}
+        interrupted = stopped()
+        if not interrupted:
+            vector, cache_hit = await cached_query_embedding(ai, standalone, message_id=message_id)
+            result = await retrieve(
+                standalone,
+                vector,
+                prep.scope_ids,
+                vault_wide=prep.vault_wide,
+                embedding_model=ai.embeddings.name,
+                top_k=settings.retrieval_top_k,
+            )
+            sources = result.chunks
+            retrieval_trace = {**result.trace, "query_embedding_cache_hit": cache_hit}
+            interrupted = stopped()
+        if interrupted:
+            retrieval_trace["stopped_before_generation"] = True
+        else:
+            names = sorted({c.document_name for c in sources} or set(prep.document_names.values()))
+            messages = load_prompt(ANSWER_VERSION).messages(
+                document_names=", ".join(names),
+                sources=format_sources(sources),
+                question=standalone,
+            )
+            agen = ai.stream(
+                messages,
+                purpose="answer",
+                prompt_version=ANSWER_VERSION,
+                message_id=message_id,
+                max_tokens=ANSWER_MAX_TOKENS,
+                result=stream,
+            )
+            try:
+                async for delta in agen:
+                    if first_token_ms is None:
+                        first_token_ms = elapsed_ms()
+                    yield _event("token", {"delta": delta})
+                    if stopped():
+                        interrupted = True
+                        break
+            finally:
+                await agen.aclose()  # records the ledger row (interrupted or not)
 
         check = check_citations(stream.text, len(sources))
         citations = []

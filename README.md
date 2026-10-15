@@ -6,18 +6,20 @@ generates AI insights; then you chat with one or more documents and get **stream
 citations are checked by the server** (document, page/section, original excerpt), or an explicit
 "not found".
 
-![Chat with a cited answer, a follow-up, a "not found" answer and the source panel](docs/screenshot-chat-fake-mode.jpg)
+![Chat with cited answers, a "not found" answer, a two-document answer and the source panel](docs/screenshot-chat.jpg)
 
-*Screenshot taken in **fake AI mode** (note the banner): the answer text comes from the
-deterministic test double; citations, excerpts, statuses and the source panel are the real
-application.*
+*Real mode (`gpt-4o-mini`), from the demo dry run: cited answers with page/section chips, an
+amber "not found", a two-document answer, and the source panel showing page 4's original text.*
 
-> **Status (2026-10-15):** backend complete; 124 fake-mode backend tests. One approved live run with
-> `gpt-4o-mini` + `text-embedding-3-small` scored 10/10 on a small single-document smoke test
-> (7 cited answers on the right page, 3 correct "not found") for an estimated $0.0016; see
-> [docs/EVALUATION.md](docs/EVALUATION.md) for what that does **not** show (retrieval at scale,
-> multi-document, follow-ups). A ChatGPT-style React UI is included (http://localhost:5173);
-> it has been checked by hand in fake mode only.
+> **Status (2026-10-15):** backend and ChatGPT-style UI complete; 125 fake-mode backend tests.
+> Two approved real-model runs:
+> - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
+> - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
+>   search and Stop.
+>
+> Estimated AI spend so far: $0.0038. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
+> results and for what they do **not** show. In particular, follow-up rewriting did not work in
+> the dry run (a known weakness), and retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
 
 ## 1. Features mapped to the brief
@@ -37,7 +39,7 @@ application.*
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 124 backend tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 125 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
 | Summary customisation, comparative analysis (BONUS) | Not done (P2) | |
 | Rate limiting, document versioning (BONUS) | Not done (future work) | |
@@ -306,7 +308,7 @@ docker compose -f compose.test.yml run --rm tests                  # full fake-m
 docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff format --check ."
 ```
 
-- **Fake-mode suite (124 tests)** runs against real Postgres + pgvector and Redis containers.
+- **Fake-mode suite (125 tests)** runs against real Postgres + pgvector and Redis containers.
   `FakeEmbeddings` is a hashed bag-of-words (lexical similarity is real, so retrieval tests mean
   something); `FakeChatModel` is scripted. It proves the plumbing: upload rules, extraction codes
   and locators, state machine and retries, idempotency, concurrency, retrieval scope and fusion,
