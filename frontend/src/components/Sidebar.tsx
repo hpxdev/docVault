@@ -59,7 +59,6 @@ export function Sidebar({ view, activeSessionId, onSelectSession, onView }: Prop
         <button
           onClick={() => {
             onSelectSession(null);
-            onView("chat");
           }}
           className="w-full rounded-lg border border-neutral-700 px-3 py-2 text-left text-sm font-medium hover:bg-neutral-800"
         >
@@ -105,7 +104,6 @@ export function Sidebar({ view, activeSessionId, onSelectSession, onView }: Prop
                 <button
                   onClick={() => {
                     onSelectSession(s.id);
-                    onView("chat");
                   }}
                   className="min-w-0 flex-1 px-2 py-1.5 text-left"
                   title={s.title}
