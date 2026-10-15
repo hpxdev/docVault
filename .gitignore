@@ -24,6 +24,7 @@ dist/
 Thumbs.db
 .idea/
 .vscode/
+.checks/
 
 # Generated test/demo fixtures
 backend/tests/.generated/

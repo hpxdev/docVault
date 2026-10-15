@@ -930,3 +930,40 @@ ruff format --check . && pytest -q'`: lint passed, 105 files formatted, 145 pass
 transport and persistence only; it cannot prove the model's reasoning. The broader paid
 A/B evaluation is being prepared separately. No app rebuild or real AI calls in this change.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: broader evaluation harness and README evidence
+
+**Produced by AI (OpenAI Codex):** opt-in broader evaluation harness and
+`docs/BROAD_EVALUATION_PLAN.md`; README walkthrough guidance, updated 145-test count,
+processing wait before comparison, v3 status, and `docs/screenshot-summary.png`.
+The feature table already covered all four bonus features; architecture metrics already
+named summary_custom and compare, so neither needed speculative new feature claims.
+
+**Real-mode screenshot:** confirmed the exact cached v3 options through GET summaries
+for northwind-brief-v2.pdf, then displayed that stored short/executive/budget-and-risks result
+in the browser. Visually inspected the capture: missing-risks notice, page 3 and both versions
+visible. Live ledger before/after was unchanged: 43 rows, $0.00674021. This differs from the
+handover's cumulative $0.00703274; no attempt was made to rewrite historical evidence.
+
+**Harness verification:** fake rehearsal initially failed because standalone rewrite calls
+omitted required message_id; fixed by linking isolated A/B calls to the budget answer message.
+Early lint found four long lines; corrected and formatted. A 90/120-page trial exercised
+only one map group, so expanded the fixture to 160 pages. Final fake rehearsal:
+`docker compose -f compose.test.yml run --rm -e BROAD_EVAL_FAKE_DRY_RUN=1 tests pytest -m live
+tests/live/test_broad_evaluation.py -q -s`: 1 passed in 3.70 s, 42 zero-cost ledger rows;
+map-reduce coverage 160/160, 2 map groups. Ruff check and format passed (106 files) before
+the final fixture-size/temporary-cap edits; the clean-clone check will validate final state.
+
+**Decisions:** force the map-reduce branch at 4000 tokens and partial-summary selection at
+1800 tokens for an economical branch check, explicitly not a default-threshold load test.
+Store raw outcomes and ledgers, distinguish heuristic scores from human review, keep the
+harness opt-in (two live tests deselected by default). Its isolated ledger cap is temporarily
+lowered to $0.01; a final in-flight call can exceed the threshold. Estimated paid run about
+$0.01, proposed allowance $0.015, roughly 42 calls before retries/cache variation.
+
+**NOT VERIFIED / needs developer:** broader real evaluation and v3 real-model improvement;
+explicit spend approval is still required. Clean-clone runtime verification follows.
+No real AI calls, no new dependencies, no publishing. Added `.checks/` to ignore isolated
+local clean-clone artifacts. Developer review sections remain untouched.
+Human review: ___

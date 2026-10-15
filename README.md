@@ -12,7 +12,7 @@ citations are checked by the server** (document, page/section, original excerpt)
 amber "not found", a two-document answer, and the source panel showing page 4's original text.*
 
 > **Status (2026-10-15):** backend and ChatGPT-style UI complete, plus custom summaries,
-> comparisons, document versions and rate limiting; 144 fake-mode backend tests.
+> comparisons, document versions and rate limiting; 145 fake-mode backend tests.
 > Six approved real-model runs:
 > - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
 > - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
@@ -46,7 +46,7 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 144 backend tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 145 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
 | Summary customisation: length, focus, tone (BONUS) | Done (fake-mode tests, UI check, three real runs: v1 invented a "risks" point; v3 (active) reports it as not addressed; [details](docs/EVALUATION.md#custom-summary-and-version-comparison-first-real-check-2026-10-15-approved)) | `services/summaries.py`, `POST /documents/{id}/summaries` |
 | Comparative analysis between documents (BONUS) | Done (2–4 documents or versions; cited similarities and differences; one real check: all 5 changes between two versions found; [details](docs/EVALUATION.md#custom-summary-and-version-comparison-first-real-check-2026-10-15-approved)) | `services/comparisons.py`, `POST /comparisons` |
@@ -110,6 +110,12 @@ Stop with `docker compose down` (add `-v` to delete the database and stored file
 The same steps are scripted in [`scripts/walkthrough.sh`](scripts/walkthrough.sh)
 (`bash scripts/walkthrough.sh`). Sample files are in [`samples/`](samples/).
 
+The script also covers custom-summary cached reuse, version ingestion (waiting for processing),
+and stored comparisons. Run it on a fresh fake-mode stack. It refuses real mode unless
+`ALLOW_REAL_AI=1` is explicitly set after spend approval. Add `CHECK_RATE_LIMIT=1` in fake
+mode to verify `429 RATE_LIMITED` and `Retry-After` using invalid empty messages. The script
+expects a fresh vault (a second version upload on a reused vault can return `VERSION_UNCHANGED`).
+
 ```bash
 API=http://localhost:8000/api/v1
 
@@ -150,6 +156,7 @@ curl -X POST $API/documents/$DOC/summaries -H 'Content-Type: application/json' \
 # 8. Upload a revised file as version 2, then compare the two versions
 NEW=$(curl -s -X POST $API/documents/$DOC/versions -F "file=@samples/northwind-brief-v2.pdf" \
   | python -c "import sys,json;print(json.load(sys.stdin)['id'])")
+curl -N "$API/documents/events?ids=$NEW&close_when_settled=true"
 curl $API/documents/$DOC/versions
 curl -X POST $API/comparisons -H 'Content-Type: application/json' \
   -d "{\"document_ids\":[\"$DOC\",\"$NEW\"]}"
@@ -325,6 +332,13 @@ estimates (not measured): ~$0.01–0.02 per 100-page document, ~$0.001 per quest
 
 ## Web UI
 
+![Real-mode custom summary with missing-topic notice and retained document versions](docs/screenshot-summary.png)
+
+*Captured on 2026-10-15 from the existing real-mode stack: a stored `gpt-4o-mini`
+`summary.custom.v3` result for version 2, showing "Not in the document: risks", a page-3
+key point and both retained versions. The result was read from the cache; capturing it made
+no new AI call. This screenshot does not show a fresh comparison run.*
+
 `frontend/`: Vite + React 19 + TypeScript (strict) + Tailwind CSS 4 + TanStack Query +
 react-markdown. API types are generated from the backend's OpenAPI schema
 (`npm run gen:api` → `src/api/schema.d.ts`).
@@ -400,10 +414,11 @@ evaluation of custom summaries (other documents, focuses, lengths, repeat runs);
 large documents.
 
 Prompt work:
-- **`chat.condense.v3`.** Give the follow-up rewriter the names of the documents in scope, and
-  tell it to leave a reference unresolved when the conversation does not name what it points to.
-  v2 (active) fixed "When was it approved?" but bound "its" to the wrong noun when the solar farm
-  had never been mentioned ([docs/EVALUATION.md](docs/EVALUATION.md)).
+- **Validate `chat.condense.v3` with the real model.** v3 is implemented and active: it receives
+  scoped document names and tells the model to preserve unnamed or ambiguous references.
+  Real-model improvement is **NOT VERIFIED**. v2 fixed "When was it approved?" but bound "its"
+  to the wrong noun when the solar farm had never been mentioned
+  ([docs/EVALUATION.md](docs/EVALUATION.md)).
 - **A broader evaluation set** (multi-document, follow-ups, long documents, injection) to compare
   prompt versions on more than a handful of questions.
 
