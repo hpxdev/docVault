@@ -381,3 +381,20 @@ failure mode is fixed for this case, not that it can never recur.
 | **Total** | | | | | **0.00052770** (2 calls) |
 
 **Project AI spend so far (estimated):** $0.00650504 + $0.00052770 = **$0.00703274**.
+
+## Codex continuation, 2026-10-15: verification only, no new real run
+
+Post-bonus clean-clone checks passed: 145 tests, 2 live tests deselected; lint/format,
+frontend build and expanded fake-mode walkthrough including rate limiting.
+See [CLEAN_CLONE_CHECK.md](CLEAN_CLONE_CHECK.md) for commands, snapshot and actual outcomes.
+
+`chat.condense.v3` is implemented and running. Real-model improvement is **NOT VERIFIED**.
+The [broader evaluation plan](BROAD_EVALUATION_PLAN.md) covers multi-document/repeat answers,
+follow-ups, long-document map-reduce and partial coverage, injection scope, summaries,
+comparisons and v2/v3 A/B rewrites. Its fake rehearsal passed with 42 zero-cost ledger calls;
+this is harness evidence, not real-model quality evidence. Explicit spend approval is pending.
+
+The README summary screenshot shows a pre-existing real-model v3 summary (budget and risks)
+and retained versions, read from cache. No new model output was generated for the screenshot.
+The current demo ledger stayed at 43 calls / $0.00674021. That differs from the handover's
+historical cumulative spend; neither historical evidence nor current data was altered.

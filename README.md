@@ -29,6 +29,12 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 > results and for what they do **not** show; retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
 
+**Continuation checks (2026-10-15):** the post-bonus clean clone passed 145 tests (2 live tests
+deselected), lint, frontend build and the expanded fake-mode walkthrough including a `429`.
+See [clean-clone evidence](docs/CLEAN_CLONE_CHECK.md). The active follow-up prompt is now v3;
+its real-model improvement is **NOT VERIFIED**. The [broader evaluation](docs/BROAD_EVALUATION_PLAN.md)
+has passed its fake rehearsal and awaits paid-run approval.
+
 ## 1. Features mapped to the brief
 
 | Brief item | Status | Where |

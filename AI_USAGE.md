@@ -11,7 +11,8 @@ from the git history. Sections the developer must write in their own words are m
   tests and documentation, ran the commands (Docker, pytest, ruff, npm), drove a browser pane to
   check the UI, and kept `docs/ai-log.md`.
 - **OpenAI `gpt-4o-mini` and `text-embedding-3-small`**: the application's own models (not a
-  coding tool). They are called only at runtime and in one approved live evaluation.
+  coding tool). Real calls were made during the explicitly approved evaluations and demo
+  checks documented in `docs/EVALUATION.md`.
 - **OpenAI Codex**: continued development from the 2026-10-15 handover: expanded the bonus-feature
   walkthrough, refreshed documentation, and prepared follow-up rewriting and evaluation work.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
@@ -31,7 +32,7 @@ from the git history. Sections the developer must write in their own words are m
    the test suite actually run, a log entry and a local commit (19 commits up to the end of T23;
    tasks built together were committed and logged together).
 4. **Fake AI by default.** Development and tests used deterministic fake providers (labelled
-   "fake" everywhere), so AI spend went only to the one approved live run.
+   "fake" everywhere), so AI spend went only to explicitly approved real-model runs.
 5. **Truthful reporting.** Anything not run is marked NOT VERIFIED in the docs; the live results
    in [docs/EVALUATION.md](docs/EVALUATION.md) are copied from the run's output.
 
@@ -88,8 +89,10 @@ labels: [docs/PROMPTS.md](docs/PROMPTS.md). In short:
 - the server validates everything it can (citations, page refs, enums, limits);
 - scope is enforced in SQL, never by the model.
 
-They were evaluated with the fake-mode suite (plumbing) and one small live run (10/10). They
-have **not** been iterated on a broad real evaluation set.
+They were evaluated with the fake-mode suite (plumbing), the initial live run (10/10),
+and the later small checks recorded in EVALUATION.md. Codex added a broader opt-in harness
+and v3 follow-up rewriting; the harness has passed only in fake mode so far. They have
+**not** been evaluated on a broad real evaluation set.
 
 ## Limits of the AI assistance
 

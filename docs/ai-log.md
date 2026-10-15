@@ -967,3 +967,36 @@ explicit spend approval is still required. Clean-clone runtime verification foll
 No real AI calls, no new dependencies, no publishing. Added `.checks/` to ignore isolated
 local clean-clone artifacts. Developer review sections remain untouched.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: post-bonus clean-clone verification
+
+**Task / produced:** verified committed snapshot 2222d9e from a clean local clone, with
+fresh isolated fake-mode application and test stacks, empty keys, dedicated images/ports
+and volumes. Full reproduction details/results are in docs/CLEAN_CLONE_CHECK.md.
+
+**Verified:** Compose build/start passed, frontend tsc/Vite build passed, revision 0003;
+ruff passed and 104 tracked Python files formatted; 145 tests passed, 2 deselected in
+71.05 s. Expanded walkthrough exited 0, including cached summary reuse, version 2 processing,
+comparison create/read/list and 429 RATE_LIMITED / Retry-After 33. Fresh DB: both versions
+ready, one latest, one summary, one comparison; 14 fake ledger rows, $0.00000000. Web/proxy
+HTTP 200, fake mode and no key. Final broad-harness fake rehearsal passed (6.43 s), 42
+zero-cost calls, 2 map groups and 160/160 coverage. Script's real-mode guard refused before
+uploads (exit 1). Main ledger before/after stayed 43 calls / $0.00674021.
+
+**What broke / found:** initial clone command used its not-yet-created destination as the
+working directory and could not start; reran clone from the repository root. A diagnostic
+SQL query guessed version_number; the actual model column is version, corrected before
+recording version results. Neither mistake changed application data.
+
+**Runtime:** no pending main-stack documents before rebuilding API/worker. Rebuilt them,
+readiness ready with worker OK, API import reports chat.condense.v3; no paid calls. Removed
+only the two disposable Compose projects/volumes and three dedicated image tags. Retained
+ignored clone/config/log artifacts. Main demo data preserved. Updated README/EVALUATION with
+these checks, AI_USAGE's obsolete single-live-run wording, and the demo's test count/tool
+attribution. Developer-owned review/experience fields remain blank. Local commits only.
+
+**NOT VERIFIED / needs developer:** all broader real-model cases and v3 efficacy await
+explicit approval of about 42 calls, estimated about $0.01 (proposed allowance $0.015).
+No load testing or default-60000-token evaluation. No new dependencies or publishing.
+Human review: ___
