@@ -40,7 +40,7 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 125 backend tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 126 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
 | Summary customisation, comparative analysis (BONUS) | Not done (P2) | |
 | Rate limiting, document versioning (BONUS) | Not done (future work) | |
