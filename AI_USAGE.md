@@ -1,144 +1,105 @@
-# AI usage
+# How I used AI
 
-How AI assistance was used to build this project. Everything below comes from the running
-development log, [docs/ai-log.md](docs/ai-log.md), written task by task as the work happened, and
-from the git history. Sections the developer must write in their own words are marked
-**[developer to complete]**; they are deliberately left blank, not filled in by the assistant.
+I used AI coding assistants throughout this case study, from planning the backend to
+building the application, checking results and preparing the demo. Most of the code,
+tests and documentation were written with AI assistance. My role was to set the direction,
+choose the scope, approve paid checks and give feedback on the product and demo.
 
-## Tools actually used
+This account is based on the development log, Git history and recorded decisions. It does
+not claim that I wrote every component or personally reviewed every line of generated code.
+The detailed technical record is in [docs/ai-log.md](docs/ai-log.md).
 
-- **Claude Code** (Anthropic; model Claude Opus 5.5) in the Claude desktop app: wrote the code,
-  tests and documentation, ran the commands (Docker, pytest, ruff, npm), drove a browser pane to
-  check the UI, and kept `docs/ai-log.md`.
-- **OpenAI `gpt-4o-mini` and `text-embedding-3-small`**: the application's own models (not a
-  coding tool). Real calls were made during the explicitly approved evaluations and demo
-  checks documented in `docs/EVALUATION.md`.
-- **OpenAI Codex**: continued development from the 2026-10-15 handover: expanded the bonus-feature
-  walkthrough, refreshed documentation, implemented v3 follow-up rewriting, and ran/reviewed
-  the explicitly approved broader real evaluation.
-  After reviewing its failures, Codex added summary v4 / comparison v2 validation, regression
-  checks, coverage-aware UI wording and a five-call re-test harness. The explicitly approved
-  real re-test cost $0.00156255 and exposed merged focus topics in v4; Codex then added v5's
-  required server-owned topic verdict fields. A separately approved two-call real check then
-  returned correct independent budget/risks verdicts and a correct no-focus control at
-  $0.00050400 estimated. These narrow successes do not establish general grounding quality.
-  Codex also prepared a beginner learning guide and a video narration/recording guide from
-  the repository, checked demo facts against sample text, and corrected destructive setup
-  instructions in the earlier demo script. No new model evaluation ran for that documentation.
-  Codex subsequently recorded a short captioned browser preview using saved real-model
-  results, with no new model calls; video capture/export limitations are logged.
-  Codex reviewed all four original case-study PDF pages and prepared a shorter narrated
-  demo plan that maps required backend/chat evidence before optional and bonus features.
-  Codex produced a subsequent 15-second narrated WebM pilot using local Windows speech,
-  existing footage, matching captions and verified audio decoding, without paid AI calls.
-  Codex also captured the approved full real demo (25 calls, $0.00391133 estimated), then
-  rebuilt its video for the developer-updated UI using saved real results, local narration,
-  captions, zooms and transitions. The UI remake made no new paid model calls.
-  A further video revision removed repeated zooms, added explanatory motion graphics,
-  recaptured the UI at higher resolution, and replaced a missed Swagger loading screen
-  with loaded documentation and a real read-only GET response. No new paid AI calls.
-  Subsequent checks and changes are recorded in `docs/ai-log.md`.
+## Tools used
 
-## Working method
+- **Claude Code** helped implement the initial backend, database, workers, tests and React
+  interface. It also ran checks and kept the early development log.
+- **OpenAI Codex** continued the work, reviewed the case-study requirements, expanded
+  verification, improved prompts and output validation, updated the interface and prepared
+  the demo and submission documentation.
+- **OpenAI models inside the application** serve a different purpose from the coding
+  assistants. The app uses `gpt-4o-mini` for answers and analysis, and
+  `text-embedding-3-small` for retrieval embeddings. Model settings are configurable,
+  subject to the application's pricing table and embedding schema.
+- **Deterministic fake providers** were used for routine development and automated tests.
+  These do not call an external model or prove the quality of real AI answers.
 
-1. **Plan before code.** `docs/BLUEPRINT.md` (scope, architecture, data model, API, test plan,
-   task backlog) and an implementation prompt derived from it existed before any code and were
-   approved by the developer; implementation followed the prompt task by task. **[developer to complete: how the blueprint was produced and what
-   you changed in it]**
-2. **Explicit gates.** The implementation prompt required the assistant to stop and ask before
-   any real OpenAI call, any new dependency outside the approved list, anything destructive
-   outside the project, or any publishing (`git push`, deploys). The OpenAI key was put into
-   `.env` by the developer and never passed through the conversation.
-3. **Small tasks, each verified.** Tasks T01–T25 (optional T26 not done), then the four
-   remaining bonus items (custom summaries, comparisons, versions, rate limiting). Each ended with lint,
-   the test suite actually run, a log entry and a local commit (19 commits up to the end of T23;
-   tasks built together were committed and logged together).
-4. **Fake AI by default.** Development and tests used deterministic fake providers (labelled
-   "fake" everywhere), so AI spend went only to explicitly approved real-model runs.
-5. **Truthful reporting.** Anything not run is marked NOT VERIFIED in the docs; the live results
-   in [docs/EVALUATION.md](docs/EVALUATION.md) are copied from the run's output.
+## My decisions and feedback
 
-## Per phase
+I asked to work through the case study one step at a time and build the backend before
+polishing the frontend. The plan covered upload, saved processing states, extraction,
+retrieval and cited answers before optional features.
 
-| Phase | Generated by AI | Decided / provided by the developer | How it was checked |
-|---|---|---|---|
-| Plan | **[developer to complete]** (not covered by this log) | Scope, stack, budget (≈ $1, app cap $0.50), approval gates, approval of the blueprint | **[developer to complete]** |
-| 0 Foundation (T01–T03) | Compose stack, settings, models, migration, errors, logging, health | Stack from the approved blueprint | Stack started with `docker compose up`; 15 tests |
-| 1 Ingestion (T04–T08) | Upload, sniffing, Celery pipeline, extractors, document API | — | 70 tests; checkpoint M1 on the live stack with all fixtures |
-| 2 AI core (T09–T18) | AI layer, ledger, index, insights, retrieval, chat, SSE, metrics, caches | — | Up to 121 tests; backend checkpoint from a clean clone (walkthrough + suite) |
-| Live eval (T19) | Evaluation set and live test | Added the key; approved the spend | Real run: 10/10, $0.0016 estimated |
-| 3 Frontend (T20–T23) | React UI, `web` container | Go-ahead for the phase | `npm run build`; manual checks in a browser pane in fake mode |
-| 4 Delivery (T24–T25) | These documents, demo script, clean-clone check | Recording and submitting the video | See ai-log |
-| Bonus items (after T25) | Versions, custom summaries, comparisons, rate limiting: migration, prompts, API, UI, 16 tests | Chose to build these four next | 144 tests; manual UI check on a separate fake-mode stack; two small real checks (docs/EVALUATION.md) |
+I approved the blueprint and the implementation scope. The assistants proposed and
+implemented technical details, including FastAPI, PostgreSQL with pgvector, Celery and
+Redis. I controlled when real-model evaluations could use the API budget. The API key was
+kept in the local environment rather than committed to the repository.
 
-**Human review of the code:** every log entry has a `Human review: ___` field for the
-developer. **[developer to complete: which parts you read or changed yourself, and how]**
+After the core application, I chose to include custom summaries, document comparisons,
+version history and rate limiting. For the interface, I asked for five upload designs and
+selected the split workspace. I then requested dark mode as the default and subtle,
+professional animations.
 
-## Concrete corrections (from the log)
+I also gave feedback on the video. I rejected repetitive zooms and pointed out that Swagger
+was missing. The revised edit uses stationary reading views, short transitions and an
+actual loaded Swagger response. The final video review and upload remain my responsibility.
 
-Each of these was wrong in the assistant's first version and was caught by running something:
-the test suite, the live stack, the browser, or a re-read of its own output.
+## How the work was checked
 
-| What was wrong | How it was caught | Fix |
+The assistants ran builds, lint, tests and browser checks, then recorded the results.
+The automated backend tests use real PostgreSQL and Redis services with fake AI providers.
+They check upload rules, extraction, task status, retries, retrieval scope, citation
+validation, chat history, streaming, caching and the additional features.
+
+Separate, explicitly approved real-model runs checked answer quality on known sample
+documents. The results include failures as well as successes. The evaluation notes explain
+which prompt version was used, what was checked and what the result does not establish.
+See [docs/EVALUATION.md](docs/EVALUATION.md).
+
+The final submission checks are recorded in
+[docs/SUBMISSION_CHECK.md](docs/SUBMISSION_CHECK.md). These distinguish new checks from
+earlier evaluation evidence. No fresh real-model run is implied by a successful fake test.
+
+The log contains unfilled human-review fields from earlier tasks. I have not filled them
+after the fact or treated assistant-run tests as evidence of my own line-by-line review.
+My documented contribution is the direction, approvals, feature choices and feedback
+described above.
+
+## Examples where the first AI output was wrong
+
+| Problem | How it was found | What changed |
 |---|---|---|
-| `OPENAI_API_KEY=   # comment` in the env file: Docker Compose passed the comment text as the key | `/health/ready` showed `key_present: true` with no key | Comment moved to its own line; validator treats `#…` as no key |
-| SQLAlchemy 2.1 no longer installs `greenlet`; the async engine failed | First test run | `sqlalchemy[asyncio]` |
-| A stage waiting to retry made the document look `queued` | Unit test of the retry path | Explicit `retrying` stage status |
-| Worker JSON logs were silently lost (Celery's stdout proxy) | Reading worker logs on the live stack | Log to `sys.__stdout__`, no stdout redirect |
-| Per-document cap could not work: a large document filled the candidate lists | Multi-document retrieval test | Per-document candidate lists |
-| Section labels with quotes broke the `<source location="…">` attribute | Vault-wide chat test | Quotes escaped in attributes |
-| Error raised inside a streaming generator after the 200 had started | Status-stream test | Validation moved into dependencies |
-| **Index and insights finishing concurrently left documents stuck in `processing`** (stale ORM copy under `SELECT … FOR UPDATE`) | Walkthrough on the live stack; the sequential tests could not see it | `populate_existing=True`; threaded regression test that fails without the fix |
-| Fake condenser rewrote standalone questions ("Who is the CFO?" became answerable) | Clean-clone walkthrough | Fake follows the prompt's "return unchanged" rule |
-| Scripted edits on Windows wrote cp1252 bytes and turned `\n` escapes into line breaks | Ruff syntax errors and a repo-wide UTF-8 scan | Edits involving escapes or non-ASCII made with the editor tool |
-| UI: "already in vault" on a new file dropped twice; stale chat title; checkbox named "on"; fake summaries showing prompt headers; multi-line titles | Using the UI in the browser pane | Fixed one by one (ai-log T20–T23) |
-| An early Stop still paid for the embedding and answer calls; a stopped answer was shown with the "no verifiable citation" warning | Real-mode demo dry run | Stop checked between pipeline steps (test added); UI shows "Stopped" |
-| Real comparison listed identical statements (same contractor, same fund) as "differences" | First real check of v1 vs v2 | Server drops differences whose statements are identical in every document (test added) |
-| Comparison similarities lost their page/section numbers (the sources were rebuilt from a dict without them) | New comparison test: response validation error | Sources keep their refs |
-| The fake comparison found no differences between two versions (it compared only the first figure sentence of each) | Using the UI on the fake-mode stack | The fake compares page by page |
-| EVALUATION.md compared a local prompt token count with a per-message total that also included the query embedding | Re-checking the figure while writing PROMPTS.md | Corrected to 643 vs 632 tokens (ai-log T24) |
+| Indexing and insights could finish at the same time and leave a document stuck in processing. | A running-stack walkthrough found it after sequential tests had passed. | The worker refreshes the locked database row, and a concurrent regression test covers the case. |
+| A follow-up prompt guessed what an ambiguous reference meant. | Real-model checks compared the rewritten question with the conversation. | The prompt was revised to preserve questions when the referent is unclear. |
+| A custom summary invented a risks point that the document did not contain. | The generated summary was compared with the sample document. | Later prompts require evidence quotes and separate verdicts for each requested topic. The server adds missing-topic notices. |
+| A comparison described identical statements as differences. | A real comparison of two known versions exposed it. | The server removes identical differences. Later similarity checks also require matching source sentences. |
+| The first video review missed a Swagger loading screen. | My feedback prompted another visual check. | The shot was replaced with loaded endpoint documentation and a real read-only HTTP 200 response. |
 
-Some first attempts were also wrong in tests rather than code (for example, wrong token
-expectations, or a scripted reply consumed by the condense call); those are listed in the log
-too.
+These corrections are examples of why generated output needed checking. Passing tests did
+not mean the first implementation or every generated answer was correct.
 
-## Application prompts
+## Prompt design
 
-How the prompts were designed, what the server validates, worked examples and their evidence
-labels: [docs/PROMPTS.md](docs/PROMPTS.md). In short:
-- grounding rules, delimited untrusted text, and output that can be checked mechanically
-  (`[S#]`, `[NO_ANSWER]`, strict JSON schema);
-- the server validates everything it can (citations, page refs, enums, limits);
-- scope is enforced in SQL, never by the model.
+Application prompts are stored as versioned files in `backend/app/prompts/`. The main choices were:
 
-They were evaluated with the fake-mode suite (plumbing), the initial live run (10/10),
-and the later small checks recorded in EVALUATION.md. Codex added a broader opt-in harness
-and v3 follow-up rewriting, then ran the developer-approved broader synthetic evaluation:
-42 real calls, $0.00791661 estimated cost. It checked the known v3 failure case twice and
-exposed summary/compare grounding limitations. This remains a small synthetic evaluation,
-not evidence of quality across arbitrary documents.
+- Retrieve only from documents allowed by the current chat scope.
+- Give each retrieved passage a source identifier and an exact page, section or line range.
+- Ask for citations and an explicit not-found answer when evidence is missing.
+- Treat document contents as untrusted input, rather than instructions to the assistant.
+- Use structured output for insights, summaries and comparisons so the server can check it.
+- Store prompt versions with results so failures can be traced and compared.
 
-## Limits of the AI assistance
+The server checks source identifiers, locations and supported evidence quotes. These checks
+do not prove that every paraphrase is correct or that a cited passage fully supports a claim.
+Worked examples and changes are in [docs/PROMPTS.md](docs/PROMPTS.md).
 
-- **Several bugs came from the assistant**, and some were found only by running the full stack:
-  the concurrency bug passed all 121 tests that existed then, because they ran stages one at a time.
-- **Fake-model tests prove plumbing, not quality.** Real-model behaviour was checked in two
-  small runs plus a prompt re-test. The dry run showed the follow-up rewrite does not work with
-  `chat.condense.v1`, which fake tests could not reveal; v2 fixed that case but mis-resolved a
-  reference the conversation never named. The broader run showed v3 leaving that ambiguous
-  question unchanged twice, a two-group map-reduce result retaining a last-page fact, and one
-  injection-scope check returning not_found. These narrow checks do not establish general
-  quality or injection resistance. Custom summaries and
-  comparisons had one small real check: the comparison was accurate but padded with two
-  identical "differences", and the summary invented a "risks" point that fake tests could not
-  reveal. `summary.custom.v2` removed the invented content in one re-test but left the new gap
-  list empty; v3 (one verdict per focus topic, gaps derived on the server) got it right in one
-  re-test. The broader run exposed further limitations: missing gap prose and unrelated content
-  in a focused summary, an unsupported whole-document claim from a partial summary, off-focus
-  similarities and a generic unsupported comparison similarity. These are recorded, not
-  hidden by the passing API test; no additional paid prompt iterations were made.
-- **Some things it could not do or verify:** record the demo video; test the Stop button against
-  a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements
-  are design reasoning).
-- **Human judgement was needed** for scope, budget and approvals at every spend or phase gate,
-  and is still needed for code review. **[developer to complete]**
+## Demo and remaining limits
+
+The narrated video uses results from an approved real-model run, displayed again in the
+updated interface. Upload and processing chronology are replayed from archived responses.
+The recording discloses this; its edited timings are not a performance benchmark. Narration
+uses the local Microsoft Zira synthetic voice. See [docs/VIDEO_DELIVERY.md](docs/VIDEO_DELIVERY.md).
+
+Real-model evaluation is still small and based on synthetic sample documents. It does not
+establish reliability for arbitrary documents, general resistance to prompt injection or
+large-scale performance. The application is a local, single-user case study with no
+authentication or OCR. Those limits remain visible in the README and evaluation notes.

@@ -1,4 +1,9 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+html.dark {
+  color-scheme: dark;
+}
 
 html,
 body {
@@ -6,7 +11,7 @@ body {
 }
 
 body {
-  @apply bg-white text-neutral-900 antialiased;
+  @apply bg-white text-neutral-900 antialiased dark:bg-[#202421] dark:text-neutral-100;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -23,7 +28,7 @@ body {
   padding-left: 1.4em;
 }
 .markdown code {
-  @apply rounded bg-neutral-100 px-1 py-0.5 text-[0.9em];
+  @apply rounded bg-neutral-100 px-1 py-0.5 text-[0.9em] dark:bg-[#2c332e];
 }
 .markdown pre {
   @apply overflow-x-auto rounded-lg bg-neutral-900 p-3 text-neutral-100;
@@ -38,4 +43,47 @@ body {
 .markdown h2,
 .markdown h3 {
   @apply font-semibold;
+}
+
+/* Short, one-time entrances; interaction feedback never shifts layout. */
+@keyframes vault-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes vault-overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vault-welcome-copy { animation: vault-enter 260ms ease-out both; }
+  .vault-upload { animation: vault-enter 300ms 60ms ease-out both; }
+  .vault-drop-overlay { animation: vault-overlay-enter 140ms ease-out both; }
+
+  button, a, .vault-composer {
+    transition: background-color 160ms ease-out, color 160ms ease-out,
+      border-color 160ms ease-out, box-shadow 160ms ease-out;
+  }
+
+  .vault-upload {
+    transition: background-color 180ms ease-out, border-color 180ms ease-out,
+      box-shadow 180ms ease-out;
+  }
+
+  .vault-upload-icon { transition: transform 180ms ease-out; }
+  .vault-upload[data-dragging="true"] {
+    box-shadow: 0 0 0 4px rgb(149 201 167 / 12%);
+  }
+  .vault-upload[data-dragging="true"] .vault-upload-icon {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

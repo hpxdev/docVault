@@ -54,13 +54,14 @@ export function Sidebar({ view, activeSessionId, onSelectSession, onView }: Prop
   );
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col bg-neutral-900 text-neutral-100 max-md:hidden">
-      <div className="p-3">
+    <aside className="flex h-full w-64 shrink-0 flex-col bg-[#181c19] text-neutral-100 max-md:hidden">
+      <div className="px-5 pb-2 pt-6 text-lg font-semibold tracking-tight">Document vault</div>
+      <div className="p-4">
         <button
           onClick={() => {
             onSelectSession(null);
           }}
-          className="w-full rounded-lg border border-neutral-700 px-3 py-2 text-left text-sm font-medium hover:bg-neutral-800"
+          className="w-full rounded-lg border border-[#465148] bg-[#29332c] px-3 py-2.5 text-left text-sm font-medium hover:bg-[#354239]"
         >
           + New chat
         </button>
@@ -69,16 +70,16 @@ export function Sidebar({ view, activeSessionId, onSelectSession, onView }: Prop
         {navButton("library", "Library")}
         {navButton("metrics", "Metrics")}
       </nav>
-      <div className="mt-4 px-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <div className="mt-4 px-4 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-[#a0aca3]">
         Chats
       </div>
       <ul className="mt-1 flex-1 space-y-0.5 overflow-y-auto px-2 pb-4">
-        {sessions.isLoading && <li className="px-2 py-1 text-sm text-neutral-500">Loading…</li>}
+        {sessions.isLoading && <li className="px-2 py-1 text-sm text-neutral-500 dark:text-[#a0aca3]">Loading…</li>}
         {sessions.error && (
           <li className="px-2 py-1 text-sm text-red-400">Could not load chats.</li>
         )}
         {sessions.data?.items.length === 0 && (
-          <li className="px-2 py-1 text-sm text-neutral-500">No chats yet.</li>
+          <li className="px-2 py-1 text-sm text-neutral-500 dark:text-[#a0aca3]">No chats yet.</li>
         )}
         {sessions.data?.items.map((s) => (
           <li key={s.id} className="group">
@@ -109,7 +110,7 @@ export function Sidebar({ view, activeSessionId, onSelectSession, onView }: Prop
                   title={s.title}
                 >
                   <div className="truncate text-sm">{s.title}</div>
-                  <div className="text-xs text-neutral-500">
+                  <div className="text-xs text-neutral-500 dark:text-[#a0aca3]">
                     {s.scope_mode === "all" ? "Whole vault" : `${s.documents.length} doc(s)`} ·{" "}
                     {relativeTime(s.updated_at)}
                   </div>
@@ -137,7 +138,7 @@ export function Sidebar({ view, activeSessionId, onSelectSession, onView }: Prop
           </li>
         ))}
       </ul>
-      <div className="border-t border-neutral-800 px-4 py-3 text-xs text-neutral-500">
+      <div className="border-t border-neutral-800 px-4 py-3 text-xs text-neutral-500 dark:text-[#a0aca3]">
         Local single-user demo · no authentication
       </div>
     </aside>

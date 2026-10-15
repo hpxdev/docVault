@@ -315,14 +315,14 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
   return (
     <div className="relative flex h-full min-w-0 flex-1">
       <div className="relative flex min-w-0 flex-1 flex-col" {...dropHandlers}>
-        {dragging && (
-          <div className="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500 bg-emerald-50/90 text-lg font-medium text-emerald-800">
+        {dragging && !showEmpty && (
+          <div className="vault-drop-overlay pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/90 text-lg font-medium text-emerald-800 dark:text-emerald-200">
             Drop files to add them to this chat (PDF, DOCX, TXT, MD · up to 25 MB each)
           </div>
         )}
-        <header className="flex items-center justify-between gap-4 border-b border-neutral-200 px-6 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200 dark:border-[#364139] px-6 py-4">
           <h1 className="truncate font-semibold">{session.data?.title ?? "New chat"}</h1>
-          <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-neutral-700">
+          <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
             <input
               type="checkbox"
               checked={vaultWide}
@@ -334,11 +334,11 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
           </label>
         </header>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl space-y-6 px-6 py-6">
-            {messages.isLoading && sessionId && <div className="text-neutral-500">Loading…</div>}
+        <div className={`flex-1 overflow-y-auto ${showEmpty ? "flex flex-col" : ""}`}>
+          <div className={`mx-auto w-full space-y-6 px-6 py-6 ${showEmpty ? "flex flex-1 flex-col justify-center max-w-5xl" : "max-w-3xl"}`}>
+            {messages.isLoading && sessionId && <div className="text-neutral-500 dark:text-[#a0aca3]">Loading…</div>}
             {messages.error && (
-              <div className="text-red-700">Could not load this chat's history.</div>
+              <div className="text-red-700 dark:text-red-300">Could not load this chat's history.</div>
             )}
             {showEmpty && !messages.isLoading && (
               <EmptyState
@@ -346,6 +346,8 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
                 suggestions={suggestions}
                 canAsk={!sendHint}
                 onPick={(q) => void send(q)}
+                onBrowse={() => fileInput.current?.click()}
+                dragging={dragging}
               />
             )}
             {history.map((m) =>
@@ -369,16 +371,16 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
                     <div className="animate-pulse text-neutral-400">Searching your documents…</div>
                   )}
                   {stream.phase === "stopping" && (
-                    <div className="mt-1 text-xs text-neutral-500">Stopping…</div>
+                    <div className="mt-1 text-xs text-neutral-500 dark:text-[#a0aca3]">Stopping…</div>
                   )}
                 </div>
               </>
             )}
-            <div ref={bottom} />
+            <div ref={bottom} className={showEmpty ? "hidden" : undefined} />
           </div>
         </div>
 
-        <div className="border-t border-neutral-100 bg-white px-6 pb-5 pt-3">
+        <div className="border-t border-neutral-100 dark:border-[#303a33] bg-white dark:bg-[#202421] px-6 pb-5 pt-3">
           <div className="mx-auto max-w-3xl">
             <AttachmentChips
               docs={chipDocs}
@@ -388,15 +390,15 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
               onDismiss={(key) => setLocalFiles((prev) => prev.filter((f) => f.key !== key))}
             />
             {notice && (
-              <div className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+              <div className="mb-2 rounded-lg bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-800 dark:text-red-200" role="alert">
                 {notice}
               </div>
             )}
-            <div className="flex items-end gap-2 rounded-2xl border border-neutral-300 bg-white p-2 shadow-sm focus-within:border-neutral-500">
+            <div className="vault-composer flex items-end gap-2 rounded-2xl border border-neutral-200 dark:border-[#364139] bg-white dark:bg-[#202421] p-3 shadow-sm focus-within:border-[#42735c]">
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-neutral-600 hover:bg-neutral-100"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[#2c332e]"
                 aria-label="Attach files"
                 title="Attach files"
               >
@@ -440,14 +442,14 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
                   type="button"
                   onClick={() => void send(draft)}
                   disabled={!canSend}
-                  className="h-9 shrink-0 rounded-full bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                  className="h-9 shrink-0 rounded-lg bg-[#42735c] px-4 text-sm font-medium text-white hover:bg-[#365e4b] disabled:cursor-not-allowed disabled:bg-neutral-200 dark:disabled:bg-[#39423c] disabled:text-neutral-500 dark:disabled:text-[#a0aca3]"
                   title={sendHint ?? "Send (Enter)"}
                 >
                   Send
                 </button>
               )}
             </div>
-            <div className="mt-1.5 min-h-4 text-xs text-neutral-500">
+            <div className="mt-1.5 min-h-4 text-xs text-neutral-500 dark:text-[#a0aca3]">
               {sendHint ?? "Enter to send · Shift+Enter for a new line"}
             </div>
           </div>
@@ -465,20 +467,59 @@ function EmptyState({
   suggestions,
   canAsk,
   onPick,
+  onBrowse,
+  dragging,
 }: {
   hasDocs: boolean;
   suggestions: string[];
   canAsk: boolean;
   onPick: (q: string) => void;
+  onBrowse: () => void;
+  dragging: boolean;
 }) {
   return (
-    <div className="pt-16 text-center">
-      <h2 className="text-2xl font-semibold">Chat with your documents</h2>
-      <p className="mt-2 text-neutral-500">
-        {hasDocs
-          ? "Answers cite the exact page or section they come from."
-          : "Drop PDF, DOCX, TXT or Markdown files anywhere here, or use + to attach them."}
-      </p>
+    <div className="py-8 sm:px-4 lg:px-8">
+      <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="vault-welcome-copy text-center lg:text-left">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.16em] text-[#42735c] dark:text-[#95c9a7]">
+            Your research workspace
+          </p>
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-4xl">
+            A conversation starts with a document.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-neutral-500 dark:text-[#a0aca3]">
+            {hasDocs
+              ? "Ask about your sources once processing finishes. Answers cite the exact page or section they come from."
+              : "Bring your files together and find answers grounded in your sources."}
+          </p>
+        </div>
+        <section
+          aria-label="Upload documents"
+          data-dragging={dragging}
+          className={`vault-upload flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed px-6 py-10 text-center ${
+            dragging ? "border-[#42735c] bg-[#e7f1e9] dark:bg-[#283f30]" : "border-[#dce3dc] dark:border-[#4a5a4d] bg-[#f5f7f4] dark:bg-[#252e27]"
+          }`}
+        >
+          <div className="vault-upload-icon flex h-12 w-12 items-center justify-center rounded-xl border border-[#e0e6df] dark:border-[#3c4b40] bg-white dark:bg-[#202421] text-[#42735c] dark:text-[#95c9a7]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 16V4m-4 4 4-4 4 4M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-medium text-neutral-800 dark:text-neutral-200">Drop your sources here</h3>
+            <p className="mt-2 text-xs leading-5 text-neutral-500 dark:text-[#a0aca3]">PDF, DOCX, TXT or Markdown</p>
+            <p className="text-xs leading-5 text-neutral-500 dark:text-[#a0aca3]">Up to 25 MB per file</p>
+          </div>
+          <button
+            type="button"
+            onClick={onBrowse}
+            className="rounded-lg bg-[#42735c] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#365e4b] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#42735c]"
+          >
+            Browse files
+          </button>
+          <p className="text-xs text-neutral-500 dark:text-[#a0aca3]">or drag &amp; drop multiple files</p>
+        </section>
+      </div>
       {suggestions.length > 0 && (
         <div className="mx-auto mt-8 grid max-w-2xl gap-2 sm:grid-cols-2">
           {suggestions.map((q) => (
@@ -486,7 +527,7 @@ function EmptyState({
               key={q}
               onClick={() => onPick(q)}
               disabled={!canAsk}
-              className="rounded-xl border border-neutral-200 px-4 py-3 text-left text-sm hover:bg-neutral-50 disabled:opacity-50"
+              className="rounded-xl border border-neutral-200 dark:border-[#364139] px-4 py-3 text-left text-sm hover:bg-neutral-50 dark:hover:bg-[#252b27] disabled:opacity-50"
             >
               {q}
             </button>
@@ -517,10 +558,10 @@ function AttachmentChips({
         const failed = d.status === "failed" || (d.status === "partial" && !d.chatReady);
         const ready = d.chatReady;
         const tone = failed
-          ? "border-red-300 bg-red-50 text-red-800"
+          ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200"
           : ready
-            ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-            : "border-neutral-300 bg-neutral-50 text-neutral-700";
+            ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200"
+            : "border-neutral-300 dark:border-[#48544b] bg-neutral-50 dark:bg-[#252b27] text-neutral-700 dark:text-neutral-300";
         return (
           <li
             key={d.id}
@@ -551,8 +592,8 @@ function AttachmentChips({
           key={f.key}
           className={`flex items-center gap-2 rounded-lg border px-2.5 py-1 text-sm ${
             f.state === "rejected"
-              ? "border-red-300 bg-red-50 text-red-800"
-              : "border-neutral-300 bg-neutral-50 text-neutral-600"
+              ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200"
+              : "border-neutral-300 dark:border-[#48544b] bg-neutral-50 dark:bg-[#252b27] text-neutral-600 dark:text-neutral-400"
           }`}
         >
           {f.state === "uploading" && (

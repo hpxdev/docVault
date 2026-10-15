@@ -12,7 +12,7 @@ function RefChip({ src }: { src: SourceRef }) {
       : null;
   if (!label) return null;
   const chip = (
-    <span className="rounded bg-neutral-200 px-1.5 text-xs leading-5 text-neutral-700">
+    <span className="rounded bg-neutral-200 dark:bg-[#39423c] px-1.5 text-xs leading-5 text-neutral-700 dark:text-neutral-300">
       {src.label} · {label}
     </span>
   );
@@ -39,16 +39,16 @@ export function ComparisonView({ comparisonId, onBack }: { comparisonId: string;
   });
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <header className="flex items-center gap-3 border-b border-neutral-200 px-6 py-3">
-        <button onClick={onBack} className="rounded px-2 py-1 text-sm text-neutral-600 hover:bg-neutral-100">
+      <header className="flex items-center gap-3 border-b border-neutral-200 dark:border-[#364139] px-6 py-3">
+        <button onClick={onBack} className="rounded px-2 py-1 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[#2c332e]">
           ← Library
         </button>
         <h1 className="font-semibold">Comparison</h1>
       </header>
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {query.isLoading && <div className="text-neutral-500">Loading…</div>}
+        {query.isLoading && <div className="text-neutral-500 dark:text-[#a0aca3]">Loading…</div>}
         {query.error && (
-          <div className="text-red-700">
+          <div className="text-red-700 dark:text-red-300">
             {query.error instanceof ApiError && query.error.status === 404
               ? "This comparison no longer exists (one of its documents was deleted)."
               : "Could not load the comparison."}
@@ -69,45 +69,45 @@ function ComparisonBody({ data }: { data: ComparisonOut }) {
   return (
     <div className="mx-auto max-w-5xl space-y-6 text-sm">
       {data.ai_mode === "fake" && (
-        <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+        <div className="rounded bg-amber-100 dark:bg-amber-950 px-2 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
           FAKE AI MODE — placeholder comparison from the test double
         </div>
       )}
       <section>
         <ul className="flex flex-wrap gap-2">
           {data.documents.map((d) => (
-            <li key={d.id} className="rounded-lg border border-neutral-200 px-2.5 py-1">
+            <li key={d.id} className="rounded-lg border border-neutral-200 dark:border-[#364139] px-2.5 py-1">
               <span className="font-semibold">{d.label}</span> {d.filename}
-              <span className="text-neutral-500"> · v{d.version}</span>
+              <span className="text-neutral-500 dark:text-[#a0aca3]"> · v{d.version}</span>
             </li>
           ))}
         </ul>
         {data.same_document_versions && (
-          <p className="mt-2 text-neutral-600">These are versions of one document, oldest first.</p>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">These are versions of one document, oldest first.</p>
         )}
         {data.focus && (
-          <p className="mt-2 text-neutral-600">
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
             Focus: <span className="font-medium">{data.focus}</span>
             {data.focus_covered === false && " — none of the documents addresses it."}
           </p>
         )}
       </section>
       <section>
-        <h2 className="mb-1 text-xs font-semibold uppercase text-neutral-500">Overview</h2>
+        <h2 className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Overview</h2>
         <p>{data.overview}</p>
       </section>
       <section>
-        <h2 className="mb-2 text-xs font-semibold uppercase text-neutral-500">Differences</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Differences</h2>
         {data.differences.length === 0 ? (
-          <p className="text-neutral-500">No verifiable differences were found.</p>
+          <p className="text-neutral-500 dark:text-[#a0aca3]">No verifiable differences were found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="text-xs uppercase tracking-wide text-neutral-500">
-                  <th className="border-b border-neutral-200 py-2 pr-4 font-medium">Aspect</th>
+                <tr className="text-xs uppercase tracking-wide text-neutral-500 dark:text-[#a0aca3]">
+                  <th className="border-b border-neutral-200 dark:border-[#364139] py-2 pr-4 font-medium">Aspect</th>
                   {data.documents.map((d) => (
-                    <th key={d.id} className="border-b border-neutral-200 py-2 pr-4 font-medium">
+                    <th key={d.id} className="border-b border-neutral-200 dark:border-[#364139] py-2 pr-4 font-medium">
                       {d.label} · v{d.version}
                     </th>
                   ))}
@@ -116,10 +116,10 @@ function ComparisonBody({ data }: { data: ComparisonOut }) {
               <tbody>
                 {data.differences.map((diff, i) => (
                   <tr key={i} className="align-top">
-                    <td className="border-b border-neutral-100 py-2 pr-4 font-medium">{diff.aspect}</td>
+                    <td className="border-b border-neutral-100 dark:border-[#303a33] py-2 pr-4 font-medium">{diff.aspect}</td>
                     {diff.positions.map((p) => (
-                      <td key={p.label} className="border-b border-neutral-100 py-2 pr-4">
-                        <div className={p.addressed ? "" : "italic text-neutral-500"}>{p.statement}</div>
+                      <td key={p.label} className="border-b border-neutral-100 dark:border-[#303a33] py-2 pr-4">
+                        <div className={p.addressed ? "" : "italic text-neutral-500 dark:text-[#a0aca3]"}>{p.statement}</div>
                         {p.addressed && (
                           <div className="mt-1">
                             <RefChip src={p} />
@@ -135,16 +135,16 @@ function ComparisonBody({ data }: { data: ComparisonOut }) {
         )}
       </section>
       <section>
-        <h2 className="mb-2 text-xs font-semibold uppercase text-neutral-500">
+        <h2 className="mb-2 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">
           {data.prompt_version === "compare.v1" ? "In common" : "Shared passages"}
         </h2>
         {data.prompt_version !== "compare.v1" && (
-          <p className="mb-2 text-sm text-neutral-500">
+          <p className="mb-2 text-sm text-neutral-500 dark:text-[#a0aca3]">
             Matching factual passages from at least two documents. Facts worded differently may be omitted.
           </p>
         )}
         {data.similarities.length === 0 ? (
-          <p className="text-neutral-500">
+          <p className="text-neutral-500 dark:text-[#a0aca3]">
             {data.prompt_version === "compare.v1"
               ? "No verifiable similarities were found."
               : "No matching factual passages were retained."}
@@ -164,9 +164,9 @@ function ComparisonBody({ data }: { data: ComparisonOut }) {
           </ul>
         )}
       </section>
-      <footer className="space-y-1 border-t border-neutral-200 pt-3 text-xs text-neutral-500">
+      <footer className="space-y-1 border-t border-neutral-200 dark:border-[#364139] pt-3 text-xs text-neutral-500 dark:text-[#a0aca3]">
         {partial.length > 0 && (
-          <div className="text-amber-800">
+          <div className="text-amber-800 dark:text-amber-200">
             {partial.join(", ")} {partial.length === 1 ? "was" : "were"} too long to compare in full; only the
             parts most relevant to the focus (or evenly spread parts) were used.
           </div>

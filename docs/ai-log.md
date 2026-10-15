@@ -4,6 +4,11 @@ Running log kept during development, one entry per task. Written by the AI codin
 (Claude Code, model Claude Opus 5.5) at the time of the work, not reconstructed afterwards.
 The `Human review` field is for the human developer to complete.
 
+Later entries identify Codex work separately. Unfilled human-review fields are historical
+placeholders, not evidence that the developer manually reviewed those tasks. The current
+[AI usage explanation](../AI_USAGE.md) describes the decisions and feedback supported by
+the recorded work.
+
 ---
 
 ## 2026-10-15 · T01 — Repository, tooling, Compose, settings
@@ -1427,3 +1432,29 @@ sidecars are in B:\f-work\case study\demo-video; earlier edit retained. git diff
 passed; no application tests rerun for media/docs-only work. No publishing or pushing.
 
 Human review: ___
+
+
+---
+
+## 2026-10-15: Codex submission preparation and interface finishing
+
+The developer selected the split upload workspace from five previews, requested dark mode
+as the default and asked for subtle professional motion. Codex updated the React frontend,
+connected the visible Browse files button to the existing upload handler, added dark styles
+across the application and short entrance/interaction transitions with reduced-motion support.
+The frontend production builds passed. Browser checks confirmed the desktop split layout,
+mobile stacking, default dark colors and configured animation durations. The local web
+container was rebuilt. No new paid model calls were made for those interface changes.
+
+The developer then authorised publishing to https://github.com/hpxdev/docVault and requested
+an AI usage rewrite based on the logs, a README/submission review and clean-checkout checks.
+Codex rewrote AI_USAGE.md in simple English, distinguished recorded human decisions from
+assistant-run verification, removed unfinished personal-contribution prompts from that account
+and kept historical human-review blanks intact. README updates cover the actual dark UI,
+clone/setup instructions, fake versus real mode, current evidence and limits. Historical
+evaluation reports are retained rather than rewritten as new results. Local documentation
+links were checked; the README and AI_USAGE.md contain no em dashes.
+
+The final video review and YouTube upload remain with the developer. No YouTube URL or final
+human video approval has been invented. Final clean-checkout results are recorded separately
+in SUBMISSION_CHECK.md after they run.

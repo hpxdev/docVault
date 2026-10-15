@@ -19,7 +19,7 @@ function CitationChip({
   if (!citation) {
     // Streaming: markers arrive before the server has validated them.
     return (
-      <span className="mx-0.5 rounded bg-neutral-200 px-1 text-[0.7rem] font-medium text-neutral-500">
+      <span className="mx-0.5 rounded bg-neutral-200 dark:bg-[#39423c] px-1 text-[0.7rem] font-medium text-neutral-500 dark:text-[#a0aca3]">
         {marker}
       </span>
     );
@@ -29,7 +29,7 @@ function CitationChip({
       type="button"
       onClick={() => onOpen(citation)}
       title={`${citation.document_name} · ${citation.location}`}
-      className="mx-0.5 inline-flex items-center rounded bg-emerald-100 px-1.5 text-[0.7rem] font-semibold text-emerald-800 align-baseline hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      className="mx-0.5 inline-flex items-center rounded bg-emerald-100 dark:bg-emerald-950 px-1.5 text-[0.7rem] font-semibold text-emerald-800 dark:text-emerald-200 align-baseline hover:bg-emerald-200 dark:hover:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
     >
       {marker} · {citation.location}
     </button>
@@ -63,7 +63,7 @@ export function AnswerText({
               );
             }
             return (
-              <a href={href} target="_blank" rel="noreferrer" className="text-blue-700 underline">
+              <a href={href} target="_blank" rel="noreferrer" className="text-blue-700 dark:text-blue-300 underline">
                 {children}
               </a>
             );
@@ -79,7 +79,7 @@ export function AnswerText({
 export function UserBubble({ content }: { content: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl bg-neutral-100 px-4 py-2.5">
+      <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl bg-neutral-100 dark:bg-[#2c332e] px-4 py-2.5">
         {content}
       </div>
     </div>
@@ -88,14 +88,14 @@ export function UserBubble({ content }: { content: string }) {
 
 const STATUS_STYLE: Record<string, { box: string; label: string } | undefined> = {
   not_found: {
-    box: "border border-amber-300 bg-amber-50",
+    box: "border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950",
     label: "Not found in the selected documents",
   },
   unsupported: {
-    box: "border border-red-300 bg-red-50",
+    box: "border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950",
     label: "No verifiable citation — treat this answer with caution",
   },
-  error: { box: "border border-red-300 bg-red-50", label: "The answer could not be generated" },
+  error: { box: "border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950", label: "The answer could not be generated" },
 };
 
 export function AssistantMessage({
@@ -110,7 +110,7 @@ export function AssistantMessage({
   return (
     <div className={`rounded-2xl ${style ? `${style.box} px-4 py-3` : "px-1"}`}>
       {style && (
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-600">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
           {style.label}
           {message.error_code ? ` (${message.error_code})` : ""}
         </div>
@@ -122,14 +122,14 @@ export function AssistantMessage({
           onOpenCitation={onOpenCitation}
         />
       ) : (
-        <div className="italic text-neutral-500">Stopped before the answer started.</div>
+        <div className="italic text-neutral-500 dark:text-[#a0aca3]">Stopped before the answer started.</div>
       )}
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-[#a0aca3]">
         {message.interrupted && (
-          <span className="rounded bg-neutral-200 px-1.5 py-0.5">Stopped</span>
+          <span className="rounded bg-neutral-200 dark:bg-[#39423c] px-1.5 py-0.5">Stopped</span>
         )}
         {message.ai_mode === "fake" && (
-          <span className="rounded bg-amber-200 px-1.5 py-0.5 text-amber-900">fake AI</span>
+          <span className="rounded bg-amber-200 dark:bg-amber-900 px-1.5 py-0.5 text-amber-900 dark:text-amber-200">fake AI</span>
         )}
         {message.citations.length > 0 && <span>{message.citations.length} source(s)</span>}
         {message.latency_ms.total !== null && message.latency_ms.total !== undefined && (

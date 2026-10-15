@@ -1,66 +1,37 @@
-# AI Vault: chat with your documents, with verified citations
+# AI Vault: chat with your documents
 
-A backend for "ChatGPT for your documents". Upload PDF, DOCX, TXT or Markdown files; a background
-pipeline extracts the text with page or section locations, indexes it for hybrid retrieval and
-generates AI insights; then you chat with one or more documents and get **streamed answers whose
-citations are checked by the server** (document, page/section, original excerpt), or an explicit
-"not found".
+AI Vault is a backend-first document management case study. Upload PDF, DOCX, TXT or
+Markdown files, let background workers process them, then ask questions about their contents.
+Answers include source links to the original page, section or line range. When the retrieved
+sources do not contain an answer, the application is designed to say so.
 
-![Chat with cited answers, a "not found" answer, a two-document answer and the source panel](docs/screenshot-chat.jpg)
+**Stack:** Python, FastAPI, PostgreSQL with pgvector, Celery, Redis, OpenAI,
+React, TypeScript and Tailwind CSS. The app runs locally with Docker Compose.
 
-*Real mode (`gpt-4o-mini`), from the demo dry run: cited answers with page/section chips, an
-amber "not found", a two-document answer, and the source panel showing page 4's original text.*
+![Dark document-chat workspace with a drag-and-drop upload box](docs/dark-workspace-preview.png)
 
-> **Status (2026-10-15):** backend and ChatGPT-style UI complete, plus custom summaries,
-> comparisons, document versions and rate limiting; 152 fake-mode backend tests.
-> Earlier approved real-model checks:
-> - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
-> - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
->   search and Stop;
-> - a re-test of the follow-up rewrite prompt (`chat.condense.v2`). It fixed "When was it
->   approved?" but mis-resolved "its" when the conversation never named the referent;
-> - a first check of a custom summary and a version comparison. The comparison found all five
->   changes between two versions on the right pages, but listed two identical statements as
->   differences (now dropped by the server). The summary invented a "risks" point;
-> - re-tests of the summary prompt: v2 stopped inventing content but left its gap list empty;
->   v3 asked for a verdict per focus topic and returned "risks" as not addressed.
->
-> A broader approved run added 42 calls at $0.00791661 estimated cost. Current demo and
-> evaluation evidence plus the targeted re-tests and video capture total $0.02063470; earlier cumulative records differ from the retained
-> demo snapshot. See [docs/EVALUATION.md](docs/EVALUATION.md) for evidence and limits;
-> retrieval at scale is untested.
-> Local, single-user demo with **no authentication**: not a secure or multi-user vault.
+The interface starts in dark mode and includes a split upload workspace, live document
+status, streamed answers and a source panel. Motion is subtle and respects reduced-motion
+preferences.
 
-**Continuation checks (2026-10-15):** the post-bonus clean clone passed 145 tests (2 live tests
-deselected), lint, frontend build and the expanded fake-mode walkthrough including a `429`.
-See [clean-clone evidence](docs/CLEAN_CLONE_CHECK.md). The broader real evaluation completed:
-both repeated multi-document answers were correct, and v3 preserved the ambiguous-capacity
-question twice while v2 rewrote it incorrectly twice. Summaries still showed focus drift,
-a missing gap sentence, and an unsupported claim about a partially included document.
-Comparisons contained off-focus or generic similarities. Passing API tests does not mean
-every generated statement is grounded. [Results and raw evidence](docs/EVALUATION.md#broader-real-evaluation-2026-10-15-approved).
+## Start here
 
-**Corrections checked:** active `summary.custom.v5` builds prose from cited points, adds
-missing-topic/partial-coverage notices on the server, and requires literal evidence quotes.
-Active `compare.v2` retains matching shared sentences rather than generic similarities and
-builds its overview on the server. The approved five-call re-test cost $0.00156255: comparisons,
-leave and partial-document summaries met the targeted checks, but summary v4 merged "budget
-and risks" into one addressed topic and missed the risks gap. V5 gives each server-listed
-topic a required independent verdict. Its approved two-call real check cost $0.00050400:
-budget/risks returned the correct independent verdicts and gap notice; the no-focus handbook
-control returned correct facts and section citations. These are single examples, not evidence
-of general reliability. [Results](docs/EVALUATION.md#summary-v5-two-call-real-check-2026-10-15-approved).
-Literal quote checks do not establish semantic entailment, and conservative shared-sentence
-matching can omit valid differently worded similarities.
+- [Quickstart](#2-quickstart): start the application locally.
+- [AI usage](AI_USAGE.md): how coding assistants were used, my decisions and corrections.
+- [Architecture](docs/ARCHITECTURE.md): services, data flow and storage.
+- [Prompt design](docs/PROMPTS.md): grounding rules and prompt revisions.
+- [Evaluation](docs/EVALUATION.md): retained real-model results, failures and limits.
+- [Final submission checks](docs/SUBMISSION_CHECK.md): verification of the submission snapshot.
+- [Learning guide](docs/LEARNING_GUIDE.md): a step-by-step explanation of the application.
 
-## New to this application?
+**Demo:** a narrated recording has been prepared. The YouTube link will be added after
+its final review and upload. [Recording details](docs/VIDEO_DELIVERY.md) explain how saved
+real-model results are displayed in the updated UI and which sequences are replayed.
 
-Read the [beginner learning guide](docs/LEARNING_GUIDE.md) for the product, terminology,
-upload/question flows, features, code map, test evidence and limitations. Use the
-[video walkthrough and spoken script](docs/VIDEO_WALKTHROUGH.md) to prepare a recording.
-The current short-video proposal is the [six-minute narrated demo plan](docs/FINAL_DEMO_PLAN.md),
-ordered by the original brief: required backend/chat first, then optional and bonus features.
-See [video delivery notes](docs/VIDEO_DELIVERY.md) for the narrated updated-UI recording and its evidence labels.
+**Scope:** this is a local, single-user application with no authentication. Fake mode lets
+reviewers try the workflows without an API key. It does not demonstrate real-model quality.
+Earlier real checks include an initial 10-question smoke test, a broader synthetic evaluation
+and targeted prompt re-tests. These are limited examples, not a reliability guarantee.
 
 ## 1. Features mapped to the brief
 
@@ -82,22 +53,35 @@ See [video delivery notes](docs/VIDEO_DELIVERY.md) for the narrated updated-UI r
 | pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 152 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
 | Summary customisation: length, focus, tone (BONUS) | Implemented; v5 requires independent server-named verdicts and passed the known budget/risks case plus a no-focus real control; broad quality remains unverified; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
-| Comparative analysis between documents (BONUS) | Implemented for 2–4 documents or versions; v2 requires identical cited shared sentences; two targeted real comparisons returned correct retained results; [details](docs/EVALUATION.md) | `services/comparisons.py`, `POST /comparisons` |
+| Comparative analysis between documents (BONUS) | Implemented for 2-4 documents or versions; v2 requires identical cited shared sentences; two targeted real comparisons returned correct retained results; [details](docs/EVALUATION.md) | `services/comparisons.py`, `POST /comparisons` |
 | Rate limiting and quota management (BONUS) | Done: per-client limits in Redis (`429 RATE_LIMITED` + `Retry-After`) next to the spend cap | `core/ratelimit.py` |
 | Document version tracking (BONUS) | Done: new versions keep history; vault-wide chat uses the latest | `POST /documents/{id}/versions` |
 
 ## 2. Quickstart
 
-Prerequisites: Docker Desktop (or Docker Engine + Compose v2). Nothing else is needed on the host.
+Prerequisites: Git and Docker Desktop (or Docker Engine with a recent Compose v2).
+The application itself runs in containers; host Python and Node.js are not required.
+The optional curl walkthrough needs Bash, curl and Python.
+
+```bash
+git clone https://github.com/hpxdev/docVault.git
+cd docVault
+```
+
+Copy the configuration example in Bash:
 
 ```bash
 cp .env.example .env
 ```
 
+In PowerShell, use `Copy-Item .env.example .env` instead.
+
 Edit `.env`:
-- either set `OPENAI_API_KEY=sk-...` (keep it on its own line, no comment after it),
-- or set `AI_PROVIDER=fake` to run without a key (deterministic test doubles, clearly labelled
-  "FAKE AI MODE"; useful to try the plumbing, not AI quality).
+- For a no-cost first run, set `AI_PROVIDER=fake`. The UI displays a FAKE AI MODE banner.
+- For real AI, keep `AI_PROVIDER=openai` and set `OPENAI_API_KEY` on its own line, with
+  no comment after the key. Uploads trigger paid embedding and analysis calls; questions
+  and uncached summaries/comparisons can also incur cost. Configure the spend limit first.
+- Keep `.env` local. It is excluded from Git.
 
 ```bash
 docker compose up --build
@@ -109,14 +93,16 @@ docker compose up --build
 - Readiness: http://localhost:8000/api/v1/health/ready
 - Migrations run automatically when the API container starts.
 
-Stop with `docker compose down` (add `-v` to delete the database and stored files).
+Stop with `docker compose down`. This keeps the database and uploaded files for the next run.
+Use `docker compose down -v` only if you intend to delete this project's database and file volumes.
+Ports 5173 and 8000 must be free. This setup is for local review, not public hosting.
 
 ## 3. Configuration
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `AI_PROVIDER` | `openai` | `openai` or `fake` (deterministic doubles; every record gets `model="fake"`, responses say `ai_mode: fake`) |
-| `OPENAI_API_KEY` | — | Only in `.env`, never committed. Without it in `openai` mode the API starts, AI stages fail with `AI_NOT_CONFIGURED`, `/health/ready` reports it |
+| `OPENAI_API_KEY` |  -  | Only in `.env`, never committed. Without it in `openai` mode the API starts, AI stages fail with `AI_NOT_CONFIGURED`, `/health/ready` reports it |
 | `OPENAI_CHAT_MODEL` | `gpt-4o-mini` | Chat/insights model (must have a price in `app/ai/pricing.py`) |
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
 | `EMBEDDING_DIMENSIONS` | `1536` | Must match the `vector(1536)` column |
@@ -204,7 +190,7 @@ curl "$API/metrics/processing?window=24h"
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /documents` | Upload 1–10 files (`files`); per-file `accepted` / `duplicate` / `rejected`; 202 unless every file is rejected |
+| `POST /documents` | Upload 1-10 files (`files`); per-file `accepted` / `duplicate` / `rejected`; 202 unless every file is rejected |
 | `GET /documents` | List (newest first, latest versions only unless `all_versions=true`); filters `status`, `q` (filename), `category`; `limit`/`offset` |
 | `GET /documents/{id}` | Detail: stage statuses, `chat_ready`, counts, warnings, last error |
 | `GET /documents/{id}/content` | Extracted original text by page/section with locators (paginated) |
@@ -214,7 +200,7 @@ curl "$API/metrics/processing?window=24h"
 | `GET /documents/{id}/versions` | All versions of the document, newest first |
 | `POST /documents/{id}/summaries` | Custom summary (`length`, `tone`, `focus`); identical options return the stored result (`cached: true`, no AI cost) |
 | `GET /documents/{id}/summaries` | Custom summaries generated for the document |
-| `POST /comparisons` | Compare 2–4 documents (`document_ids`, optional `focus`): overview, similarities, differences, each cited; stored and reused |
+| `POST /comparisons` | Compare 2-4 documents (`document_ids`, optional `focus`): overview, similarities, differences, each cited; stored and reused |
 | `GET /comparisons?document_id=`, `GET /comparisons/{id}` | Past comparisons |
 | `POST /documents/{id}/reprocess?stages=` | Re-run failed (default) or chosen stages; `409` while processing |
 | `DELETE /documents/{id}` | Delete this version: file, segments, chunks, insights, custom summaries, comparisons that include it, cached metrics; old citations keep their snapshot; the newest remaining version becomes the latest |
@@ -298,7 +284,7 @@ document FKs set NULL on delete) · `ai_calls` (ledger; no FKs so spend survives
 - **Retrieval SQL is our own** (not LangChain's PGVector store): it lets us enforce the scope
   filter, exact scans and hybrid fusion. LangChain is used for model wrappers, structured output,
   prompt templates and the token splitter.
-- **SSE, not WebSocket.** Both chat tokens and document status flow one way (server → browser);
+- **SSE for one-way updates.** Both chat tokens and document status flow one way (server → browser);
   the question goes up as a normal POST and "stop generating" is just closing the stream. SSE runs
   over plain HTTP, gives the same live experience as the brief's WebSocket bonus, and needs no
   extra protocol. FastAPI 0.143's native `EventSourceResponse` is used (no `sse-starlette`).
@@ -331,8 +317,8 @@ document FKs set NULL on delete) · `ai_calls` (ledger; no FKs so spend survives
 
 Prompts are versioned files in `backend/app/prompts/` and every stored output records its
 `prompt_version`. Answers must cite `[S#]` after every factual sentence or start with
-`[NO_ANSWER]`; source text is delimited and declared to be data, so instructions inside documents
-are ignored. The server then removes any marker it did not provide (`unsupported` if none valid
+`[NO_ANSWER]`; source text is delimited and declared to be untrusted data. This instructs the model
+to ignore commands inside documents, but does not establish general prompt-injection resistance. The server then removes any marker it did not provide (`unsupported` if none valid
 remain) and maps valid ones to the stored chunk text. Insights use one structured call for
 documents up to 60K tokens and map-reduce over ~8K-token groups above that, so the whole document
 is covered; page references outside the document are dropped and counted. Retrieval fuses vector
@@ -345,8 +331,7 @@ multi-document chats. Details: [docs/PROMPTS.md](docs/PROMPTS.md); architecture 
 Nothing below has been load-tested; it is how the design is meant to scale.
 - Upload is O(file size) streaming + one insert; heavy work runs in workers that scale
   horizontally; `ingest` and `ai` queues can be scaled separately.
-- Document-scoped retrieval is an exact scan over that scope's chunks (fast for thousands of
-  chunks, always correct); vault-wide uses HNSW. Whether Postgres picks HNSW depends on table size;
+- Document-scoped retrieval is an exact scan over that scope's chunks (intended for smaller scoped collections); vault-wide uses HNSW. Whether Postgres picks HNSW depends on table size;
   at the few-thousand-chunk scale tested locally it preferred the `document_id` btree (correct,
   cheaper there). **NOT VERIFIED** at large scale.
 - All list endpoints are paginated and indexed. Next steps: S3 storage, cursor pagination,
@@ -361,7 +346,7 @@ the database on a miss) is checked before each call; at `AI_SPEND_LIMIT_USD` cal
 `AI_BUDGET_EXCEEDED` (429), without retry. The cap can be overshot by at most the calls already in
 flight. Embedding tokens are counted locally with the model's tokenizer (LangChain does not
 return embedding usage). **All cost figures are estimates**, not invoice amounts. Rough design
-estimates (not measured): ~$0.01–0.02 per 100-page document, ~$0.001 per question.
+estimates (not measured): ~$0.01-0.02 per 100-page document, ~$0.001 per question.
 
 ## Web UI
 
@@ -388,7 +373,7 @@ react-markdown. API types are generated from the backend's OpenAPI schema
 - **Library:** all documents with status, filters, insights drawer (summary, key points with
   pages/sections, entities, tags, tone), reprocess and delete. The drawer also has a **custom
   summary** form (length, tone, focus) and a **versions** panel (upload a new version, switch
-  between versions, "What changed since v1?"). Tick 2–4 documents and press **Compare** for the
+  between versions, "What changed since v1?"). Tick 2-4 documents and press **Compare** for the
   comparison page (`#/compare/<id>`): differences as a table with one column per document,
   similarities, and page chips that open the original PDF at that page. "Older versions" shows
   superseded versions.
@@ -402,7 +387,7 @@ react-markdown. API types are generated from the backend's OpenAPI schema
 Development (hot reload, proxying to the API on :8000):
 
 ```bash
-cd frontend && npm install && npm run dev      # http://localhost:5173 (stop the web container first)
+cd frontend && npm ci && npm run dev      # http://localhost:5173 (stop the web container first)
 npm run build                                  # strict type-check + production build
 ```
 
@@ -413,7 +398,7 @@ docker compose -f compose.test.yml run --rm tests                  # full fake-m
 docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff format --check ."
 ```
 
-- **Fake-mode suite (144 tests)** runs against real Postgres + pgvector and Redis containers.
+- **Fake-mode suite** runs against real Postgres + pgvector and Redis containers.
   `FakeEmbeddings` is a hashed bag-of-words (lexical similarity is real, so retrieval tests mean
   something); `FakeChatModel` is scripted. It proves the plumbing: upload rules, extraction codes
   and locators, state machine and retries, idempotency, concurrency, retrieval scope and fusion,
@@ -424,19 +409,32 @@ docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff fo
   `RUN_LIVE_AI_TESTS=1`, `TEST_AI_PROVIDER=openai` and approved spend; results go to
   `docs/EVALUATION.md`.
 
-- **Frontend:** no automated UI tests; `npm run build` (strict type-check) plus manual checks in
-  a browser against the running stack in fake mode (see docs/ai-log.md, T20–T23).
+- **Frontend:** `npm run build` performs the strict TypeScript check and production build.
+  Browser checks cover rendered screens and selected interactions; there is no automated UI
+  regression suite. See [final verification](docs/SUBMISSION_CHECK.md) for the current results.
 
 ## 12. Known limitations
 
-No OCR · single user, no authentication · English-oriented full-text search · local file
-storage · `gpt-4o-mini` is deprecated by OpenAI (shutdown 2027-01-14; `OPENAI_CHAT_MODEL` is
-configurable) · cost figures are estimates · real-model quality checked only on a 10-question,
-single-document smoke test (docs/EVALUATION.md) · custom summaries and comparisons checked
-with the real model on one document pair only; `summary.custom.v1` added content that was not in
-the document (invented "risks"; fixed in re-tests of v2 and v3), and the server cannot detect such
-content in general · rate limits key on the
-socket address, so behind a proxy every client shares one limit.
+- Local, single-user application with no authentication or tenant isolation. Do not expose this
+  demo directly to the public internet.
+- No OCR. Scanned PDFs without extractable text cannot be processed. Full-text retrieval is
+  configured for English.
+- Citation validation checks that sources exist in the supplied context. It does not prove
+  that every generated statement follows from them.
+- Real-model checks use a small synthetic document set. Earlier prompts produced unsupported
+  content and missed focus topics. Current prompt revisions passed targeted checks, but broad
+  reliability, injection resistance and large-scale throughput remain unverified.
+- Comparisons use conservative identical-sentence checks for similarities and can miss valid
+  similarities expressed in different words. Custom summaries can use only selected parts of
+  long documents; coverage information identifies this.
+- Model availability and provider prices can change. The configured models and local pricing
+  table must be reviewed before a future real-mode run. Recorded cost figures are estimates.
+- The spend check runs before a call and does not reserve funds atomically. Concurrent calls
+  already in flight can exceed the configured threshold.
+- Rate limits use the socket address, so clients behind a proxy share a limit. Redis failures
+  allow requests through with a warning log.
+- Data uses local Docker volumes. There is no production backup, high availability or hosted
+  deployment in this submission.
 
 ## 13. Future work
 

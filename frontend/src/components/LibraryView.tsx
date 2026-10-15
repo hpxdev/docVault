@@ -7,11 +7,11 @@ import { useDocumentEvents } from "../hooks/useDocumentEvents";
 import { errorText, formatBytes, relativeTime, statusLabel } from "../lib/format";
 
 const STATUS_TONE: Record<string, string> = {
-  ready: "bg-emerald-100 text-emerald-800",
-  partial: "bg-amber-100 text-amber-800",
-  failed: "bg-red-100 text-red-800",
-  processing: "bg-blue-100 text-blue-800",
-  queued: "bg-neutral-200 text-neutral-700",
+  ready: "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200",
+  partial: "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200",
+  failed: "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-200",
+  processing: "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200",
+  queued: "bg-neutral-200 dark:bg-[#39423c] text-neutral-700 dark:text-neutral-300",
 };
 
 export function LibraryView({
@@ -83,19 +83,19 @@ export function LibraryView({
   return (
     <div className="flex h-full min-w-0 flex-1">
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center gap-3 border-b border-neutral-200 px-6 py-3">
+        <header className="flex flex-wrap items-center gap-3 border-b border-neutral-200 dark:border-[#364139] px-6 py-3">
           <h1 className="mr-auto font-semibold">Library</h1>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search filenames…"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-500"
+            className="rounded-lg border border-neutral-300 dark:border-[#48544b] px-3 py-1.5 text-sm outline-none focus:border-neutral-500"
             aria-label="Search filenames"
           />
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+            className="rounded-lg border border-neutral-300 dark:border-[#48544b] px-2 py-1.5 text-sm"
             aria-label="Filter by status"
           >
             <option value="">All statuses</option>
@@ -105,7 +105,7 @@ export function LibraryView({
               </option>
             ))}
           </select>
-          <label className="flex items-center gap-1.5 text-sm text-neutral-700">
+          <label className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300">
             <input
               type="checkbox"
               checked={allVersions}
@@ -117,7 +117,7 @@ export function LibraryView({
           <button
             onClick={() => compare.mutate(picked)}
             disabled={picked.length < 2 || compare.isPending}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50"
+            className="rounded-lg border border-neutral-300 dark:border-[#48544b] px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-[#252b27] disabled:opacity-50"
             title="Tick 2–4 documents to compare them"
           >
             {compare.isPending ? "Comparing…" : `Compare${picked.length ? ` (${picked.length})` : ""}`}
@@ -137,21 +137,21 @@ export function LibraryView({
           </label>
         </header>
         {notice && (
-          <div className="mx-6 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          <div className="mx-6 mt-3 rounded-lg bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-800 dark:text-red-200" role="alert">
             {notice}
           </div>
         )}
         <div className="flex-1 overflow-auto px-6 py-4">
-          {docs.isLoading && <div className="text-neutral-500">Loading…</div>}
-          {docs.error && <div className="text-red-700">Could not load documents.</div>}
+          {docs.isLoading && <div className="text-neutral-500 dark:text-[#a0aca3]">Loading…</div>}
+          {docs.error && <div className="text-red-700 dark:text-red-300">Could not load documents.</div>}
           {docs.data && items.length === 0 && (
-            <div className="py-16 text-center text-neutral-500">
+            <div className="py-16 text-center text-neutral-500 dark:text-[#a0aca3]">
               No documents{q || status ? " match these filters" : " yet — upload some to get started"}.
             </div>
           )}
           {items.length > 0 && (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-neutral-500">
+              <thead className="text-xs uppercase tracking-wide text-neutral-500 dark:text-[#a0aca3]">
                 <tr>
                   <th className="w-8 py-2 pr-2 font-medium">
                     <span className="sr-only">Select for comparison</span>
@@ -167,7 +167,7 @@ export function LibraryView({
               </thead>
               <tbody className="divide-y divide-neutral-100">
                 {items.map((d) => (
-                  <tr key={d.id} className={selected?.id === d.id ? "bg-neutral-50" : ""}>
+                  <tr key={d.id} className={selected?.id === d.id ? "bg-neutral-50 dark:bg-[#252b27]" : ""}>
                     <td className="py-2.5 pr-2">
                       <input
                         type="checkbox"
@@ -189,7 +189,7 @@ export function LibraryView({
                         <VersionBadge doc={d} />
                       </div>
                       {d.error && (
-                        <div className="truncate text-xs text-red-700" title={d.error.message ?? ""}>
+                        <div className="truncate text-xs text-red-700 dark:text-red-300" title={d.error.message ?? ""}>
                           {errorText(d.error.code, d.error.message)}
                         </div>
                       )}
@@ -199,23 +199,23 @@ export function LibraryView({
                         {statusLabel(d.status, d.chat_ready)}
                       </span>
                     </td>
-                    <td className="py-2.5 pr-4 uppercase text-neutral-600 max-md:hidden">
+                    <td className="py-2.5 pr-4 uppercase text-neutral-600 dark:text-neutral-400 max-md:hidden">
                       {d.file_type}
                       {d.page_count ? ` · ${d.page_count} p` : ""}
                     </td>
-                    <td className="py-2.5 pr-4 text-neutral-600 max-md:hidden">{formatBytes(d.size_bytes)}</td>
-                    <td className="py-2.5 pr-4 text-neutral-600 max-lg:hidden">{d.category ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-neutral-600 max-lg:hidden">{relativeTime(d.created_at)}</td>
+                    <td className="py-2.5 pr-4 text-neutral-600 dark:text-neutral-400 max-md:hidden">{formatBytes(d.size_bytes)}</td>
+                    <td className="py-2.5 pr-4 text-neutral-600 dark:text-neutral-400 max-lg:hidden">{d.category ?? "—"}</td>
+                    <td className="py-2.5 pr-4 text-neutral-600 dark:text-neutral-400 max-lg:hidden">{relativeTime(d.created_at)}</td>
                     <td className="whitespace-nowrap py-2.5 text-right">
                       {d.chat_ready && (
-                        <button onClick={() => onChatWith(d)} className="rounded px-2 py-1 text-emerald-700 hover:bg-emerald-50">
+                        <button onClick={() => onChatWith(d)} className="rounded px-2 py-1 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950">
                           Chat
                         </button>
                       )}
                       {(d.status === "failed" || d.status === "partial") && (
                         <button
                           onClick={() => reprocess.mutate(d.id)}
-                          className="rounded px-2 py-1 text-blue-700 hover:bg-blue-50"
+                          className="rounded px-2 py-1 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
                         >
                           Reprocess
                         </button>
@@ -225,7 +225,7 @@ export function LibraryView({
                           if (confirm(`Delete "${d.filename}"? Past citations keep their excerpts.`))
                             remove.mutate(d.id);
                         }}
-                        className="rounded px-2 py-1 text-red-700 hover:bg-red-50"
+                        className="rounded px-2 py-1 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950"
                       >
                         Delete
                       </button>
@@ -255,7 +255,7 @@ function VersionBadge({ doc }: { doc: DocumentOut }) {
   return (
     <span
       className={`shrink-0 rounded px-1.5 text-xs leading-5 ${
-        doc.is_latest ? "bg-blue-100 text-blue-800" : "bg-neutral-200 text-neutral-600"
+        doc.is_latest ? "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200" : "bg-neutral-200 dark:bg-[#39423c] text-neutral-600 dark:text-neutral-400"
       }`}
       title={doc.is_latest ? "Latest version" : "A newer version exists"}
     >
@@ -285,10 +285,10 @@ function InsightsDrawer({
   const data = insights.data;
   return (
     <aside
-      className="flex h-full w-[28rem] shrink-0 flex-col border-l border-neutral-200 bg-neutral-50 max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-20 max-lg:shadow-xl"
+      className="flex h-full w-[28rem] shrink-0 flex-col border-l border-neutral-200 dark:border-[#364139] bg-neutral-50 dark:bg-[#252b27] max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-20 max-lg:shadow-xl"
       aria-label="Insights"
     >
-      <div className="flex items-start justify-between gap-2 border-b border-neutral-200 p-4">
+      <div className="flex items-start justify-between gap-2 border-b border-neutral-200 dark:border-[#364139] p-4">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-1.5">
             <div className="truncate font-semibold" title={doc.filename}>
@@ -296,46 +296,46 @@ function InsightsDrawer({
             </div>
             <VersionBadge doc={doc} />
           </div>
-          <div className="text-xs text-neutral-500">
+          <div className="text-xs text-neutral-500 dark:text-[#a0aca3]">
             {doc.file_type.toUpperCase()}
             {doc.page_count ? ` · ${doc.page_count} pages` : ` · ${doc.segment_count ?? 0} sections`}
             {doc.warnings.length > 0 &&
               ` · ${doc.warnings.map((w) => (w.code === "EMPTY_PAGES" ? `empty pages ${(w.pages as number[]).join(", ")}` : w.code)).join("; ")}`}
           </div>
         </div>
-        <button onClick={onClose} className="rounded px-2 py-1 text-sm text-neutral-500 hover:bg-neutral-200" aria-label="Close insights">
+        <button onClick={onClose} className="rounded px-2 py-1 text-sm text-neutral-500 dark:text-[#a0aca3] hover:bg-neutral-200 dark:hover:bg-[#39423c]" aria-label="Close insights">
           ✕
         </button>
       </div>
       <div className="flex-1 space-y-5 overflow-y-auto p-4 text-sm">
-        {insights.isLoading && <div className="text-neutral-500">Loading insights…</div>}
+        {insights.isLoading && <div className="text-neutral-500 dark:text-[#a0aca3]">Loading insights…</div>}
         {notReady && (
-          <div className="text-neutral-600">
+          <div className="text-neutral-600 dark:text-neutral-400">
             Insights are not available yet (status: {doc.status}).
           </div>
         )}
-        {insights.error && !notReady && <div className="text-red-700">Could not load insights.</div>}
+        {insights.error && !notReady && <div className="text-red-700 dark:text-red-300">Could not load insights.</div>}
         {data && (
           <>
             {data.ai_mode === "fake" && (
-              <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+              <div className="rounded bg-amber-100 dark:bg-amber-950 px-2 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
                 FAKE AI MODE — placeholder insights from the test double
               </div>
             )}
             <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500">Summary</h3>
+              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Summary</h3>
               <p>{data.summary_short}</p>
               <details className="mt-2">
-                <summary className="cursor-pointer text-neutral-600">Detailed summary</summary>
+                <summary className="cursor-pointer text-neutral-600 dark:text-neutral-400">Detailed summary</summary>
                 <p className="mt-1 whitespace-pre-wrap">{data.summary_detailed}</p>
               </details>
             </section>
             <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500">Key points</h3>
+              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Key points</h3>
               <ul className="space-y-1.5">
                 {data.key_points.map((kp, i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="shrink-0 rounded bg-neutral-200 px-1.5 text-xs leading-5 text-neutral-700">
+                    <span className="shrink-0 rounded bg-neutral-200 dark:bg-[#39423c] px-1.5 text-xs leading-5 text-neutral-700 dark:text-neutral-300">
                       {kp.pages.length ? `p. ${kp.pages.join(", ")}` : `§ ${(kp.sections ?? []).join(", ")}`}
                     </span>
                     <span>{kp.text}</span>
@@ -344,17 +344,17 @@ function InsightsDrawer({
               </ul>
             </section>
             <section className="flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+              <span className="rounded-full bg-blue-100 dark:bg-blue-950 px-2 py-0.5 text-xs font-medium text-blue-800 dark:text-blue-200">
                 {data.category}
               </span>
               {data.tags.map((t) => (
-                <span key={t} className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs">
+                <span key={t} className="rounded-full bg-neutral-200 dark:bg-[#39423c] px-2 py-0.5 text-xs">
                   {t}
                 </span>
               ))}
             </section>
             <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500">Tone</h3>
+              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Tone</h3>
               <p>
                 <span className="font-medium">{(data.sentiment.label as string | null) ?? "unknown"}</span>
                 {data.sentiment.rationale ? ` — ${data.sentiment.rationale as string}` : ""}
@@ -362,7 +362,7 @@ function InsightsDrawer({
             </section>
             {Object.entries(data.entities).some(([, v]) => v.length) && (
               <section>
-                <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500">Entities</h3>
+                <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Entities</h3>
                 <dl className="space-y-1">
                   {Object.entries(data.entities)
                     .filter(([, v]) => v.length)
@@ -376,14 +376,14 @@ function InsightsDrawer({
               </section>
             )}
             <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500">Suggested questions</h3>
+              <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Suggested questions</h3>
               <ul className="list-disc space-y-1 pl-5">
                 {data.suggested_questions.map((s) => (
                   <li key={s}>{s}</li>
                 ))}
               </ul>
             </section>
-            <div className="text-xs text-neutral-500">
+            <div className="text-xs text-neutral-500 dark:text-[#a0aca3]">
               {data.model} · {data.prompt_version} · coverage {String(data.coverage.segments_covered)}/
               {String(data.coverage.segments_total)} ({String(data.coverage.method)})
             </div>
@@ -392,8 +392,8 @@ function InsightsDrawer({
         {doc.stages.extract === "succeeded" && <CustomSummaryPanel doc={doc} />}
         <VersionsPanel doc={doc} onSelect={onSelect} onOpenComparison={onOpenComparison} />
       </div>
-      <div className="border-t border-neutral-200 p-4 text-sm">
-        <a href={api.fileUrl(doc.id)} target="_blank" rel="noreferrer" className="text-blue-700 underline">
+      <div className="border-t border-neutral-200 dark:border-[#364139] p-4 text-sm">
+        <a href={api.fileUrl(doc.id)} target="_blank" rel="noreferrer" className="text-blue-700 dark:text-blue-300 underline">
           Open original file
         </a>
       </div>
@@ -414,8 +414,8 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
     onSuccess: setResult,
   });
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase text-neutral-500">Custom summary</h3>
+    <section className="rounded-lg border border-neutral-200 dark:border-[#364139] bg-white dark:bg-[#202421] p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Custom summary</h3>
       <form
         className="flex flex-wrap items-center gap-2"
         onSubmit={(e) => {
@@ -426,7 +426,7 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
         <select
           value={length}
           onChange={(e) => setLength(e.target.value as SummaryRequest["length"])}
-          className="rounded border border-neutral-300 px-1.5 py-1"
+          className="rounded border border-neutral-300 dark:border-[#48544b] px-1.5 py-1"
           aria-label="Summary length"
         >
           {LENGTHS.map((l) => (
@@ -438,7 +438,7 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
         <select
           value={tone}
           onChange={(e) => setTone(e.target.value as SummaryRequest["tone"])}
-          className="rounded border border-neutral-300 px-1.5 py-1"
+          className="rounded border border-neutral-300 dark:border-[#48544b] px-1.5 py-1"
           aria-label="Summary tone"
         >
           {TONES.map((t) => (
@@ -452,7 +452,7 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
           onChange={(e) => setFocus(e.target.value)}
           maxLength={200}
           placeholder="Focus (optional), e.g. budget and risks"
-          className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-1"
+          className="min-w-0 flex-1 rounded border border-neutral-300 dark:border-[#48544b] px-2 py-1"
           aria-label="Summary focus"
         />
         <button
@@ -464,25 +464,25 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
         </button>
       </form>
       {generate.error && (
-        <div className="mt-2 text-red-700" role="alert">
+        <div className="mt-2 text-red-700 dark:text-red-300" role="alert">
           {generate.error instanceof ApiError ? generate.error.message : "Could not generate the summary."}
         </div>
       )}
       {result && (
         <div className="mt-3 space-y-2">
           {result.ai_mode === "fake" && (
-            <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+            <div className="rounded bg-amber-100 dark:bg-amber-950 px-2 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
               FAKE AI MODE — placeholder summary from the test double
             </div>
           )}
           {result.focus && result.focus_covered === false && (
-            <div className="rounded bg-amber-50 px-2 py-1 text-amber-900">
+            <div className="rounded bg-amber-50 dark:bg-amber-950 px-2 py-1 text-amber-900 dark:text-amber-200">
               {result.coverage.complete === false ? "The selected parts do not" : "The document does not"}
               {" "}address "{result.focus}".
             </div>
           )}
           {result.focus_covered !== false && (result.focus_not_addressed ?? []).length > 0 && (
-            <div className="rounded bg-amber-50 px-2 py-1 text-amber-900">
+            <div className="rounded bg-amber-50 dark:bg-amber-950 px-2 py-1 text-amber-900 dark:text-amber-200">
               {result.coverage.complete === false
                 ? "Not found in the selected parts:"
                 : "Not in the document:"}{" "}
@@ -494,7 +494,7 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
             <ul className="space-y-1.5">
               {result.key_points.map((kp, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="shrink-0 rounded bg-neutral-200 px-1.5 text-xs leading-5 text-neutral-700">
+                  <span className="shrink-0 rounded bg-neutral-200 dark:bg-[#39423c] px-1.5 text-xs leading-5 text-neutral-700 dark:text-neutral-300">
                     {kp.pages.length ? `p. ${kp.pages.join(", ")}` : `§ ${(kp.sections ?? []).join(", ")}`}
                   </span>
                   <span>{kp.text}</span>
@@ -502,7 +502,7 @@ function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
               ))}
             </ul>
           )}
-          <div className="text-xs text-neutral-500">
+          <div className="text-xs text-neutral-500 dark:text-[#a0aca3]">
             {result.length} · {result.tone} · {result.model}
             {result.cached ? " · stored result (no AI cost)" : ""}
             {result.coverage.complete === false &&
@@ -550,10 +550,10 @@ function VersionsPanel({
   const items = versions.data?.items ?? [];
   const previous = items.find((v) => v.version < doc.version && v.stages.extract === "succeeded");
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-3">
+    <section className="rounded-lg border border-neutral-200 dark:border-[#364139] bg-white dark:bg-[#202421] p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase text-neutral-500">Versions</h3>
-        <label className="cursor-pointer rounded border border-neutral-300 px-2 py-0.5 text-xs font-medium hover:bg-neutral-50">
+        <h3 className="text-xs font-semibold uppercase text-neutral-500 dark:text-[#a0aca3]">Versions</h3>
+        <label className="cursor-pointer rounded border border-neutral-300 dark:border-[#48544b] px-2 py-0.5 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-[#252b27]">
           {upload.isPending ? "Uploading…" : "Upload new version"}
           <input
             type="file"
@@ -568,7 +568,7 @@ function VersionsPanel({
         </label>
       </div>
       {error && (
-        <div className="mb-2 text-red-700" role="alert">
+        <div className="mb-2 text-red-700 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
@@ -582,7 +582,7 @@ function VersionsPanel({
             >
               v{v.version} · {v.filename}
             </button>
-            <span className="shrink-0 text-xs text-neutral-500">
+            <span className="shrink-0 text-xs text-neutral-500 dark:text-[#a0aca3]">
               {v.is_latest ? "latest · " : ""}
               {relativeTime(v.created_at)}
             </span>
@@ -593,7 +593,7 @@ function VersionsPanel({
         <button
           onClick={() => compare.mutate([previous.id, doc.id])}
           disabled={compare.isPending}
-          className="mt-2 rounded border border-neutral-300 px-2 py-0.5 text-xs font-medium hover:bg-neutral-50 disabled:opacity-50"
+          className="mt-2 rounded border border-neutral-300 dark:border-[#48544b] px-2 py-0.5 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-[#252b27] disabled:opacity-50"
         >
           {compare.isPending ? "Comparing…" : `What changed since v${previous.version}?`}
         </button>
