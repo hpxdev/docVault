@@ -187,14 +187,19 @@ document's chunks (delete + insert) and insights upsert on `(document_id, prompt
 ```
 documents 1─* document_segments 1─* chunks (vector(1536), tsv GENERATED, HNSW + GIN + btree)
 documents 1─* document_insights (unique document_id + prompt_version)
+documents 1─* document_summaries (unique document_id + params_key + prompt_version + model)
+documents *── version group (version_group_id, version, is_latest; one latest per group)
+document_comparisons (document_ids uuid[] + snapshot; GIN; removed with any of its documents)
 documents 1─* processing_runs
 chat_sessions *─* documents (chat_session_documents)
 chat_sessions 1─* messages 1─* message_citations ─→ chunks/documents (ON DELETE SET NULL; snapshot kept)
 ai_calls (ledger; no foreign keys, so spend survives deletions)
 ```
 
-Deletes cascade from documents to segments, chunks, insights, runs and session links. Citations
-keep their document name, locator and excerpt.
+Deletes cascade from documents to segments, chunks, insights, custom summaries, runs and
+session links; comparisons that include the document are deleted explicitly (an array has no
+foreign key). Citations keep their document name, locator and excerpt. Deleting the latest
+version makes the newest remaining version the latest, under a lock on the version group.
 
 ## 8. Realtime: why SSE
 
@@ -212,12 +217,40 @@ only be worth its complexity for a two-way need (collaboration, voice, mid-strea
 | Query embeddings | `qemb:{embedding_model}:{sha256(lowercased, whitespace-collapsed query)}` | 7 days; a new model changes the key |
 | Metrics responses | `metrics:documents`, `metrics:processing:{window}` | 15 s; cleared on upload, reprocess, delete |
 | Duplicate uploads | `documents.sha256` unique | until the document is deleted |
+| Custom summaries | `document_summaries` row per document + options + prompt version + model | until the document is deleted |
+| Comparisons | `document_comparisons` row per sorted document ids + focus + prompt version + model | until one of the documents is deleted |
+| Rate-limit counters | `rl:{group}:{client}:{minute}` | 65 s |
 | Spend total | `ai:spend_total_usd` | 1 h; recomputed from `ai_calls` on a miss; incremented atomically after each call |
 
 Chat answers are not cached: the same text in another session can need a different answer
 (different scope and history), and reuse could cite documents outside the current scope.
 
-## 10. Observability
+## 10. Versions, on-demand AI and rate limits
+
+**Versions.** `POST /documents/{id}/versions` runs the normal upload checks (size, type sniffing,
+SHA-256), then locks every row of the version group (`SELECT … FOR UPDATE`, `populate_existing`),
+clears `is_latest` on them, flushes, and inserts the new row as version max + 1. A partial unique
+index (`version_group_id WHERE is_latest`) makes "two latest versions" impossible even if the
+code were wrong; concurrent new-version uploads queue on the lock. The new version is processed
+like any upload. Vault-wide retrieval filters `is_latest`; document-scoped chats keep the
+version they were attached to.
+
+**Custom summaries and comparisons** run in the API process (async LangChain `ainvoke` with
+strict structured output) instead of Celery: one call of a few seconds, and the client wants the
+result now. The request's DB transaction is committed before the AI call, so no locks or
+snapshots are held while waiting. Both go through the same spend cap and `ai_calls` ledger
+(purposes `summary_custom` and `compare`); a comparison's ledger row has no `document_id`
+because it spans several documents. Results are stored (see Caching).
+
+**Rate limits** (`core/ratelimit.py`) are FastAPI route dependencies that run before the
+endpoint's own dependencies, so a rejected question never stores a user message. Groups: `ai`
+(ask, ask-stream, custom summary, comparison) and `upload` (upload, new version, reprocess). A
+Lua `INCR`+`EXPIRE` on `rl:{group}:{client ip}:{minute}` counts requests; over the limit, the
+response is `429 RATE_LIMITED` with `Retry-After`; every limited response carries
+`X-RateLimit-Limit/Remaining/Reset`. Redis errors fail open (logged). The AI spend cap remains
+the hard cost limit; rate limits stop bursts and runaway clients.
+
+## 11. Observability
 
 JSON log lines with `request_id` and IDs, stages, durations, token counts and costs (an
 allow-list in the formatter keeps document text and prompts out of logs). `X-Request-ID` on every

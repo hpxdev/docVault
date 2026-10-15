@@ -63,3 +63,44 @@ class SectionNotesLLM(_Strict):
     key_points: list[KeyPointLLM] = Field(description="Up to 6 points covering this section group")
     entities: EntitiesLLM
     figures: list[str] = Field(description="Notable numbers with their context, verbatim")
+
+
+class CustomSummaryLLM(_Strict):
+    focus_covered: bool = Field(
+        description="False if the document says nothing about the requested focus (true when no "
+        "focus was requested)"
+    )
+    summary: str = Field(description="The summary, within the requested word limit")
+    key_points: list[KeyPointLLM] = Field(description="Key points, within the requested count")
+
+
+class DocumentRefsLLM(_Strict):
+    document: str = Field(description="Document label, e.g. D1")
+    refs: list[int] = Field(description="Numbers of that document's [Page N] / [Section N] markers")
+
+
+class SimilarityLLM(_Strict):
+    text: str = Field(description="One point the documents have in common")
+    sources: list[DocumentRefsLLM] = Field(description="Where each document states it")
+
+
+class PositionLLM(_Strict):
+    document: str = Field(description="Document label, e.g. D1")
+    statement: str = Field(
+        description="What this document says about the aspect, or exactly 'Not addressed'"
+    )
+    refs: list[int] = Field(description="Marker numbers in this document; empty if not addressed")
+
+
+class DifferenceLLM(_Strict):
+    aspect: str = Field(description="The topic on which the documents differ, a few words")
+    positions: list[PositionLLM] = Field(description="One entry per document")
+
+
+class ComparisonLLM(_Strict):
+    focus_covered: bool = Field(
+        description="False if none of the documents addresses the requested focus"
+    )
+    overview: str = Field(description="At most 120 words")
+    similarities: list[SimilarityLLM] = Field(description="Up to 6 shared points")
+    differences: list[DifferenceLLM] = Field(description="Up to 8 differences or conflicts")

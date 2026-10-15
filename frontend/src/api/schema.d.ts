@@ -112,9 +112,11 @@ export interface paths {
         post?: never;
         /**
          * Delete a document and everything derived from it
-         * @description Deletes the file, segments, chunks, insights and session links, and clears cached metrics.
-         *     Past chat citations keep their snapshot (document name, locator, excerpt); their `chunk_id`
-         *     and `document_id` become null. The AI cost ledger is kept.
+         * @description Deletes the file, segments, chunks, insights, custom summaries, comparisons that include
+         *     it and session links, and clears cached metrics. Past chat citations keep their snapshot
+         *     (document name, locator, excerpt); their `chunk_id` and `document_id` become null. The AI
+         *     cost ledger is kept. Only this version is deleted: if it was the latest, the newest remaining
+         *     version becomes the latest.
          */
         delete: operations["delete_document_api_v1_documents__document_id__delete"];
         options?: never;
@@ -177,6 +179,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All versions of a document (newest first) */
+        get: operations["list_versions_api_v1_documents__document_id__versions_get"];
+        put?: never;
+        /**
+         * Upload a new version of a document
+         * @description The file becomes version N+1 of the document's version group and is processed like a new
+         *     upload; `document_id` may be any version of the group. Older versions are kept with their
+         *     insights and chat citations (`is_latest: false`); vault-wide chat and the default document
+         *     list use the latest version only, while chats that were attached to an older version keep
+         *     it. The new version may have a different file type or name.
+         *
+         *     `409 VERSION_UNCHANGED`: the file is byte-identical to a version of this document;
+         *     `409 DUPLICATE_CONTENT`: it is identical to a different document.
+         */
+        post: operations["upload_version_api_v1_documents__document_id__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/summaries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Custom summaries generated for this document (newest first) */
+        get: operations["list_summaries_api_v1_documents__document_id__summaries_get"];
+        put?: never;
+        /**
+         * Custom summary: choose length, tone and focus
+         * @description Summarises the document's extracted text with the chosen options. Key points cite their
+         *     pages (PDF) or sections, validated on the server. An identical request (same document,
+         *     options and model; the focus is compared case- and whitespace-insensitively) returns the
+         *     stored summary with `cached: true` and no AI cost. A document longer than
+         *     `ON_DEMAND_MAX_INPUT_TOKENS` is summarised from selected parts (those matching the focus
+         *     first); `coverage.complete` is then false. `focus_covered: false` means the document does
+         *     not address the focus. Also `429 AI_BUDGET_EXCEEDED` (spend cap) and `503` (provider).
+         */
+        post: operations["create_summary_api_v1_documents__document_id__summaries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/reprocess": {
         parameters: {
             query?: never;
@@ -192,6 +249,51 @@ export interface paths {
          *     `409 NOTHING_TO_REPROCESS` when no stage failed and none was requested.
          */
         post: operations["reprocess_document_api_v1_documents__document_id__reprocess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comparisons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Past comparisons (newest first) */
+        get: operations["list_comparisons_api_v1_comparisons_get"];
+        put?: never;
+        /**
+         * Compare 2–4 documents (or versions of one document)
+         * @description Documents are labelled D1… in upload order (oldest first), so two versions read as
+         *     old → new. Returns an overview, **similarities** (each stated in at least two documents) and
+         *     **differences** (one position per document), every statement cited to pages or sections and
+         *     validated on the server: a position whose source could not be verified is shown as not
+         *     addressed / uncited instead of as the document's claim. The same document set and focus
+         *     returns the stored result with `cached: true` and no AI cost. Long documents share the
+         *     `ON_DEMAND_MAX_INPUT_TOKENS` budget; see `coverage.documents.<label>.complete`.
+         *     Also `429 AI_BUDGET_EXCEEDED` (spend cap) and `503` (provider).
+         */
+        post: operations["create_comparison_api_v1_comparisons_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comparisons/{comparison_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One comparison */
+        get: operations["get_comparison_api_v1_comparisons__comparison_id__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -290,8 +392,9 @@ export interface paths {
          *     - `error` (instead of the rest): `{code, message, status, details, message_id}`
          *
          *     Comment lines `: ping` are sent every 15 s while idle. Scope errors (404/409/422) are returned
-         *     as normal JSON errors before the stream starts. If the client disconnects, generation stops at
-         *     the next token and the partial answer is saved with `interrupted: true`.
+         *     as normal JSON errors before the stream starts, and so is `429 RATE_LIMITED`. If the client
+         *     disconnects, generation stops at the next token and the partial answer is saved with
+         *     `interrupted: true`.
          */
         post: operations["ask_stream_api_v1_chat_sessions__session_id__messages_stream_post"];
         delete?: never;
@@ -382,6 +485,14 @@ export interface components {
              */
             files: string[];
         };
+        /** Body_upload_version_api_v1_documents__document_id__versions_post */
+        Body_upload_version_api_v1_documents__document_id__versions_post: {
+            /**
+             * File
+             * @description One file (PDF, DOCX, TXT, MD), ≤ MAX_UPLOAD_MB
+             */
+            file: string;
+        };
         /** CitationOut */
         CitationOut: {
             /**
@@ -420,6 +531,194 @@ export interface components {
              * @description Cosine similarity of the chunk (null if FTS-only)
              */
             score: number | null;
+        };
+        /** ComparedDocument */
+        ComparedDocument: {
+            /**
+             * Label
+             * @description D1, D2, … (oldest upload first)
+             */
+            label: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Filename */
+            filename: string;
+            /** File Type */
+            file_type: string;
+            /** Version */
+            version: number;
+            /**
+             * Version Group Id
+             * Format: uuid
+             */
+            version_group_id: string;
+        };
+        /** ComparisonList */
+        ComparisonList: {
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Items */
+            items: components["schemas"]["ComparisonOut"][];
+        };
+        /**
+         * ComparisonOut
+         * @example {
+         *       "ai_mode": "openai",
+         *       "cached": false,
+         *       "coverage": {
+         *         "documents": {
+         *           "D1": {
+         *             "complete": true
+         *           },
+         *           "D2": {
+         *             "complete": true
+         *           }
+         *         }
+         *       },
+         *       "created_at": "2026-10-15T09:25:00Z",
+         *       "differences": [
+         *         {
+         *           "aspect": "Annual leave days",
+         *           "positions": [
+         *             {
+         *               "addressed": true,
+         *               "document_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *               "label": "D1",
+         *               "pages": [
+         *                 1
+         *               ],
+         *               "statement": "25 days of paid annual leave."
+         *             },
+         *             {
+         *               "addressed": true,
+         *               "document_id": "8a2d4c6e-0f1b-4a3c-9e5d-7b9f1a3c5e70",
+         *               "label": "D2",
+         *               "pages": [
+         *                 1
+         *               ],
+         *               "statement": "27 days of paid annual leave."
+         *             }
+         *           ]
+         *         }
+         *       ],
+         *       "documents": [
+         *         {
+         *           "file_type": "pdf",
+         *           "filename": "leave-policy-2025.pdf",
+         *           "id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *           "label": "D1",
+         *           "version": 1,
+         *           "version_group_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10"
+         *         },
+         *         {
+         *           "file_type": "pdf",
+         *           "filename": "leave-policy-2026.pdf",
+         *           "id": "8a2d4c6e-0f1b-4a3c-9e5d-7b9f1a3c5e70",
+         *           "label": "D2",
+         *           "version": 2,
+         *           "version_group_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10"
+         *         }
+         *       ],
+         *       "id": "5e7a9c1b-3d5f-4a7b-9c1e-3a5c7e9b1d3f",
+         *       "model": "gpt-4o-mini",
+         *       "overview": "Two versions of the leave policy; 2026 adds two days of leave.",
+         *       "prompt_version": "compare.v1",
+         *       "same_document_versions": true,
+         *       "similarities": [
+         *         {
+         *           "sources": [
+         *             {
+         *               "document_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *               "label": "D1",
+         *               "pages": [
+         *                 2
+         *               ]
+         *             },
+         *             {
+         *               "document_id": "8a2d4c6e-0f1b-4a3c-9e5d-7b9f1a3c5e70",
+         *               "label": "D2",
+         *               "pages": [
+         *                 2
+         *               ]
+         *             }
+         *           ],
+         *           "text": "Up to 5 unused days can be carried over."
+         *         }
+         *       ]
+         *     }
+         */
+        ComparisonOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Documents */
+            documents: components["schemas"]["ComparedDocument"][];
+            /** Focus */
+            focus: string | null;
+            /** Overview */
+            overview: string;
+            /** Focus Covered */
+            focus_covered: boolean | null;
+            /**
+             * Same Document Versions
+             * @description True when all documents are versions of one
+             */
+            same_document_versions: boolean;
+            /** Similarities */
+            similarities: components["schemas"]["Similarity"][];
+            /** Differences */
+            differences: components["schemas"]["Difference"][];
+            /** Coverage */
+            coverage: {
+                [key: string]: unknown;
+            };
+            /**
+             * Ai Mode
+             * @enum {string}
+             */
+            ai_mode: "openai" | "fake";
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Cached */
+            cached: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * ComparisonRequest
+         * @example {
+         *       "document_ids": [
+         *         "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *         "8a2d4c6e-0f1b-4a3c-9e5d-7b9f1a3c5e70"
+         *       ],
+         *       "focus": "budget"
+         *     }
+         * @example {
+         *       "document_ids": [
+         *         "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *         "8a2d4c6e-0f1b-4a3c-9e5d-7b9f1a3c5e70"
+         *       ]
+         *     }
+         */
+        ComparisonRequest: {
+            /** Document Ids */
+            document_ids: string[];
+            /** Focus */
+            focus?: string | null;
         };
         /**
          * ContentPage
@@ -460,6 +759,16 @@ export interface components {
             /** Items */
             items: components["schemas"]["SegmentOut"][];
         };
+        /** Difference */
+        Difference: {
+            /** Aspect */
+            aspect: string;
+            /**
+             * Positions
+             * @description One per document, in label order
+             */
+            positions: components["schemas"]["Position"][];
+        };
         /** DocumentList */
         DocumentList: {
             /** Total */
@@ -482,6 +791,7 @@ export interface components {
          *       "file_type": "pdf",
          *       "filename": "falcon-plan.pdf",
          *       "id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *       "is_latest": true,
          *       "mime_type": "application/pdf",
          *       "page_count": 5,
          *       "ready_at": "2026-10-15T09:12:09.880Z",
@@ -496,6 +806,8 @@ export interface components {
          *       "status": "ready",
          *       "token_count": 2210,
          *       "updated_at": "2026-10-15T09:12:09.880Z",
+         *       "version": 2,
+         *       "version_group_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
          *       "warnings": [
          *         {
          *           "code": "EMPTY_PAGES",
@@ -552,6 +864,22 @@ export interface components {
             error: components["schemas"]["ErrorInfo"] | null;
             /** Category */
             category?: string | null;
+            /**
+             * Version
+             * @description 1 for the first upload; +1 for each new version
+             */
+            version: number;
+            /**
+             * Version Group Id
+             * Format: uuid
+             * @description Shared by all versions of a document (the id of version 1)
+             */
+            version_group_id: string;
+            /**
+             * Is Latest
+             * @description False once a newer version has been uploaded
+             */
+            is_latest: boolean;
             /**
              * Created At
              * Format: date-time
@@ -811,6 +1139,27 @@ export interface components {
              */
             created_at: string;
         };
+        /** Position */
+        Position: {
+            /** Label */
+            label: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Pages */
+            pages: number[];
+            /** Sections */
+            sections?: number[] | null;
+            /** Statement */
+            statement: string;
+            /**
+             * Addressed
+             * @description False: not addressed, or no source was cited
+             */
+            addressed: boolean;
+        };
         /** ReprocessResponse */
         ReprocessResponse: {
             document: components["schemas"]["DocumentOut"];
@@ -877,6 +1226,17 @@ export interface components {
             status: string;
             /** Chat Ready */
             chat_ready: boolean;
+            /**
+             * Version
+             * @default 1
+             */
+            version: number;
+            /**
+             * Is Latest
+             * @description False when a newer version exists (this chat keeps this one)
+             * @default true
+             */
+            is_latest: boolean;
             /**
              * Added At
              * Format: date-time
@@ -959,6 +1319,30 @@ export interface components {
             /** Remove Document Ids */
             remove_document_ids?: string[];
         };
+        /** Similarity */
+        Similarity: {
+            /** Text */
+            text: string;
+            /**
+             * Sources
+             * @description At least two documents
+             */
+            sources: components["schemas"]["SourceRef"][];
+        };
+        /** SourceRef */
+        SourceRef: {
+            /** Label */
+            label: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Pages */
+            pages: number[];
+            /** Sections */
+            sections?: number[] | null;
+        };
         /** StageStatuses */
         StageStatuses: {
             /**
@@ -970,6 +1354,134 @@ export interface components {
             index: string;
             /** Insights */
             insights: string;
+        };
+        /** SummaryList */
+        SummaryList: {
+            /** Items */
+            items: components["schemas"]["SummaryOut"][];
+        };
+        /**
+         * SummaryOut
+         * @example {
+         *       "ai_mode": "openai",
+         *       "cached": false,
+         *       "coverage": {
+         *         "complete": true,
+         *         "input_token_budget": 40000,
+         *         "segments_included": 6,
+         *         "segments_total": 6,
+         *         "selection": "all",
+         *         "validation": {
+         *           "dropped_key_points": 0,
+         *           "dropped_refs": 0,
+         *           "invalid_enums": 0,
+         *           "truncated_fields": []
+         *         }
+         *       },
+         *       "created_at": "2026-10-15T09:20:00Z",
+         *       "document_id": "6f1c2a9e-3b7d-4c2e-9a51-0d8e4b7f2c10",
+         *       "focus": "budget and risks",
+         *       "focus_covered": true,
+         *       "id": "1c3e5a7b-9d0f-4b2a-8c6e-4f2a0b8d6c1e",
+         *       "key_points": [
+         *         {
+         *           "pages": [
+         *             3
+         *           ],
+         *           "text": "Contingency of 3.2 million euros."
+         *         }
+         *       ],
+         *       "length": "short",
+         *       "model": "gpt-4o-mini",
+         *       "prompt_version": "summary.custom.v1",
+         *       "summary": "The project budget is 41.5 million euros, approved on 4 March 2026…",
+         *       "tone": "executive"
+         *     }
+         */
+        SummaryOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Length */
+            length: string;
+            /** Tone */
+            tone: string;
+            /** Focus */
+            focus: string | null;
+            /** Summary */
+            summary: string;
+            /** Key Points */
+            key_points: components["schemas"]["KeyPoint"][];
+            /**
+             * Focus Covered
+             * @description False when the document does not address the focus; null without a focus
+             */
+            focus_covered: boolean | null;
+            /**
+             * Coverage
+             * @description `complete: false` means the document was too long and only the selected parts were summarised
+             */
+            coverage: {
+                [key: string]: unknown;
+            };
+            /**
+             * Ai Mode
+             * @enum {string}
+             */
+            ai_mode: "openai" | "fake";
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /**
+             * Cached
+             * @description True when an identical earlier request was reused (no AI cost)
+             */
+            cached: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * SummaryRequest
+         * @example {
+         *       "focus": "budget and risks",
+         *       "length": "short",
+         *       "tone": "executive"
+         *     }
+         * @example {
+         *       "length": "long",
+         *       "tone": "plain"
+         *     }
+         */
+        SummaryRequest: {
+            /**
+             * Length
+             * @description short ≤ 80 words / 3 points · medium ≤ 200 / 5 · long ≤ 400 / 8
+             * @default medium
+             * @enum {string}
+             */
+            length: "short" | "medium" | "long";
+            /**
+             * Tone
+             * @default neutral
+             * @enum {string}
+             */
+            tone: "neutral" | "executive" | "technical" | "plain";
+            /**
+             * Focus
+             * @description Topic to concentrate on, e.g. 'budget and risks' (treated as data, not as instructions)
+             */
+            focus?: string | null;
         };
         /**
          * UploadResponse
@@ -1067,6 +1579,24 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VersionList */
+        VersionList: {
+            /**
+             * Version Group Id
+             * Format: uuid
+             */
+            version_group_id: string;
+            /**
+             * Latest Id
+             * Format: uuid
+             */
+            latest_id: string;
+            /**
+             * Items
+             * @description All versions, newest first
+             */
+            items: components["schemas"]["DocumentOut"][];
         };
     };
     responses: never;
@@ -1173,6 +1703,8 @@ export interface operations {
                 q?: string | null;
                 /** @description Insights category */
                 category?: string | null;
+                /** @description Include older versions (default: latest version only) */
+                all_versions?: boolean;
             };
             header?: never;
             path?: never;
@@ -1290,6 +1822,25 @@ export interface operations {
                      *       "error": {
                      *         "code": "VALIDATION_ERROR",
                      *         "message": "Invalid request.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Too many AI requests: at most 20 per minute. Try again in 12 s.",
                      *         "details": {}
                      *       },
                      *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
@@ -1603,6 +2154,386 @@ export interface operations {
             };
         };
     };
+    list_versions_api_v1_documents__document_id__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionList"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "NOT_FOUND",
+                     *         "message": "Document not found.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_version_api_v1_documents__document_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_version_api_v1_documents__document_id__versions_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description TOO_MANY_FILES */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "TOO_MANY_FILES",
+                     *         "message": "At most 10 files per request (12 sent).",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "NOT_FOUND",
+                     *         "message": "Document not found.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description VERSION_UNCHANGED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VERSION_UNCHANGED",
+                     *         "message": "This file is identical to version 1 of the document.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description FILE_TOO_LARGE */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "FILE_TOO_LARGE",
+                     *         "message": "The file exceeds the 25 MB limit.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description UNSUPPORTED_FILE_TYPE */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "UNSUPPORTED_FILE_TYPE",
+                     *         "message": "Only PDF, DOCX, TXT and Markdown files are supported.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description VALIDATION_ERROR */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_ERROR",
+                     *         "message": "Invalid request.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Too many AI requests: at most 20 per minute. Try again in 12 s.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_summaries_api_v1_documents__document_id__summaries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryList"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "NOT_FOUND",
+                     *         "message": "Document not found.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_summary_api_v1_documents__document_id__summaries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SummaryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryOut"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "NOT_FOUND",
+                     *         "message": "Document not found.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description DOCUMENT_NOT_EXTRACTED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "DOCUMENT_NOT_EXTRACTED",
+                     *         "message": "The document text is not available yet.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description VALIDATION_ERROR */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_ERROR",
+                     *         "message": "Invalid request.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Too many AI requests: at most 20 per minute. Try again in 12 s.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description AI_PROVIDER_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AI_PROVIDER_UNAVAILABLE",
+                     *         "message": "The AI provider is unavailable; try again shortly.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     reprocess_document_api_v1_documents__document_id__reprocess_post: {
         parameters: {
             query?: {
@@ -1681,6 +2612,230 @@ export interface operations {
                      *     }
                      */
                     "application/json": unknown;
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Too many AI requests: at most 20 per minute. Try again in 12 s.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_comparisons_api_v1_comparisons_get: {
+        parameters: {
+            query?: {
+                /** @description Page size (max 100) */
+                limit?: number;
+                /** @description Items to skip */
+                offset?: number;
+                /** @description Only comparisons that include this document */
+                document_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_comparison_api_v1_comparisons_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComparisonRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonOut"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "NOT_FOUND",
+                     *         "message": "Document not found.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description DOCUMENT_NOT_EXTRACTED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "DOCUMENT_NOT_EXTRACTED",
+                     *         "message": "Some documents' text is not available yet.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description VALIDATION_ERROR */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "VALIDATION_ERROR",
+                     *         "message": "Invalid request.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Too many AI requests: at most 20 per minute. Try again in 12 s.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description AI_PROVIDER_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "AI_PROVIDER_UNAVAILABLE",
+                     *         "message": "The AI provider is unavailable; try again shortly.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_comparison_api_v1_comparisons__comparison_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comparison_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonOut"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "NOT_FOUND",
+                     *         "message": "Document not found.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2208,6 +3363,25 @@ export interface operations {
                      *       "error": {
                      *         "code": "VALIDATION_ERROR",
                      *         "message": "Invalid request.",
+                     *         "details": {}
+                     *       },
+                     *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"
+                     *     }
+                     */
+                    "application/json": unknown;
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Too many AI requests: at most 20 per minute. Try again in 12 s.",
                      *         "details": {}
                      *       },
                      *       "request_id": "4b8f0c2d9e1a4f6b8c3d2e1f0a9b8c7d"

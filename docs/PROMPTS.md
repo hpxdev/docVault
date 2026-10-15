@@ -3,19 +3,22 @@
 The templates live in [`backend/app/prompts/`](../backend/app/prompts/) as versioned Markdown
 files (`## system` / `## user` sections, LangChain f-string variables). Every stored AI output
 records the `prompt_version` that produced it (`document_insights.prompt_version`,
-`messages.prompt_version`, `ai_calls.prompt_version`). To change a prompt, add a new version
+`messages.prompt_version`, `document_summaries.prompt_version`,
+`document_comparisons.prompt_version`, `ai_calls.prompt_version`). To change a prompt, add a new version
 file instead of editing an old one.
 
 Shared design rules:
 - **Ground everything in the text.** Each prompt says to use only the supplied text and to
   leave things out rather than guess.
-- **Delimit untrusted text** (`<document>`, `<part>`, `<section_notes>`, `<sources>`) and state
+- **Delimit untrusted text** (`<document>`, `<part>`, `<section_notes>`, `<sources>`, `<focus>`)
+  and state
   that instructions inside it are data. This reduces prompt injection; it does not *guarantee*
   the model ignores it. Scope safety never depends on the model (§ 4.5).
 - **Check on the server whatever can be checked**: page references, enum values, list lengths
   and citation markers are validated after the call, and violations are dropped and counted.
 - **Models:** `gpt-4o-mini`, temperature 0.1. Insights use Structured Outputs
-  (`with_structured_output(..., method="json_schema", strict=True)`); chat uses plain text.
+  (`with_structured_output(..., method="json_schema", strict=True)`), and so do custom
+  summaries and comparisons; chat uses plain text.
 
 Evidence labels used below: **REAL** = output from the approved live run
 ([EVALUATION.md](EVALUATION.md), 2026-10-15); **TEST** = asserted by the fake-mode test suite
@@ -157,6 +160,67 @@ are replaced (a real bug: section labels contain quotes; see ai-log T13–T15).
 - `[NO_ANSWER]` only counts at the start of the reply.
 
 ---
+
+## 5. `summary.custom.v1` (custom summaries)
+
+| | |
+|---|---|
+| Input | File name, marker kind, a coverage note, the reader's focus inside `<focus>` (may be empty) and the document text with `[Page N]` / `[Section N: heading]` markers inside `<document>` |
+| Output | `CustomSummaryLLM`: `focus_covered`, `summary`, `key_points[{text, refs}]` (max 1,200 output tokens) |
+
+The options become rules in the **system** prompt, never free text from the user:
+- **length**: short ≤ 80 words / 3 key points, medium ≤ 200 / 5, long ≤ 400 / 8;
+- **tone**: one of four fixed descriptions (neutral; executive: decisions, outcomes, figures,
+  risks first; technical: precise terms and conditions; plain: everyday words). The prompt says
+  the tone changes wording and order, never the facts;
+- **focus**: the only free text. It goes into the user message inside `<focus>`, declared to be
+  data that only names a topic ("write a poem" in it is not an instruction). If the document
+  does not address it, the model must set `focus_covered: false` and say so in one sentence
+  instead of summarising something else.
+
+**Long documents.** Above `ON_DEMAND_MAX_INPUT_TOKENS` (40K) the text is cut into ≤ 1,500-token
+windows; with a focus, the windows sharing the most words with it are sent first, otherwise
+evenly spread windows (0, ½, ¼, ¾, …), always in document order. The prompt is told that it sees
+only part of the document, and the response's `coverage` says how many pages/sections were
+included. This is a deliberate trade-off against map-reduce (several calls, slower) for an
+on-demand request.
+
+**Server-side validation:** key points without a valid page/section are dropped and counted,
+over-limit lists and summaries are cut and recorded in `coverage.validation`, exactly as for
+insights. The result is stored per document + normalised options (focus compared case- and
+whitespace-insensitively) + prompt version + model, so asking again costs nothing.
+
+**Evidence:** TEST only (fake model, `tests/integration/test_analysis.py`); real-model output
+is **NOT VERIFIED**.
+
+## 6. `compare.v1` (comparisons)
+
+| | |
+|---|---|
+| Input | A document list (`D1 = file (version n)`, plus "these are versions of the same document, oldest first" when they are), a coverage note, the focus in `<focus>`, and each document as `<document label="D1" name="…" version="1" markers="[Page N]">…</document>` |
+| Output | `ComparisonLLM`: `focus_covered`, `overview` (≤ 120 words), `similarities[{text, sources[{document, refs}]}]` (≤ 6), `differences[{aspect, positions[{document, statement, refs}]}]` (≤ 8) (max 1,600 output tokens) |
+
+**Design choices:**
+- Documents are labelled D1… in upload order, so two versions read old → new, and the prompt
+  asks to describe the changes as differences.
+- One position per document for every difference, with the literal "Not addressed" when a
+  document says nothing. The model must not infer that something unmentioned is false, and
+  must not claim "not addressed" for a document that was only partly included.
+- The `ON_DEMAND_MAX_INPUT_TOKENS` budget is split equally between the documents, with the same
+  focus-first window selection as custom summaries.
+
+**Server-side validation** (`services/comparisons.py`):
+- every `(document label, ref)` must exist in what that document's prompt block contained;
+  unknown labels and refs are dropped and counted;
+- a similarity needs valid sources in **at least two** documents, otherwise it is dropped;
+- a position without a valid ref is never shown as the document's claim: it becomes "Not
+  addressed" (when the model said so) or "No source was cited for this document's position."
+  (`addressed: false`); a difference with no cited position at all is dropped;
+- positions are re-ordered to one per document in label order; a missing one is shown as "No
+  position given.".
+
+**Limitation:** as with chat, the server checks that a cited page exists and was provided, not
+that it supports the statement. **Evidence:** TEST only; real-model output is **NOT VERIFIED**.
 
 ## Worked examples
 

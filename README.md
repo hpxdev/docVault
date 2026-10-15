@@ -11,7 +11,8 @@ citations are checked by the server** (document, page/section, original excerpt)
 *Real mode (`gpt-4o-mini`), from the demo dry run: cited answers with page/section chips, an
 amber "not found", a two-document answer, and the source panel showing page 4's original text.*
 
-> **Status (2026-10-15):** backend and ChatGPT-style UI complete; 126 fake-mode backend tests.
+> **Status (2026-10-15):** backend and ChatGPT-style UI complete, plus custom summaries,
+> comparisons, document versions and rate limiting; 142 fake-mode backend tests.
 > Three approved real-model runs:
 > - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
 > - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
@@ -42,8 +43,10 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
 | pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 126 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
-| Summary customisation, comparative analysis (BONUS) | Not done (P2) | |
-| Rate limiting, document versioning (BONUS) | Not done (future work) | |
+| Summary customisation: length, focus, tone (BONUS) | Done (fake-mode tests and UI check); real-model output **NOT VERIFIED** | `services/summaries.py`, `POST /documents/{id}/summaries` |
+| Comparative analysis between documents (BONUS) | Done (2–4 documents or versions; cited similarities and differences); real-model output **NOT VERIFIED** | `services/comparisons.py`, `POST /comparisons` |
+| Rate limiting and quota management (BONUS) | Done: per-client limits in Redis (`429 RATE_LIMITED` + `Retry-After`) next to the spend cap | `core/ratelimit.py` |
+| Document version tracking (BONUS) | Done: new versions keep history; vault-wide chat uses the latest | `POST /documents/{id}/versions` |
 
 ## 2. Quickstart
 
@@ -91,6 +94,9 @@ Stop with `docker compose down` (add `-v` to delete the database and stored file
 | `CHUNK_TOKENS` / `CHUNK_OVERLAP_TOKENS` | `800` / `100` | Chunking (cl100k tokens) |
 | `RETRIEVAL_TOP_K` | `8` | Sources given to the model |
 | `INSIGHTS_SINGLE_PASS_MAX_TOKENS` | `60000` | Above this, insights use map-reduce |
+| `ON_DEMAND_MAX_INPUT_TOKENS` | `40000` | Input cap for custom summaries; comparisons split it across their documents. Longer documents are sent in selected parts (`coverage.complete: false`) |
+| `RATE_LIMIT_ENABLED` | `true` | Per-client rate limits (fixed one-minute windows in Redis) |
+| `RATE_LIMIT_AI_PER_MINUTE` / `RATE_LIMIT_UPLOAD_PER_MINUTE` | `20` / `30` | `ai`: questions, custom summaries, comparisons · `upload`: uploads, new versions, reprocess. `0` = no limit |
 | `RUN_LIVE_AI_TESTS` | `0` | Live tests run only when `1` (and approved) |
 | `DEBUG_PROMPTS` | `0` | Reserved dev flag, currently unused: prompts and document text are never logged |
 
@@ -132,7 +138,18 @@ curl -N -X POST $API/chat/sessions/$SESSION/messages/stream -H 'Content-Type: ap
 curl -X POST $API/chat/sessions/$SESSION/messages -H 'Content-Type: application/json' \
   -d '{"content":"Who is the CFO?"}'
 
-# 7. History and metrics
+# 7. Custom summary: length short|medium|long, tone neutral|executive|technical|plain, optional focus
+curl -X POST $API/documents/$DOC/summaries -H 'Content-Type: application/json' \
+  -d '{"length":"short","tone":"executive","focus":"budget and risks"}'
+
+# 8. Upload a revised file as version 2, then compare the two versions
+NEW=$(curl -s -X POST $API/documents/$DOC/versions -F "file=@samples/northwind-brief-v2.pdf" \
+  | python -c "import sys,json;print(json.load(sys.stdin)['id'])")
+curl $API/documents/$DOC/versions
+curl -X POST $API/comparisons -H 'Content-Type: application/json' \
+  -d "{\"document_ids\":[\"$DOC\",\"$NEW\"]}"
+
+# 9. History and metrics
 curl "$API/chat/sessions/$SESSION/messages?limit=20"
 curl $API/metrics/documents
 curl "$API/metrics/processing?window=24h"
@@ -143,13 +160,19 @@ curl "$API/metrics/processing?window=24h"
 | Endpoint | Purpose |
 |---|---|
 | `POST /documents` | Upload 1–10 files (`files`); per-file `accepted` / `duplicate` / `rejected`; 202 unless every file is rejected |
-| `GET /documents` | List (newest first); filters `status`, `q` (filename), `category`; `limit`/`offset` |
+| `GET /documents` | List (newest first, latest versions only unless `all_versions=true`); filters `status`, `q` (filename), `category`; `limit`/`offset` |
 | `GET /documents/{id}` | Detail: stage statuses, `chat_ready`, counts, warnings, last error |
 | `GET /documents/{id}/content` | Extracted original text by page/section with locators (paginated) |
 | `GET /documents/{id}/file` | Original file |
 | `GET /documents/{id}/insights` | AI insights; `404 INSIGHTS_NOT_READY` with current status |
+| `POST /documents/{id}/versions` | Upload one file (`file`) as the next version; `409 VERSION_UNCHANGED` / `DUPLICATE_CONTENT` for identical files |
+| `GET /documents/{id}/versions` | All versions of the document, newest first |
+| `POST /documents/{id}/summaries` | Custom summary (`length`, `tone`, `focus`); identical options return the stored result (`cached: true`, no AI cost) |
+| `GET /documents/{id}/summaries` | Custom summaries generated for the document |
+| `POST /comparisons` | Compare 2–4 documents (`document_ids`, optional `focus`): overview, similarities, differences, each cited; stored and reused |
+| `GET /comparisons?document_id=`, `GET /comparisons/{id}` | Past comparisons |
 | `POST /documents/{id}/reprocess?stages=` | Re-run failed (default) or chosen stages; `409` while processing |
-| `DELETE /documents/{id}` | Delete file, segments, chunks, insights, cached metrics; old citations keep their snapshot |
+| `DELETE /documents/{id}` | Delete this version: file, segments, chunks, insights, custom summaries, comparisons that include it, cached metrics; old citations keep their snapshot; the newest remaining version becomes the latest |
 | `GET /documents/events?ids=` | SSE: snapshot, then live status; `: ping` every 15 s |
 | `POST/GET /chat/sessions`, `GET/PATCH/DELETE /chat/sessions/{id}` | Sessions: scope = documents or whole vault (`scope_mode: all`) |
 | `POST /chat/sessions/{id}/messages` | Ask; complete JSON answer with citations |
@@ -163,7 +186,9 @@ response carries `X-Request-ID`. Codes: `UNSUPPORTED_FILE_TYPE` 415, `EMPTY_FILE
 `FILE_TOO_LARGE` 413, `TOO_MANY_FILES` 400, `UPLOAD_REJECTED` 400 (all files rejected for mixed
 reasons), `VALIDATION_ERROR` 422, `NOT_FOUND` 404, `INSIGHTS_NOT_READY` 404,
 `DOCUMENTS_NOT_READY` 409, `NO_DOCUMENTS_IN_SCOPE` 422, `DOCUMENT_PROCESSING` /
-`NOTHING_TO_REPROCESS` / `EXTRACTION_REQUIRED` 409, `AI_BUDGET_EXCEEDED` 429,
+`NOTHING_TO_REPROCESS` / `EXTRACTION_REQUIRED` / `DOCUMENT_NOT_EXTRACTED` / `VERSION_UNCHANGED` /
+`DUPLICATE_CONTENT` 409, `RATE_LIMITED` 429 (with `Retry-After` and `X-RateLimit-*` headers),
+`AI_BUDGET_EXCEEDED` 429,
 `AI_PROVIDER_UNAVAILABLE` 503, `AI_NOT_CONFIGURED` 503. Stage failure codes on documents:
 `ENCRYPTED_DOCUMENT`, `CORRUPT_DOCUMENT`, `PAGE_LIMIT_EXCEEDED`, `NO_EXTRACTABLE_TEXT`,
 `UNSUPPORTED_ENCODING`, `AI_PROVIDER_UNAVAILABLE`, `AI_BUDGET_EXCEEDED`, `AI_QUOTA_EXCEEDED`,
@@ -207,10 +232,13 @@ re-delivered task can't move a document backwards; runs left by a dead worker ar
 
 ## 6. Data model
 
-`documents` (status per stage, counts, warnings, errors, timestamps) · `document_segments`
+`documents` (status per stage, counts, warnings, errors, timestamps; `version_group_id`,
+`version`, `is_latest`, with a partial unique index allowing one latest per group) · `document_segments`
 (page/section text with locator and offsets) · `chunks` (text, locator, `vector(1536)`,
 generated `tsvector`; HNSW cosine, GIN, btree on document) · `document_insights` (unique per
-document + prompt version, with coverage) · `processing_runs` · `chat_sessions` +
+document + prompt version, with coverage) · `document_summaries` (custom summaries, unique per
+document + options + prompt version + model) · `document_comparisons` (result JSON, document
+snapshot, GIN index on `document_ids`) · `processing_runs` · `chat_sessions` +
 `chat_session_documents` · `messages` (answer status, standalone query, scope used, retrieval
 trace, latencies) · `message_citations` (snapshot of document name, locator, excerpt; chunk and
 document FKs set NULL on delete) · `ai_calls` (ledger; no FKs so spend survives deletions).
@@ -234,6 +262,25 @@ document FKs set NULL on delete) · `ai_calls` (ledger; no FKs so spend survives
   embeddings and metrics are cached; duplicate files are deduplicated.
 - Duplicate uploads return the existing document (`duplicate: true`) without reprocessing, even if
   that document had failed (use reprocess).
+- **Versions are explicit** (`POST /documents/{id}/versions`), never guessed from a matching
+  filename: two unrelated "report.pdf" files are common. The old version keeps its chunks,
+  insights and citations. Vault-wide chat and the default list use only the latest version; a chat
+  attached to an old version keeps it (its answers stay reproducible), and its chip says that a
+  newer version exists. Version numbers are max(remaining) + 1, so the number of a deleted newest
+  version can be reused.
+- **Custom summaries and comparisons are synchronous** (a few seconds expected with
+  `gpt-4o-mini`; not measured) and stored: an identical request returns the stored result with
+  `cached: true` and no AI cost. This is safe, unlike caching chat answers, because the input is
+  fully determined by the document(s) and the options. Long inputs are cut to
+  `ON_DEMAND_MAX_INPUT_TOKENS`: the parts sharing words with the focus first (otherwise evenly
+  spread parts), and `coverage` says what was included.
+- **Comparison output is validated like citations**: every cited (document, page/section) must
+  exist in what the prompt contained; a similarity needs sources in two documents; a position
+  without a valid source is shown as "No source was cited" rather than as the document's claim.
+- **Rate limits** are per client IP in fixed one-minute windows (Redis `INCR` + `EXPIRE`), checked
+  before anything is stored. `X-Forwarded-For` is ignored because it can be forged. A fixed
+  window can let up to twice the limit through around a boundary, acceptable for abuse
+  protection; the spend cap still bounds cost. If Redis is down, requests are allowed (logged).
 
 ## 8. RAG and prompt design (summary)
 
@@ -287,7 +334,12 @@ react-markdown. API types are generated from the backend's OpenAPI schema
   documents' suggested questions. "Search entire vault" switches the session's scope.
   Enter sends, Shift+Enter adds a line.
 - **Library:** all documents with status, filters, insights drawer (summary, key points with
-  pages/sections, entities, tags, tone), reprocess and delete.
+  pages/sections, entities, tags, tone), reprocess and delete. The drawer also has a **custom
+  summary** form (length, tone, focus) and a **versions** panel (upload a new version, switch
+  between versions, "What changed since v1?"). Tick 2–4 documents and press **Compare** for the
+  comparison page (`#/compare/<id>`): differences as a table with one column per document,
+  similarities, and page chips that open the original PDF at that page. "Older versions" shows
+  superseded versions.
 - **Metrics:** document statistics, AI usage and estimated cost, chat rates and latency,
   per-stage processing.
 - A yellow **FAKE AI MODE** banner shows whenever the backend runs with `AI_PROVIDER=fake`.
@@ -309,12 +361,13 @@ docker compose -f compose.test.yml run --rm tests                  # full fake-m
 docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff format --check ."
 ```
 
-- **Fake-mode suite (126 tests)** runs against real Postgres + pgvector and Redis containers.
+- **Fake-mode suite (142 tests)** runs against real Postgres + pgvector and Redis containers.
   `FakeEmbeddings` is a hashed bag-of-words (lexical similarity is real, so retrieval tests mean
   something); `FakeChatModel` is scripted. It proves the plumbing: upload rules, extraction codes
   and locators, state machine and retries, idempotency, concurrency, retrieval scope and fusion,
-  citation validation, condensing, streaming and disconnects, metrics, caches, spend cap. It does
-  **not** prove answer quality.
+  citation validation, condensing, streaming and disconnects, metrics, caches, spend cap, versions,
+  custom summaries and comparisons (options, caching, output validation, long-document
+  selection), rate limits. It does **not** prove answer quality.
 - **Live tests** (`tests/live/`, `pytest -m live`) call OpenAI and run only with
   `RUN_LIVE_AI_TESTS=1`, `TEST_AI_PROVIDER=openai` and approved spend; results go to
   `docs/EVALUATION.md`.
@@ -327,13 +380,16 @@ docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff fo
 No OCR · single user, no authentication · English-oriented full-text search · local file
 storage · `gpt-4o-mini` is deprecated by OpenAI (shutdown 2027-01-14; `OPENAI_CHAT_MODEL` is
 configurable) · cost figures are estimates · real-model quality checked only on a 10-question,
-single-document smoke test (docs/EVALUATION.md).
+single-document smoke test (docs/EVALUATION.md) · custom summaries and comparisons have run only
+against the fake model: their real-model output is **NOT VERIFIED** · rate limits key on the
+socket address, so behind a proxy every client shares one limit.
 
 ## 13. Future work
 
-Authentication and multi-tenant ownership; S3-compatible storage; document versioning; rate
-limiting; OCR; WebSocket only if a two-way need appears; cursor pagination; summary
-customisation and comparative analysis (P2).
+Authentication and multi-tenant ownership (then per-user rate limits and quotas); S3-compatible
+storage; OCR; WebSocket only if a two-way need appears; cursor pagination; map-reduce for custom
+summaries of very long documents (today: selected parts); comparisons as background tasks for
+large documents.
 
 Prompt work:
 - **`chat.condense.v3`.** Give the follow-up rewriter the names of the documents in scope, and

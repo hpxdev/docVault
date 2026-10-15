@@ -7,14 +7,22 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.sse import EventSourceResponse, ServerSentEvent
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.common import Limit, Offset, error_responses
 from app.core.errors import AppError, ConflictError, NotFoundError, error_body
+from app.core.ratelimit import RATE_LIMITED_EXAMPLE, rate_limit
 from app.core.redis import async_cache
 from app.db.session import get_db
-from app.models import Document, DocumentInsights, DocumentSegment
+from app.models import (
+    Document,
+    DocumentComparison,
+    DocumentInsights,
+    DocumentSegment,
+    DocumentSummary,
+)
+from app.schemas.analysis import SummaryList, SummaryOut, SummaryRequest
 from app.schemas.documents import (
     ContentPage,
     DocumentList,
@@ -23,12 +31,14 @@ from app.schemas.documents import (
     ReprocessResponse,
     SegmentOut,
     UploadResponse,
+    VersionList,
 )
 from app.services import cache
 from app.services.events import publish_deleted, publish_status
 from app.services.status import STAGE_COLUMN, STAGES, channel, recompute, status_payload
 from app.services.storage import Storage, get_storage
-from app.services.upload import handle_upload
+from app.services.summaries import get_or_create_summary
+from app.services.upload import handle_new_version, handle_upload
 from app.workers import dispatch
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -70,7 +80,8 @@ async def _category(session: AsyncSession, document_id: uuid.UUID) -> str | None
     status_code=202,
     response_model=UploadResponse,
     summary="Upload 1–10 documents",
-    responses=error_responses(400, 413, 415, 422),
+    responses=error_responses(400, 413, 415, 422, 429, overrides={429: RATE_LIMITED_EXAMPLE}),
+    dependencies=[rate_limit("upload")],
 )
 async def upload_documents(
     session: DB,
@@ -117,9 +128,14 @@ async def list_documents(
     ] = None,
     q: Annotated[str | None, Query(description="Case-insensitive filename search")] = None,
     category: Annotated[str | None, Query(description="Insights category")] = None,
+    all_versions: Annotated[
+        bool, Query(description="Include older versions (default: latest version only)")
+    ] = False,
 ):
     category_col = latest_category()
     stmt = select(Document, category_col.label("category"))
+    if not all_versions:
+        stmt = stmt.where(Document.is_latest.is_(True))
     if status:
         stmt = stmt.where(Document.status == status)
     if q:
@@ -346,6 +362,116 @@ async def get_document_insights(document_id: uuid.UUID, session: DB):
 
 
 @router.post(
+    "/{document_id}/versions",
+    status_code=202,
+    response_model=DocumentOut,
+    summary="Upload a new version of a document",
+    responses=error_responses(
+        400,
+        404,
+        409,
+        413,
+        415,
+        422,
+        429,
+        overrides={
+            409: ("VERSION_UNCHANGED", "This file is identical to version 1 of the document."),
+            429: RATE_LIMITED_EXAMPLE,
+        },
+    ),
+    dependencies=[rate_limit("upload")],
+)
+async def upload_version(
+    document_id: uuid.UUID,
+    session: DB,
+    storage: StorageDep,
+    file: UploadFile = File(..., description="One file (PDF, DOCX, TXT, MD), ≤ MAX_UPLOAD_MB"),
+):
+    """The file becomes version N+1 of the document's version group and is processed like a new
+    upload; `document_id` may be any version of the group. Older versions are kept with their
+    insights and chat citations (`is_latest: false`); vault-wide chat and the default document
+    list use the latest version only, while chats that were attached to an older version keep
+    it. The new version may have a different file type or name.
+
+    `409 VERSION_UNCHANGED`: the file is byte-identical to a version of this document;
+    `409 DUPLICATE_CONTENT`: it is identical to a different document."""
+    current = await get_document_or_404(session, document_id)
+    doc = await handle_new_version(session, storage, current, file)
+    await cache.invalidate_metrics()
+    return doc
+
+
+@router.get(
+    "/{document_id}/versions",
+    response_model=VersionList,
+    summary="All versions of a document (newest first)",
+    responses=error_responses(404),
+)
+async def list_versions(document_id: uuid.UUID, session: DB):
+    doc = await get_document_or_404(session, document_id)
+    category_col = latest_category()
+    rows = await session.execute(
+        select(Document, category_col.label("category"))
+        .where(Document.version_group_id == doc.version_group_id)
+        .order_by(Document.version.desc())
+    )
+    items = [DocumentOut.from_model(d, cat) for d, cat in rows.all()]
+    latest = next((i for i in items if i.is_latest), items[0])
+    return VersionList(version_group_id=doc.version_group_id, latest_id=latest.id, items=items)
+
+
+@router.post(
+    "/{document_id}/summaries",
+    response_model=SummaryOut,
+    summary="Custom summary: choose length, tone and focus",
+    responses=error_responses(
+        404,
+        409,
+        422,
+        429,
+        503,
+        overrides={
+            409: ("DOCUMENT_NOT_EXTRACTED", "The document text is not available yet."),
+            429: RATE_LIMITED_EXAMPLE,
+        },
+    ),
+    dependencies=[rate_limit("ai")],
+)
+async def create_summary(document_id: uuid.UUID, body: SummaryRequest, session: DB):
+    """Summarises the document's extracted text with the chosen options. Key points cite their
+    pages (PDF) or sections, validated on the server. An identical request (same document,
+    options and model; the focus is compared case- and whitespace-insensitively) returns the
+    stored summary with `cached: true` and no AI cost. A document longer than
+    `ON_DEMAND_MAX_INPUT_TOKENS` is summarised from selected parts (those matching the focus
+    first); `coverage.complete` is then false. `focus_covered: false` means the document does
+    not address the focus. Also `429 AI_BUDGET_EXCEEDED` (spend cap) and `503` (provider)."""
+    doc = await get_document_or_404(session, document_id)
+    row, cached = await get_or_create_summary(
+        session, doc, length=body.length, tone=body.tone, focus=body.focus
+    )
+    if not cached:
+        await cache.invalidate_metrics()
+    return SummaryOut.from_model(row, cached)
+
+
+@router.get(
+    "/{document_id}/summaries",
+    response_model=SummaryList,
+    summary="Custom summaries generated for this document (newest first)",
+    responses=error_responses(404),
+)
+async def list_summaries(document_id: uuid.UUID, session: DB):
+    await get_document_or_404(session, document_id)
+    rows = await session.scalars(
+        select(DocumentSummary)
+        .where(DocumentSummary.document_id == document_id)
+        .order_by(DocumentSummary.created_at.desc())
+        .limit(50)
+    )
+    return SummaryList(items=[SummaryOut.from_model(r, cached=True) for r in rows])
+
+
+@router.post(
     "/{document_id}/reprocess",
     status_code=202,
     response_model=ReprocessResponse,
@@ -354,8 +480,13 @@ async def get_document_insights(document_id: uuid.UUID, session: DB):
         404,
         409,
         422,
-        overrides={409: ("DOCUMENT_PROCESSING", "The document is currently processing.")},
+        429,
+        overrides={
+            409: ("DOCUMENT_PROCESSING", "The document is currently processing."),
+            429: RATE_LIMITED_EXAMPLE,
+        },
     ),
+    dependencies=[rate_limit("upload")],
 )
 async def reprocess_document(
     document_id: uuid.UUID,
@@ -429,11 +560,33 @@ async def reprocess_document(
     responses=error_responses(404),
 )
 async def delete_document(document_id: uuid.UUID, session: DB, storage: StorageDep):
-    """Deletes the file, segments, chunks, insights and session links, and clears cached metrics.
-    Past chat citations keep their snapshot (document name, locator, excerpt); their `chunk_id`
-    and `document_id` become null. The AI cost ledger is kept."""
+    """Deletes the file, segments, chunks, insights, custom summaries, comparisons that include
+    it and session links, and clears cached metrics. Past chat citations keep their snapshot
+    (document name, locator, excerpt); their `chunk_id` and `document_id` become null. The AI
+    cost ledger is kept. Only this version is deleted: if it was the latest, the newest remaining
+    version becomes the latest."""
     doc = await get_document_or_404(session, document_id)
+    # Lock the version group so a concurrent new-version upload cannot interleave.
+    await session.execute(
+        select(Document.id)
+        .where(Document.version_group_id == doc.version_group_id)
+        .with_for_update()
+    )
+    group_id, was_latest = doc.version_group_id, doc.is_latest
+    await session.execute(
+        delete(DocumentComparison).where(DocumentComparison.document_ids.contains([document_id]))
+    )
     await session.delete(doc)
+    await session.flush()
+    if was_latest:
+        newest = await session.scalar(
+            select(Document)
+            .where(Document.version_group_id == group_id)
+            .order_by(Document.version.desc())
+            .limit(1)
+        )
+        if newest is not None:
+            newest.is_latest = True
     await session.commit()
     storage.delete_document(document_id)
     await cache.invalidate_metrics()

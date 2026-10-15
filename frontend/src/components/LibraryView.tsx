@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, ApiError } from "../api/client";
-import type { DocumentOut } from "../api/types";
+import type { DocumentOut, SummaryOut, SummaryRequest } from "../api/types";
 import { useDocumentEvents } from "../hooks/useDocumentEvents";
 import { errorText, formatBytes, relativeTime, statusLabel } from "../lib/format";
 
@@ -14,15 +14,23 @@ const STATUS_TONE: Record<string, string> = {
   queued: "bg-neutral-200 text-neutral-700",
 };
 
-export function LibraryView({ onChatWith }: { onChatWith: (doc: DocumentOut) => void }) {
+export function LibraryView({
+  onChatWith,
+  onOpenComparison,
+}: {
+  onChatWith: (doc: DocumentOut) => void;
+  onOpenComparison: (id: string) => void;
+}) {
   const queryClient = useQueryClient();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
+  const [allVersions, setAllVersions] = useState(false);
   const [selected, setSelected] = useState<DocumentOut | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const docs = useQuery({
-    queryKey: ["documents", q, status],
-    queryFn: () => api.listDocuments({ limit: 100, q, status }),
+    queryKey: ["documents", q, status, allVersions],
+    queryFn: () => api.listDocuments({ limit: 100, q, status, all_versions: allVersions }),
   });
   const items = docs.data?.items ?? [];
   const activeIds = items.filter((d) => d.status === "queued" || d.status === "processing").map((d) => d.id);
@@ -47,6 +55,17 @@ export function LibraryView({ onChatWith }: { onChatWith: (doc: DocumentOut) => 
     },
     onError: (err) => setNotice(err instanceof ApiError ? err.message : "Delete failed."),
   });
+  const compare = useMutation({
+    mutationFn: (ids: string[]) => api.compare(ids),
+    onSuccess: (result) => {
+      queryClient.setQueryData(["comparison", result.id], result);
+      setPicked([]);
+      onOpenComparison(result.id);
+    },
+    onError: (err) => setNotice(err instanceof ApiError ? err.message : "Comparison failed."),
+  });
+  const togglePick = (id: string) =>
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p));
   const upload = useMutation({
     mutationFn: (files: File[]) => api.upload(files.slice(0, 10)),
     onSuccess: (results) => {
@@ -86,6 +105,23 @@ export function LibraryView({ onChatWith }: { onChatWith: (doc: DocumentOut) => 
               </option>
             ))}
           </select>
+          <label className="flex items-center gap-1.5 text-sm text-neutral-700">
+            <input
+              type="checkbox"
+              checked={allVersions}
+              onChange={(e) => setAllVersions(e.target.checked)}
+              aria-label="Show older versions"
+            />
+            Older versions
+          </label>
+          <button
+            onClick={() => compare.mutate(picked)}
+            disabled={picked.length < 2 || compare.isPending}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50"
+            title="Tick 2–4 documents to compare them"
+          >
+            {compare.isPending ? "Comparing…" : `Compare${picked.length ? ` (${picked.length})` : ""}`}
+          </button>
           <label className="cursor-pointer rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">
             Upload
             <input
@@ -117,6 +153,9 @@ export function LibraryView({ onChatWith }: { onChatWith: (doc: DocumentOut) => 
             <table className="w-full text-left text-sm">
               <thead className="text-xs uppercase tracking-wide text-neutral-500">
                 <tr>
+                  <th className="w-8 py-2 pr-2 font-medium">
+                    <span className="sr-only">Select for comparison</span>
+                  </th>
                   <th className="py-2 pr-4 font-medium">Document</th>
                   <th className="py-2 pr-4 font-medium">Status</th>
                   <th className="py-2 pr-4 font-medium max-md:hidden">Type</th>
@@ -129,14 +168,26 @@ export function LibraryView({ onChatWith }: { onChatWith: (doc: DocumentOut) => 
               <tbody className="divide-y divide-neutral-100">
                 {items.map((d) => (
                   <tr key={d.id} className={selected?.id === d.id ? "bg-neutral-50" : ""}>
+                    <td className="py-2.5 pr-2">
+                      <input
+                        type="checkbox"
+                        checked={picked.includes(d.id)}
+                        onChange={() => togglePick(d.id)}
+                        disabled={d.stages.extract !== "succeeded" || (!picked.includes(d.id) && picked.length >= 4)}
+                        aria-label={`Select ${d.filename} for comparison`}
+                      />
+                    </td>
                     <td className="max-w-xs py-2.5 pr-4">
-                      <button
-                        onClick={() => setSelected(d)}
-                        className="block max-w-full truncate text-left font-medium hover:underline"
-                        title={d.filename}
-                      >
-                        {d.filename}
-                      </button>
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <button
+                          onClick={() => setSelected(d)}
+                          className="block min-w-0 truncate text-left font-medium hover:underline"
+                          title={d.filename}
+                        >
+                          {d.filename}
+                        </button>
+                        <VersionBadge doc={d} />
+                      </div>
                       {d.error && (
                         <div className="truncate text-xs text-red-700" title={d.error.message ?? ""}>
                           {errorText(d.error.code, d.error.message)}
@@ -186,12 +237,45 @@ export function LibraryView({ onChatWith }: { onChatWith: (doc: DocumentOut) => 
           )}
         </div>
       </div>
-      {selected && <InsightsDrawer doc={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <InsightsDrawer
+          key={selected.id}
+          doc={selected}
+          onClose={() => setSelected(null)}
+          onSelect={(d) => setSelected(d)}
+          onOpenComparison={onOpenComparison}
+        />
+      )}
     </div>
   );
 }
 
-function InsightsDrawer({ doc, onClose }: { doc: DocumentOut; onClose: () => void }) {
+function VersionBadge({ doc }: { doc: DocumentOut }) {
+  if (doc.version === 1 && doc.is_latest) return null;
+  return (
+    <span
+      className={`shrink-0 rounded px-1.5 text-xs leading-5 ${
+        doc.is_latest ? "bg-blue-100 text-blue-800" : "bg-neutral-200 text-neutral-600"
+      }`}
+      title={doc.is_latest ? "Latest version" : "A newer version exists"}
+    >
+      v{doc.version}
+      {doc.is_latest ? "" : " · old"}
+    </span>
+  );
+}
+
+function InsightsDrawer({
+  doc,
+  onClose,
+  onSelect,
+  onOpenComparison,
+}: {
+  doc: DocumentOut;
+  onClose: () => void;
+  onSelect: (doc: DocumentOut) => void;
+  onOpenComparison: (id: string) => void;
+}) {
   const insights = useQuery({
     queryKey: ["insights", doc.id],
     queryFn: () => api.getInsights(doc.id),
@@ -206,8 +290,11 @@ function InsightsDrawer({ doc, onClose }: { doc: DocumentOut; onClose: () => voi
     >
       <div className="flex items-start justify-between gap-2 border-b border-neutral-200 p-4">
         <div className="min-w-0">
-          <div className="truncate font-semibold" title={doc.filename}>
-            {doc.filename}
+          <div className="flex min-w-0 items-center gap-1.5">
+            <div className="truncate font-semibold" title={doc.filename}>
+              {doc.filename}
+            </div>
+            <VersionBadge doc={doc} />
           </div>
           <div className="text-xs text-neutral-500">
             {doc.file_type.toUpperCase()}
@@ -302,6 +389,8 @@ function InsightsDrawer({ doc, onClose }: { doc: DocumentOut; onClose: () => voi
             </div>
           </>
         )}
+        {doc.stages.extract === "succeeded" && <CustomSummaryPanel doc={doc} />}
+        <VersionsPanel doc={doc} onSelect={onSelect} onOpenComparison={onOpenComparison} />
       </div>
       <div className="border-t border-neutral-200 p-4 text-sm">
         <a href={api.fileUrl(doc.id)} target="_blank" rel="noreferrer" className="text-blue-700 underline">
@@ -309,5 +398,197 @@ function InsightsDrawer({ doc, onClose }: { doc: DocumentOut; onClose: () => voi
         </a>
       </div>
     </aside>
+  );
+}
+
+const LENGTHS: SummaryRequest["length"][] = ["short", "medium", "long"];
+const TONES: SummaryRequest["tone"][] = ["neutral", "executive", "technical", "plain"];
+
+function CustomSummaryPanel({ doc }: { doc: DocumentOut }) {
+  const [length, setLength] = useState<SummaryRequest["length"]>("short");
+  const [tone, setTone] = useState<SummaryRequest["tone"]>("executive");
+  const [focus, setFocus] = useState("");
+  const [result, setResult] = useState<SummaryOut | null>(null);
+  const generate = useMutation({
+    mutationFn: () => api.createSummary(doc.id, { length, tone, focus: focus.trim() || null }),
+    onSuccess: setResult,
+  });
+  return (
+    <section className="rounded-lg border border-neutral-200 bg-white p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase text-neutral-500">Custom summary</h3>
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          generate.mutate();
+        }}
+      >
+        <select
+          value={length}
+          onChange={(e) => setLength(e.target.value as SummaryRequest["length"])}
+          className="rounded border border-neutral-300 px-1.5 py-1"
+          aria-label="Summary length"
+        >
+          {LENGTHS.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+        <select
+          value={tone}
+          onChange={(e) => setTone(e.target.value as SummaryRequest["tone"])}
+          className="rounded border border-neutral-300 px-1.5 py-1"
+          aria-label="Summary tone"
+        >
+          {TONES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <input
+          value={focus}
+          onChange={(e) => setFocus(e.target.value)}
+          maxLength={200}
+          placeholder="Focus (optional), e.g. budget and risks"
+          className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-1"
+          aria-label="Summary focus"
+        />
+        <button
+          type="submit"
+          disabled={generate.isPending}
+          className="rounded bg-neutral-900 px-2.5 py-1 font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+        >
+          {generate.isPending ? "Writing…" : "Generate"}
+        </button>
+      </form>
+      {generate.error && (
+        <div className="mt-2 text-red-700" role="alert">
+          {generate.error instanceof ApiError ? generate.error.message : "Could not generate the summary."}
+        </div>
+      )}
+      {result && (
+        <div className="mt-3 space-y-2">
+          {result.ai_mode === "fake" && (
+            <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+              FAKE AI MODE — placeholder summary from the test double
+            </div>
+          )}
+          {result.focus && result.focus_covered === false && (
+            <div className="rounded bg-amber-50 px-2 py-1 text-amber-900">
+              The document does not address "{result.focus}".
+            </div>
+          )}
+          <p className="whitespace-pre-wrap">{result.summary}</p>
+          {result.key_points.length > 0 && (
+            <ul className="space-y-1.5">
+              {result.key_points.map((kp, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="shrink-0 rounded bg-neutral-200 px-1.5 text-xs leading-5 text-neutral-700">
+                    {kp.pages.length ? `p. ${kp.pages.join(", ")}` : `§ ${(kp.sections ?? []).join(", ")}`}
+                  </span>
+                  <span>{kp.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="text-xs text-neutral-500">
+            {result.length} · {result.tone} · {result.model}
+            {result.cached ? " · stored result (no AI cost)" : ""}
+            {result.coverage.complete === false &&
+              ` · long document: ${String(result.coverage.segments_included)}/${String(result.coverage.segments_total)} parts used`}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function VersionsPanel({
+  doc,
+  onSelect,
+  onOpenComparison,
+}: {
+  doc: DocumentOut;
+  onSelect: (doc: DocumentOut) => void;
+  onOpenComparison: (id: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const versions = useQuery({
+    queryKey: ["versions", doc.version_group_id],
+    queryFn: () => api.listVersions(doc.id),
+  });
+  const [error, setError] = useState<string | null>(null);
+  const upload = useMutation({
+    mutationFn: (file: File) => api.uploadVersion(doc.id, file),
+    onSuccess: (created) => {
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["versions", doc.version_group_id] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      onSelect(created);
+    },
+    onError: (err) => setError(err instanceof ApiError ? err.message : "Upload failed."),
+  });
+  const compare = useMutation({
+    mutationFn: (ids: string[]) => api.compare(ids),
+    onSuccess: (result) => {
+      queryClient.setQueryData(["comparison", result.id], result);
+      onOpenComparison(result.id);
+    },
+    onError: (err) => setError(err instanceof ApiError ? err.message : "Comparison failed."),
+  });
+  const items = versions.data?.items ?? [];
+  const previous = items.find((v) => v.version < doc.version && v.stages.extract === "succeeded");
+  return (
+    <section className="rounded-lg border border-neutral-200 bg-white p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase text-neutral-500">Versions</h3>
+        <label className="cursor-pointer rounded border border-neutral-300 px-2 py-0.5 text-xs font-medium hover:bg-neutral-50">
+          {upload.isPending ? "Uploading…" : "Upload new version"}
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt,.md,.markdown"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) upload.mutate(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+      {error && (
+        <div className="mb-2 text-red-700" role="alert">
+          {error}
+        </div>
+      )}
+      <ul className="space-y-1">
+        {items.map((v) => (
+          <li key={v.id} className="flex items-center gap-2">
+            <button
+              onClick={() => onSelect(v)}
+              className={`min-w-0 truncate text-left hover:underline ${v.id === doc.id ? "font-semibold" : ""}`}
+              title={v.filename}
+            >
+              v{v.version} · {v.filename}
+            </button>
+            <span className="shrink-0 text-xs text-neutral-500">
+              {v.is_latest ? "latest · " : ""}
+              {relativeTime(v.created_at)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {previous && doc.stages.extract === "succeeded" && (
+        <button
+          onClick={() => compare.mutate([previous.id, doc.id])}
+          disabled={compare.isPending}
+          className="mt-2 rounded border border-neutral-300 px-2 py-0.5 text-xs font-medium hover:bg-neutral-50 disabled:opacity-50"
+        >
+          {compare.isPending ? "Comparing…" : `What changed since v${previous.version}?`}
+        </button>
+      )}
+    </section>
   );
 }

@@ -139,7 +139,9 @@ async def resolve_scope(
         docs = (
             await db.scalars(
                 select(Document).where(
-                    Document.index_status == "succeeded", Document.embedding_model == model
+                    Document.index_status == "succeeded",
+                    Document.embedding_model == model,
+                    Document.is_latest.is_(True),  # older versions only when attached explicitly
                 )
             )
         ).all()

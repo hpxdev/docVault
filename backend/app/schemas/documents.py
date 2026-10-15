@@ -41,6 +41,9 @@ class DocumentOut(BaseModel):
                 "warnings": [{"code": "EMPTY_PAGES", "pages": [4]}],
                 "error": None,
                 "category": "report",
+                "version": 2,
+                "version_group_id": DOC_ID,
+                "is_latest": True,
                 "created_at": "2026-10-15T09:12:03.120Z",
                 "updated_at": "2026-10-15T09:12:09.880Z",
                 "chat_ready_at": "2026-10-15T09:12:07.410Z",
@@ -65,6 +68,11 @@ class DocumentOut(BaseModel):
     warnings: list[dict[str, Any]]
     error: ErrorInfo | None = Field(description="Last stage error, if any")
     category: str | None = None
+    version: int = Field(description="1 for the first upload; +1 for each new version")
+    version_group_id: uuid.UUID = Field(
+        description="Shared by all versions of a document (the id of version 1)"
+    )
+    is_latest: bool = Field(description="False once a newer version has been uploaded")
     created_at: datetime
     updated_at: datetime
     chat_ready_at: datetime | None
@@ -93,6 +101,9 @@ class DocumentOut(BaseModel):
             if doc.error_code
             else None,
             category=category,
+            version=doc.version,
+            version_group_id=doc.version_group_id,
+            is_latest=doc.is_latest,
             created_at=doc.created_at,
             updated_at=doc.updated_at,
             chat_ready_at=doc.chat_ready_at,
@@ -197,6 +208,12 @@ class ContentPage(Page):
     document_id: uuid.UUID
     file_type: str
     items: list[SegmentOut]
+
+
+class VersionList(BaseModel):
+    version_group_id: uuid.UUID
+    latest_id: uuid.UUID
+    items: list[DocumentOut] = Field(description="All versions, newest first")
 
 
 class ReprocessResponse(BaseModel):

@@ -24,7 +24,8 @@ from the git history. Sections the developer must write in their own words are m
    any real OpenAI call, any new dependency outside the approved list, anything destructive
    outside the project, or any publishing (`git push`, deploys). The OpenAI key was put into
    `.env` by the developer and never passed through the conversation.
-3. **Small tasks, each verified.** Tasks T01–T25 (optional T26 not done). Each ended with lint,
+3. **Small tasks, each verified.** Tasks T01–T25 (optional T26 not done), then the four
+   remaining bonus items (custom summaries, comparisons, versions, rate limiting). Each ended with lint,
    the test suite actually run, a log entry and a local commit (19 commits up to the end of T23;
    tasks built together were committed and logged together).
 4. **Fake AI by default.** Development and tests used deterministic fake providers (labelled
@@ -43,6 +44,7 @@ from the git history. Sections the developer must write in their own words are m
 | Live eval (T19) | Evaluation set and live test | Added the key; approved the spend | Real run: 10/10, $0.0016 estimated |
 | 3 Frontend (T20–T23) | React UI, `web` container | Go-ahead for the phase | `npm run build`; manual checks in a browser pane in fake mode |
 | 4 Delivery (T24–T25) | These documents, demo script, clean-clone check | Recording and submitting the video | See ai-log |
+| Bonus items (after T25) | Versions, custom summaries, comparisons, rate limiting: migration, prompts, API, UI, 16 tests | Chose to build these four next | 142 tests; manual UI check on a separate fake-mode stack; real-model output NOT VERIFIED |
 
 **Human review of the code:** every log entry has a `Human review: ___` field for the
 developer. **[developer to complete: which parts you read or changed yourself, and how]**
@@ -66,6 +68,8 @@ the test suite, the live stack, the browser, or a re-read of its own output.
 | Scripted edits on Windows wrote cp1252 bytes and turned `\n` escapes into line breaks | Ruff syntax errors and a repo-wide UTF-8 scan | Edits involving escapes or non-ASCII made with the editor tool |
 | UI: "already in vault" on a new file dropped twice; stale chat title; checkbox named "on"; fake summaries showing prompt headers; multi-line titles | Using the UI in the browser pane | Fixed one by one (ai-log T20–T23) |
 | An early Stop still paid for the embedding and answer calls; a stopped answer was shown with the "no verifiable citation" warning | Real-mode demo dry run | Stop checked between pipeline steps (test added); UI shows "Stopped" |
+| Comparison similarities lost their page/section numbers (the sources were rebuilt from a dict without them) | New comparison test: response validation error | Sources keep their refs |
+| The fake comparison found no differences between two versions (it compared only the first figure sentence of each) | Using the UI on the fake-mode stack | The fake compares page by page |
 | EVALUATION.md compared a local prompt token count with a per-message total that also included the query embedding | Re-checking the figure while writing PROMPTS.md | Corrected to 643 vs 632 tokens (ai-log T24) |
 
 Some first attempts were also wrong in tests rather than code (for example, wrong token
@@ -92,7 +96,8 @@ have **not** been iterated on a broad real evaluation set.
   small runs plus a prompt re-test. The dry run showed the follow-up rewrite does not work with
   `chat.condense.v1`, which fake tests could not reveal; v2 fixed that case but mis-resolved a
   reference the conversation never named. Map-reduce
-  insights and injection resistance with the real model are NOT VERIFIED.
+  insights and injection resistance with the real model are NOT VERIFIED, and so are custom
+  summaries and comparisons, which have run only against the fake model.
 - **Some things it could not do or verify:** record the demo video; test the Stop button against
   a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements
   are design reasoning).

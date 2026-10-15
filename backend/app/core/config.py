@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     chunk_overlap_tokens: int = 100
     retrieval_top_k: int = 8
     insights_single_pass_max_tokens: int = 60000
+    # Input cap for on-demand AI (custom summaries; comparisons share it across documents).
+    on_demand_max_input_tokens: int = Field(default=40000, ge=2000, le=120000)
+
+    # Rate limits per client IP, fixed one-minute windows in Redis (0 = no limit for that group).
+    rate_limit_enabled: bool = True
+    rate_limit_ai_per_minute: int = Field(default=20, ge=0)
+    rate_limit_upload_per_minute: int = Field(default=30, ge=0)
 
     # Dev / tests
     run_live_ai_tests: bool = False

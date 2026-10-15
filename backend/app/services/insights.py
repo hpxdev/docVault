@@ -10,7 +10,13 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.ai.client import SyncAI
-from app.ai.schemas import CATEGORIES, SENTIMENTS, DocumentInsightsLLM, SectionNotesLLM
+from app.ai.schemas import (
+    CATEGORIES,
+    SENTIMENTS,
+    DocumentInsightsLLM,
+    KeyPointLLM,
+    SectionNotesLLM,
+)
 from app.core.config import get_settings
 from app.core.tokens import chat_encoding, count_chat_tokens
 from app.models import Document, DocumentInsights, DocumentSegment
@@ -71,9 +77,8 @@ def render(parts: list[MarkedSegment]) -> str:
     return "\n\n".join(f"{p.marker}\n{p.text or '(no text on this page)'}" for p in parts)
 
 
-def group_for_map(parts: list[MarkedSegment], max_tokens: int) -> list[list[MarkedSegment]]:
-    """Consecutive groups of about `max_tokens`. A segment larger than that is split into
-    token windows that keep its marker, so no text is skipped."""
+def split_large(parts: list[MarkedSegment], max_tokens: int) -> list[MarkedSegment]:
+    """Split segments larger than `max_tokens` into token windows that keep their marker."""
     enc = chat_encoding()
     pieces: list[MarkedSegment] = []
     for p in parts:
@@ -84,11 +89,22 @@ def group_for_map(parts: list[MarkedSegment], max_tokens: int) -> list[list[Mark
         for start in range(0, len(tokens), max_tokens):
             window = enc.decode(tokens[start : start + max_tokens])
             pieces.append(MarkedSegment(p.ref, p.marker, p.segment_id, window))
+    return pieces
+
+
+def piece_cost(p: MarkedSegment) -> int:
+    return count_chat_tokens(p.marker) + count_chat_tokens(p.text) + 2
+
+
+def group_for_map(parts: list[MarkedSegment], max_tokens: int) -> list[list[MarkedSegment]]:
+    """Consecutive groups of about `max_tokens`. A segment larger than that is split into
+    token windows that keep its marker, so no text is skipped."""
+    pieces = split_large(parts, max_tokens)
     groups: list[list[MarkedSegment]] = []
     current: list[MarkedSegment] = []
     size = 0
     for p in pieces:
-        cost = count_chat_tokens(p.marker) + count_chat_tokens(p.text) + 2
+        cost = piece_cost(p)
         if current and size + cost > max_tokens:
             groups.append(current)
             current, size = [], 0
@@ -123,7 +139,7 @@ def _notes_block(index: int, label: str, notes: SectionNotesLLM) -> str:
     return "\n".join(lines)
 
 
-def _clip_words(text: str, limit: int, name: str, v: Validation) -> str:
+def clip_words(text: str, limit: int, name: str, v: Validation) -> str:
     words = text.split()
     if len(words) <= limit:
         return text.strip()
@@ -146,25 +162,36 @@ def _clean_list(
     return out[:limit]
 
 
-def validate(
-    raw: DocumentInsightsLLM, *, valid_refs: set[int], pdf: bool
-) -> tuple[dict[str, Any], Validation]:
-    """Drop refs outside the document, invalid enum values and over-limit items; count them."""
-    v = Validation()
+def ref_fields(refs: list[int], pdf: bool) -> dict[str, Any]:
+    """Validated marker numbers as API fields: `pages` for PDFs, `sections` otherwise."""
+    return {"pages": refs} if pdf else {"pages": [], "sections": refs}
+
+
+def validate_key_points(
+    raw: list[KeyPointLLM], *, valid_refs: set[int], pdf: bool, limit: int, v: Validation
+) -> list[dict[str, Any]]:
     key_points = []
-    for kp in raw.key_points:
+    for kp in raw:
         refs = sorted({r for r in kp.refs if r in valid_refs})
         v.dropped_refs += len(set(kp.refs)) - len(refs)
         if not refs or not kp.text.strip():
             v.dropped_key_points += 1  # every key point must point at its source
             continue
-        point: dict[str, Any] = {"text": kp.text.strip(), "pages": refs if pdf else []}
-        if not pdf:
-            point["sections"] = refs
-        key_points.append(point)
-    if len(key_points) > MAX_KEY_POINTS:
+        key_points.append({"text": kp.text.strip(), **ref_fields(refs, pdf)})
+    if len(key_points) > limit:
         v.truncated_fields.append("key_points")
-        key_points = key_points[:MAX_KEY_POINTS]
+        key_points = key_points[:limit]
+    return key_points
+
+
+def validate(
+    raw: DocumentInsightsLLM, *, valid_refs: set[int], pdf: bool
+) -> tuple[dict[str, Any], Validation]:
+    """Drop refs outside the document, invalid enum values and over-limit items; count them."""
+    v = Validation()
+    key_points = validate_key_points(
+        raw.key_points, valid_refs=valid_refs, pdf=pdf, limit=MAX_KEY_POINTS, v=v
+    )
 
     category = raw.category.strip().lower()
     if category not in CATEGORIES:
@@ -184,10 +211,8 @@ def validate(
         "amounts": _clean_list(e.amounts, MAX_ENTITIES),
     }
     fields = {
-        "summary_short": _clip_words(
-            raw.summary_short, LIMITS["summary_short"], "summary_short", v
-        ),
-        "summary_detailed": _clip_words(
+        "summary_short": clip_words(raw.summary_short, LIMITS["summary_short"], "summary_short", v),
+        "summary_detailed": clip_words(
             raw.summary_detailed, LIMITS["summary_detailed"], "summary_detailed", v
         ),
         "key_points": key_points,

@@ -242,10 +242,15 @@ class AsyncAI:
         *,
         prompt_version: str | None = None,
         message_id: uuid.UUID | None = None,
+        document_id: uuid.UUID | None = None,
     ) -> tuple[Any, Usage]:
         await self.guard()
         started = time.perf_counter()
-        meta = {"prompt_version": prompt_version, "document_id": None, "message_id": message_id}
+        meta = {
+            "prompt_version": prompt_version,
+            "document_id": document_id,
+            "message_id": message_id,
+        }
         try:
             value, usage = await coro_fn()
         except Exception as exc:
@@ -301,6 +306,26 @@ class AsyncAI:
             lambda: self.chat.acomplete(messages, purpose=purpose, max_tokens=max_tokens),
             prompt_version=prompt_version,
             message_id=message_id,
+        )
+
+    async def structured(
+        self,
+        schema: type[T],
+        messages: Sequence[BaseMessage],
+        *,
+        purpose: str,
+        prompt_version: str,
+        document_id: uuid.UUID | None,
+        max_tokens: int,
+    ) -> tuple[T, Usage]:
+        """On-demand structured output (custom summaries, comparisons). A comparison spans several
+        documents, so its ledger row has no `document_id`."""
+        return await self._call(
+            purpose,
+            self.chat.name,
+            lambda: self.chat.astructured(schema, messages, purpose=purpose, max_tokens=max_tokens),
+            prompt_version=prompt_version,
+            document_id=document_id,
         )
 
     async def stream(

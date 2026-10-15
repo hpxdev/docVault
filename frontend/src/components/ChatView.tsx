@@ -39,6 +39,8 @@ interface ChipDoc {
   chatReady: boolean;
   error: { code: string; message: string | null } | null;
   stages?: StatusPayload["stages"];
+  version?: number;
+  isLatest?: boolean;
 }
 
 export function ChatView({ sessionId, onSessionCreated }: Props) {
@@ -96,6 +98,8 @@ export function ChatView({ sessionId, onSessionCreated }: Props) {
       chatReady: s?.chat_ready ?? d.chat_ready,
       error: s?.error ?? null,
       stages: s?.stages,
+      version: d.version,
+      isLatest: d.is_latest,
     };
   });
 
@@ -530,6 +534,7 @@ function AttachmentChips({
             <span className="shrink-0 text-xs opacity-80">
               {failed ? errorText(d.error?.code, d.error?.message) : statusLabel(d.status, d.chatReady)}
               {duplicates.has(d.id) && " · already in vault"}
+              {d.isLatest === false && ` · v${d.version}, newer version exists`}
             </span>
             <button
               onClick={() => onRemove(d.id)}

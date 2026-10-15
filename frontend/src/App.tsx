@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "./api/client";
 import type { DocumentOut } from "./api/types";
 import { ChatView } from "./components/ChatView";
+import { ComparisonView } from "./components/ComparisonView";
 import { StatusBanner } from "./components/FakeModeBanner";
 import { LibraryView } from "./components/LibraryView";
 import { MetricsView } from "./components/MetricsView";
@@ -12,16 +13,22 @@ import { Sidebar, type View } from "./components/Sidebar";
 interface Route {
   view: View;
   sessionId: string | null;
+  comparisonId?: string | null;
 }
 
-/** Hash routes: #/chat, #/chat/<session id>, #/library, #/metrics (refresh and Back work). */
+const UUID = /^[0-9a-f-]{36}$/i;
+
+/** Hash routes: #/chat, #/chat/<session id>, #/library, #/metrics, #/compare/<comparison id>
+ * (refresh and Back work). */
 function parseHash(hash: string): Route {
   const [, view, id] = hash.replace(/^#/, "").split("/");
   if (view === "library" || view === "metrics") return { view, sessionId: null };
-  return { view: "chat", sessionId: id && /^[0-9a-f-]{36}$/i.test(id) ? id : null };
+  if (view === "compare" && id && UUID.test(id)) return { view, sessionId: null, comparisonId: id };
+  return { view: "chat", sessionId: id && UUID.test(id) ? id : null };
 }
 
-function toHash({ view, sessionId }: Route): string {
+function toHash({ view, sessionId, comparisonId }: Route): string {
+  if (view === "compare") return `#/compare/${comparisonId}`;
   return view === "chat" ? `#/chat${sessionId ? `/${sessionId}` : ""}` : `#/${view}`;
 }
 
@@ -67,7 +74,18 @@ export default function App() {
               onSessionCreated={(id) => navigate({ view: "chat", sessionId: id })}
             />
           )}
-          {route.view === "library" && <LibraryView onChatWith={(d) => void chatWith(d)} />}
+          {route.view === "library" && (
+            <LibraryView
+              onChatWith={(d) => void chatWith(d)}
+              onOpenComparison={(id) => navigate({ view: "compare", sessionId: null, comparisonId: id })}
+            />
+          )}
+          {route.view === "compare" && route.comparisonId && (
+            <ComparisonView
+              comparisonId={route.comparisonId}
+              onBack={() => navigate({ view: "library", sessionId: null })}
+            />
+          )}
           {route.view === "metrics" && <MetricsView />}
         </main>
       </div>

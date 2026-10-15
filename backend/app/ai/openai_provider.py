@@ -64,16 +64,13 @@ class OpenAIChat:
             self._by_max_tokens[max_tokens] = llm
         return llm
 
-    def structured(
-        self, schema: type[T], messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
-    ) -> tuple[T, Usage]:
-        runnable = self._llm(max_tokens).with_structured_output(
+    def _structured_runnable(self, schema: type[BaseModel], max_tokens: int):
+        return self._llm(max_tokens).with_structured_output(
             schema, method="json_schema", strict=True, include_raw=True
         )
-        try:
-            out = runnable.invoke(list(messages))
-        except Exception as exc:
-            raise classify(exc) from exc
+
+    @staticmethod
+    def _parsed(out: dict) -> tuple[BaseModel, Usage]:
         usage = usage_from_metadata(getattr(out.get("raw"), "usage_metadata", None))
         parsed = out.get("parsed")
         if parsed is None or out.get("parsing_error") is not None:
@@ -81,6 +78,24 @@ class OpenAIChat:
             err.usage = usage  # type: ignore[attr-defined]  (still billed)
             raise err
         return parsed, usage
+
+    def structured(
+        self, schema: type[T], messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
+    ) -> tuple[T, Usage]:
+        try:
+            out = self._structured_runnable(schema, max_tokens).invoke(list(messages))
+        except Exception as exc:
+            raise classify(exc) from exc
+        return self._parsed(out)  # type: ignore[return-value]
+
+    async def astructured(
+        self, schema: type[T], messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
+    ) -> tuple[T, Usage]:
+        try:
+            out = await self._structured_runnable(schema, max_tokens).ainvoke(list(messages))
+        except Exception as exc:
+            raise classify(exc) from exc
+        return self._parsed(out)  # type: ignore[return-value]
 
     async def acomplete(
         self, messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int

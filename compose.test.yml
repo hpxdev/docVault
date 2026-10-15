@@ -48,6 +48,7 @@ services:
       CACHE_REDIS_URL: redis://test-redis:6379/1
       STORAGE_DIR: /tmp/vault-storage
       LOG_LEVEL: WARNING
+      RATE_LIMIT_ENABLED: "false"  # tests that need limits enable them
       RUN_LIVE_AI_TESTS: ${RUN_LIVE_AI_TESTS:-0}
     volumes:
       - ./backend:/app

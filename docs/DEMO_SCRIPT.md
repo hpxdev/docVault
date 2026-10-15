@@ -5,6 +5,7 @@ For recording the demo video. It uses only the self-written sample files in
 
 | File | Known facts used below |
 |---|---|
+| `northwind-brief-v2.pdf` (6 pages) | Revised brief: budget 44.0 million euros approved 12 May 2026, contingency 3.6 million, construction September 2026, grid connection Q4 2027; pages 2, 5, 6 unchanged |
 | `northwind-brief.pdf` (6 pages) | p2: 48 MW capacity · p3: budget 41.5 million euros, approved 4 March 2026, contingency 3.2 million · p4: construction starts June 2026, contractor Brightline Builders |
 | `employee-handbook.docx` | "Leave Policy": 27 days paid annual leave, up to 5 carried over · "Remote Work": up to three days per week |
 | `onboarding-guide.md` | "Accounts": VPN client Tunnelbear-X · "Staging": deploys every Tuesday at 14:00 UTC |
@@ -53,9 +54,23 @@ estimated for three documents and six questions (dry-run ledger).
 | 5:15–6:00 | 8. Swagger and metrics | Swagger tab: show the endpoint groups and an example; then the UI's Metrics page | Every endpoint has examples and one error format. Metrics: AI calls and **estimated** cost by purpose and model against the $0.50 cap; not-found rate with numerator/denominator; first-token latency; stage success rates and durations |
 | 6:00–6:45 | 9. Tests, AI usage, limitations | Show the test run summary (124 passed); open AI_USAGE.md and docs/EVALUATION.md | Fake-mode tests prove the plumbing (real Postgres/Redis); one live evaluation, 10/10 on a small set. Built with Claude Code, every step logged, bugs it caused and how they were caught. Limitations: no OCR, single user, no auth, English full-text search, gpt-4o-mini shutdown 2027-01-14 |
 
+### Optional segment (about 1 minute; NOT rehearsed in real mode)
+
+Custom summaries, comparisons and versions were checked in the UI in **fake mode** only; their
+real-model output is **NOT VERIFIED**, so rehearse once (about 3 AI calls, a fraction of a cent
+estimated) before recording.
+
+| Do | Say / point out |
+|---|---|
+| Library → `northwind-brief.pdf` → Custom summary: short, executive, focus *budget and risks* → Generate | Length, tone and focus are options; key points cite pages; asking again returns the stored result ("no AI cost") |
+| Versions → Upload new version → `northwind-brief-v2.pdf` | v2 is processed like an upload; v1 is kept (tick "Older versions" to see it); vault-wide chat now uses v2 |
+| When v2 is ready: "What changed since v1?" | Differences table, one column per version, page chips: the budget, approval date, contingency, construction start and grid connection changed |
+
 ## If something goes wrong on camera
 
 - A document stays "Processing": check `docker compose logs worker`. Reprocess from the Library.
 - `AI_BUDGET_EXCEEDED`: the app cap ($0.50) was reached; check the Metrics page.
+- `RATE_LIMITED`: more than 20 AI requests (or 30 uploads) in a minute; wait for the time in
+  the message.
 - The answer differs from the "expected" text above: that is the real model; the citation chip
   still shows exactly which page it used.

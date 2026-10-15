@@ -38,6 +38,10 @@ class ChatModel(Protocol):
         self, schema: type[T], messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
     ) -> tuple[T, Usage]: ...
 
+    async def astructured(
+        self, schema: type[T], messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
+    ) -> tuple[T, Usage]: ...
+
     async def acomplete(
         self, messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
     ) -> tuple[str, Usage]: ...

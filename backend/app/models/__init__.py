@@ -20,6 +20,9 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy import (
+    text as sql_text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -62,8 +65,28 @@ class Document(Base):
     )
     chat_ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Versions: every document belongs to a group (its own id for version 1); exactly one
+    # document per group is the latest (partial unique index in migration 0002).
+    version_group_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    is_latest: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
-    __table_args__ = (Index("ix_documents_created_at", "created_at"),)
+    __table_args__ = (
+        Index("ix_documents_created_at", "created_at"),
+        Index("ix_documents_version_group_id", "version_group_id"),
+        UniqueConstraint("version_group_id", "version", name="uq_documents_group_version"),
+        Index(
+            "uq_documents_group_latest",
+            "version_group_id",
+            unique=True,
+            postgresql_where=sql_text("is_latest"),
+        ),
+    )
+
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("id", uuid.uuid4())
+        kwargs.setdefault("version_group_id", kwargs["id"])
+        super().__init__(**kwargs)
 
 
 class DocumentSegment(Base):
@@ -134,6 +157,54 @@ class DocumentInsights(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     __table_args__ = (UniqueConstraint("document_id", "prompt_version"),)
+
+
+class DocumentSummary(Base):
+    """On-demand summary with user options (length, tone, focus). Cached by those options."""
+
+    __tablename__ = "document_summaries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    params_key: Mapped[str] = mapped_column(String(64))  # sha256 of the normalised options
+    length: Mapped[str] = mapped_column(String(16))
+    tone: Mapped[str] = mapped_column(String(16))
+    focus: Mapped[str | None] = mapped_column(Text)
+    prompt_version: Mapped[str] = mapped_column(String(64))
+    model: Mapped[str] = mapped_column(String(128))
+    summary: Mapped[str] = mapped_column(Text)
+    key_points: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    focus_covered: Mapped[bool | None] = mapped_column(Boolean)
+    coverage: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("document_id", "params_key", "prompt_version", "model"),)
+
+
+class DocumentComparison(Base):
+    """Comparative analysis of 2–4 documents. No FKs: the document list is a snapshot; rows that
+    include a deleted document are removed with it (see the delete endpoint)."""
+
+    __tablename__ = "document_comparisons"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)))
+    documents: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)  # [{id, label, filename, …}]
+    params_key: Mapped[str] = mapped_column(String(64))
+    focus: Mapped[str | None] = mapped_column(Text)
+    prompt_version: Mapped[str] = mapped_column(String(64))
+    model: Mapped[str] = mapped_column(String(128))
+    result: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    coverage: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("params_key", "prompt_version", "model"),
+        Index("ix_document_comparisons_document_ids", "document_ids", postgresql_using="gin"),
+        Index("ix_document_comparisons_created_at", "created_at"),
+    )
 
 
 class ProcessingRun(Base):

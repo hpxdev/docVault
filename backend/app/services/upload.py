@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.errors import AppError
+from app.core.errors import AppError, ConflictError
 from app.models import Document
 from app.schemas.documents import DocumentOut, ErrorInfo, UploadResult
 from app.services.sniff import sniff
@@ -66,7 +66,30 @@ async def _spool(upload: UploadFile, tmp_dir: Path, max_bytes: int) -> tuple[Pat
     return path, digest.hexdigest(), size
 
 
-async def _process_one(session: AsyncSession, storage: Storage, upload: UploadFile) -> UploadResult:
+async def _next_version(session: AsyncSession, group_id: uuid.UUID) -> int:
+    """Lock every version of the group (so concurrent new-version uploads queue up), mark them
+    as no longer latest and return the next version number."""
+    versions = (
+        await session.scalars(
+            select(Document)
+            .where(Document.version_group_id == group_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    ).all()
+    for old in versions:
+        old.is_latest = False
+    await session.flush()  # clear the old "latest" flag before the new row claims it
+    return max((v.version for v in versions), default=0) + 1
+
+
+async def _process_one(
+    session: AsyncSession,
+    storage: Storage,
+    upload: UploadFile,
+    *,
+    version_of: Document | None = None,
+) -> UploadResult:
     settings = get_settings()
     filename = safe_filename(upload.filename)
     tmp_path: Path | None = None
@@ -94,8 +117,15 @@ async def _process_one(session: AsyncSession, storage: Storage, upload: UploadFi
         doc_id = uuid.uuid4()
         key = storage.save(doc_id, detected.ext, tmp_path)
         tmp_path = None
+        group_id, version = doc_id, 1
+        if version_of is not None:
+            group_id = version_of.version_group_id
+            version = await _next_version(session, group_id)
         doc = Document(
             id=doc_id,
+            version_group_id=group_id,
+            version=version,
+            is_latest=True,
             filename=filename,
             mime_type=detected.mime_type,
             file_type=detected.file_type,
@@ -171,3 +201,33 @@ async def handle_upload(
         status = REJECTION_STATUS.get(next(iter(codes)), 400) if len(codes) == 1 else 400
         return results, status
     return results, 202
+
+
+async def handle_new_version(
+    session: AsyncSession, storage: Storage, current: Document, upload: UploadFile
+) -> DocumentOut:
+    """Upload one file as the next version of `current`'s document. The previous versions are
+    kept (with their chunks, insights and chat citations); only the new one is `is_latest`."""
+    result = await _process_one(session, storage, upload, version_of=current)
+    if result.outcome == "rejected":
+        assert result.error is not None
+        raise AppError(
+            result.error.message or "The file was rejected.",
+            code=result.error.code,
+            status_code=REJECTION_STATUS.get(result.error.code, 400),
+        )
+    assert result.document is not None
+    if result.outcome == "duplicate":
+        existing = result.document
+        if existing.version_group_id == current.version_group_id:
+            raise ConflictError(
+                f"This file is identical to version {existing.version} of the document.",
+                code="VERSION_UNCHANGED",
+                details={"document_id": str(existing.id), "version": existing.version},
+            )
+        raise ConflictError(
+            "This file is already in the vault as a different document.",
+            code="DUPLICATE_CONTENT",
+            details={"document_id": str(existing.id), "filename": existing.filename},
+        )
+    return result.document

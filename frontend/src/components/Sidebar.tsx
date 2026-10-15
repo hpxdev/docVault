@@ -5,7 +5,7 @@ import { api } from "../api/client";
 import type { SessionOut } from "../api/types";
 import { relativeTime } from "../lib/format";
 
-export type View = "chat" | "library" | "metrics";
+export type View = "chat" | "library" | "metrics" | "compare";
 
 interface Props {
   view: View;

@@ -21,7 +21,12 @@ from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
 
 from app.ai.providers import StreamResult, Usage
-from app.ai.schemas import DocumentInsightsLLM, SectionNotesLLM
+from app.ai.schemas import (
+    ComparisonLLM,
+    CustomSummaryLLM,
+    DocumentInsightsLLM,
+    SectionNotesLLM,
+)
 from app.core.tokens import count_chat_tokens, count_embedding_tokens
 
 T = TypeVar("T", bound=BaseModel)
@@ -282,10 +287,121 @@ def _top_words(text: str, k: int) -> list[str]:
 
 
 _DELIMITED = re.compile(r"<(document|part|section_notes)>\n?(.*?)\n?</\1>", re.S)
+_FOCUS = re.compile(r"<focus>\n?(.*?)\n?</focus>", re.S)
+_DOC_BLOCK = re.compile(r'<document label="(D\d+)"[^>]*>\n(.*?)\n</document>', re.S)
+_LIMITS = re.compile(r"at most (\d+) words; give at most (\d+) key points")
+
+
+def _focus_terms(prompt: str) -> set[str]:
+    match = _FOCUS.search(prompt)
+    return set(content_words(match.group(1))) if match else set()
+
+
+def _best_sentence(body: str, terms: set[str]) -> tuple[int, str] | None:
+    """(overlap with `terms`, sentence); without terms, prefer sentences with figures."""
+    sentences = _sentences(body)
+    if not sentences:
+        return None
+
+    def facts(x: str) -> tuple[bool, int]:
+        return sum(c.isdigit() for c in x) > 0, len(x)
+
+    if terms:
+        best = max(sentences, key=lambda x: (len(terms & set(content_words(x))), *facts(x)))
+        return len(terms & set(content_words(best))), best
+    return 0, max(sentences, key=facts)
+
+
+def fake_custom_summary(prompt: str) -> dict[str, Any]:
+    """Extractive stand-in for summary.custom.v1: one sentence per section, filtered by focus."""
+    terms = _focus_terms(prompt)
+    match = _DELIMITED.search(prompt)
+    text = match.group(2) if match else ""
+    limits = _LIMITS.search(prompt)
+    words, n_points = (int(limits.group(1)), int(limits.group(2))) if limits else (200, 5)
+    points = []
+    for ref, body in _blocks(text):
+        best = _best_sentence(body, terms)
+        if best and (best[0] > 0 or not terms):
+            points.append((best[1], [ref]))
+    covered = bool(points) or not terms
+    points = _spread(points, n_points)
+    if not covered:
+        summary = f"{FAKE_LABEL}: the document does not mention the requested focus."
+    else:
+        body = " ".join(t for t, _ in points).split()
+        summary = f"{FAKE_LABEL} summary (not model-generated): " + " ".join(body[: words - 6])
+    return {
+        "focus_covered": covered,
+        "summary": summary,
+        "key_points": [{"text": t[:300], "refs": refs} for t, refs in points],
+    }
+
+
+def fake_comparison(prompt: str) -> dict[str, Any]:
+    """Stand-in for compare.v1: shared words as similarities, the figures sentence of each
+    document as one difference. Every statement cites the marker it was taken from."""
+    terms = _focus_terms(prompt)
+    docs = [(label, _blocks(body)) for label, body in _DOC_BLOCK.findall(prompt)]
+
+    def words_of(blocks: list[tuple[int, str]]) -> Counter:
+        return Counter(w for _, b in blocks for w in content_words(b) if len(w) >= 5)
+
+    counts = [words_of(blocks) for _, blocks in docs]
+    shared = set(counts[0]).intersection(*counts[1:]) if counts else set()
+    if terms:
+        shared &= terms
+    top = sorted(shared, key=lambda w: (-sum(c[w] for c in counts), w))[:3]
+    similarities = []
+    for word in top:
+        sources = []
+        for label, blocks in docs:
+            ref = next(r for r, b in blocks if word in content_words(b))
+            sources.append({"document": label, "refs": [ref]})
+        similarities.append(
+            {"text": f"{FAKE_LABEL}: every document mentions '{word}'.", "sources": sources}
+        )
+    # Differences: per page/section number, the sentences that are not in every document.
+    sentences = [
+        {
+            ref: [x for x in _sentences(body) if not terms or terms & set(content_words(x))]
+            for ref, body in blocks
+        }
+        for _, blocks in docs
+    ]
+    differences = []
+    for ref in sorted({r for s in sentences for r in s}):
+        per_doc = [s.get(ref, []) for s in sentences]
+        common = set(per_doc[0]).intersection(*per_doc[1:])
+        unique = [[x for x in sents if x not in common] for sents in per_doc]
+        if not any(unique):
+            continue
+        positions = [
+            {
+                "document": label,
+                "statement": _best_sentence(" ".join(u), set())[1][:300],
+                "refs": [ref],
+            }
+            if u
+            else {"document": label, "statement": "Not addressed", "refs": []}
+            for (label, _), u in zip(docs, unique, strict=True)
+        ]
+        differences.append({"aspect": f"Page/section {ref} (fake)", "positions": positions})
+    return {
+        "focus_covered": bool(top or differences) or not terms,
+        "overview": f"{FAKE_LABEL}: placeholder comparison of {len(docs)} documents "
+        "(not model-generated).",
+        "similarities": similarities,
+        "differences": differences,
+    }
 
 
 def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessage]) -> M:
     prompt = _human_text(messages)
+    if schema is CustomSummaryLLM:
+        return schema.model_validate(fake_custom_summary(prompt))
+    if schema is ComparisonLLM:
+        return schema.model_validate(fake_comparison(prompt))
     # Only the delimited document text, never the prompt's own header lines.
     match = _DELIMITED.search(prompt)
     text = match.group(2) if match else prompt
@@ -367,6 +483,11 @@ class FakeChatModel:
         if isinstance(out, dict):
             out = schema.model_validate(out)
         return out, self._usage(messages, out.model_dump_json())
+
+    async def astructured(
+        self, schema: type[T], messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int
+    ) -> tuple[T, Usage]:
+        return self.structured(schema, messages, purpose=purpose, max_tokens=max_tokens)
 
     async def acomplete(
         self, messages: Sequence[BaseMessage], *, purpose: str, max_tokens: int

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.common import Limit, Offset, error_responses
 from app.core.config import get_settings
 from app.core.errors import NotFoundError
+from app.core.ratelimit import RATE_LIMITED_EXAMPLE, rate_limit
 from app.db.session import get_db
 from app.models import ChatSession, ChatSessionDocument, Document, Message
 from app.schemas.chat import (
@@ -78,6 +79,8 @@ async def _session_out(db: AsyncSession, chat: ChatSession) -> SessionOut:
                 filename=docs[link.document_id].filename,
                 status=docs[link.document_id].status,
                 chat_ready=is_chat_ready(docs[link.document_id]),
+                version=docs[link.document_id].version,
+                is_latest=docs[link.document_id].is_latest,
                 added_at=link.added_at,
             )
             for link in chat.document_links
@@ -217,6 +220,7 @@ async def _prepare(session_id: uuid.UUID, body: AskRequest, db: DB) -> PreparedA
         429,
         503,
     ),
+    dependencies=[rate_limit("ai")],
 )
 async def ask(prep: Annotated[PreparedAsk, Depends(_prepare)]):
     """Runs the full RAG pipeline and returns the user message plus the assistant message with
@@ -244,8 +248,9 @@ _STREAM_DOC = """Server-Sent Events, in order:
 - `error` (instead of the rest): `{code, message, status, details, message_id}`
 
 Comment lines `: ping` are sent every 15 s while idle. Scope errors (404/409/422) are returned
-as normal JSON errors before the stream starts. If the client disconnects, generation stops at
-the next token and the partial answer is saved with `interrupted: true`."""
+as normal JSON errors before the stream starts, and so is `429 RATE_LIMITED`. If the client
+disconnects, generation stops at the next token and the partial answer is saved with
+`interrupted: true`."""
 
 
 @router.post(
@@ -266,7 +271,9 @@ the next token and the partial answer is saved with `interrupted: true`."""
             }
         },
         **_NOT_READY,
+        **error_responses(429, overrides={429: RATE_LIMITED_EXAMPLE}),
     },
+    dependencies=[rate_limit("ai")],
 )
 async def ask_stream(
     prep: Annotated[PreparedAsk, Depends(_prepare)],

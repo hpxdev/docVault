@@ -14,6 +14,7 @@ from sqlalchemy import create_engine, text
 
 os.environ.setdefault("AI_PROVIDER", "fake")
 os.environ.setdefault("STORAGE_DIR", "/tmp/vault-storage")
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")  # tests that need limits enable them
 
 from app.core.config import get_settings  # noqa: E402
 from app.workers import stages as _stages  # noqa: E402,F401  (registers pipeline stages)
@@ -27,6 +28,8 @@ TABLES = [
     "chat_sessions",
     "chunks",
     "document_insights",
+    "document_summaries",
+    "document_comparisons",
     "document_segments",
     "processing_runs",
     "ai_calls",

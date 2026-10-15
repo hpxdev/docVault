@@ -66,12 +66,13 @@ QUESTIONS = [
 ]
 
 
-def make_eval_pdf() -> bytes:
+def make_eval_pdf(pages: dict[int, list[str]] | None = None) -> bytes:
+    pages = pages or PAGES
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
-    for number in sorted(PAGES):
+    for number in sorted(pages):
         y = 800
-        for line in PAGES[number]:
+        for line in pages[number]:
             c.drawString(60, y, line)
             y -= 20
         c.showPage()

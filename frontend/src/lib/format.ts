@@ -47,6 +47,10 @@ const ERROR_TEXT: Record<string, string> = {
   AI_PROVIDER_UNAVAILABLE: "AI provider unavailable — retry later",
   AI_BUDGET_EXCEEDED: "AI spend cap reached",
   AI_NOT_CONFIGURED: "AI is not configured",
+  RATE_LIMITED: "Too many requests — wait a minute and retry",
+  VERSION_UNCHANGED: "Identical to an existing version",
+  DUPLICATE_CONTENT: "Already in the vault as another document",
+  DOCUMENT_NOT_EXTRACTED: "The document text is not available yet",
 };
 
 export function errorText(code: string | undefined | null, fallback?: string | null): string {

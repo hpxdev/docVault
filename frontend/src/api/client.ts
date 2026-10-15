@@ -1,5 +1,7 @@
 import type {
   AskResponse,
+  ComparisonList,
+  ComparisonOut,
   DocumentList,
   DocumentMetrics,
   DocumentOut,
@@ -9,8 +11,12 @@ import type {
   Readiness,
   SessionList,
   SessionOut,
+  SummaryList,
+  SummaryOut,
+  SummaryRequest,
   UploadResponse,
   UploadResult,
+  VersionList,
 } from "./types";
 
 export const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api/v1";
@@ -64,7 +70,9 @@ const json = (method: string, body: unknown): RequestInit => ({
 export const api = {
   ready: () => request<Readiness>("/health/ready"),
 
-  listDocuments: (params: { limit?: number; offset?: number; status?: string; q?: string } = {}) => {
+  listDocuments: (
+    params: { limit?: number; offset?: number; status?: string; q?: string; all_versions?: boolean } = {},
+  ) => {
     const qs = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => v !== undefined && v !== "" && qs.set(k, String(v)));
     return request<DocumentList>(`/documents?${qs}`);
@@ -92,6 +100,24 @@ export const api = {
       throw err;
     }
   },
+
+  /** Upload one file as the next version of a document (any version id of the group). */
+  uploadVersion: (id: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    return request<DocumentOut>(`/documents/${id}/versions`, { method: "POST", body: form });
+  },
+  listVersions: (id: string) => request<VersionList>(`/documents/${id}/versions`),
+
+  createSummary: (id: string, body: SummaryRequest) =>
+    request<SummaryOut>(`/documents/${id}/summaries`, json("POST", body)),
+  listSummaries: (id: string) => request<SummaryList>(`/documents/${id}/summaries`),
+
+  compare: (documentIds: string[], focus?: string) =>
+    request<ComparisonOut>("/comparisons", json("POST", { document_ids: documentIds, focus: focus || null })),
+  getComparison: (id: string) => request<ComparisonOut>(`/comparisons/${id}`),
+  listComparisons: (documentId?: string) =>
+    request<ComparisonList>(`/comparisons?limit=20${documentId ? `&document_id=${documentId}` : ""}`),
 
   listSessions: () => request<SessionList>("/chat/sessions?limit=100"),
   getSession: (id: string) => request<SessionOut>(`/chat/sessions/${id}`),

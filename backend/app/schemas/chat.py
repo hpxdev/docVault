@@ -46,6 +46,10 @@ class SessionDocument(BaseModel):
     filename: str
     status: str
     chat_ready: bool
+    version: int = 1
+    is_latest: bool = Field(
+        default=True, description="False when a newer version exists (this chat keeps this one)"
+    )
     added_at: datetime
 
 

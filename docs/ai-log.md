@@ -760,3 +760,62 @@ was already active). README "Future work" now lists `chat.condense.v3` (document
 condense prompt; leave unresolvable references alone) and a broader evaluation set. No spend.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Bonus items: versions, custom summaries, comparisons, rate limiting
+
+Requested by the developer after re-checking the brief: the four bonus items that were still
+open. Built in fake mode; **no OpenAI calls, no spend**.
+
+**Produced by AI:**
+- Migration `0002`: `documents.version_group_id/version/is_latest` (unique group + version,
+  partial unique index "one latest per group"), `document_summaries`, `document_comparisons`.
+- **Versions:** `POST/GET /documents/{id}/versions`; upload path locks the group and flips
+  `is_latest`; delete promotes the newest remaining version; `GET /documents` shows latest only
+  unless `all_versions=true`; vault-wide chat filters `is_latest`; session documents report
+  `version`/`is_latest`.
+- **Custom summaries:** `summary.custom.v1`, `POST/GET /documents/{id}/summaries` (length, tone,
+  focus), stored per normalised options; long documents use focus-first window selection
+  (`services/selection.py`) with honest `coverage`.
+- **Comparisons:** `compare.v1`, `POST/GET /comparisons`, `GET /comparisons/{id}`; server-side
+  validation of every (document, page/section) reference; deleting a document deletes its
+  comparisons.
+- **Rate limiting:** `core/ratelimit.py`, Redis fixed windows per client IP, groups `ai` and
+  `upload`, `429 RATE_LIMITED` with `Retry-After` and `X-RateLimit-*`; fails open on Redis errors.
+- AI layer: async structured output (`astructured`, `AsyncAI.structured`); deterministic fakes
+  for both new schemas.
+- UI: Library multi-select + Compare, comparison page `#/compare/<id>`, custom-summary form and
+  versions panel in the drawer, version badges, "Older versions", chat chip "newer version
+  exists". New sample `samples/northwind-brief-v2.pdf` (known changes on pages 1, 3, 4).
+- 16 new tests (`test_versions.py`, `test_analysis.py`, `test_ratelimit.py`); the test harness
+  disables rate limits unless a test enables them.
+
+**Decisions:** versions are explicit, never inferred from filenames; old versions stay
+attached to existing chats; summaries/comparisons are synchronous and stored (safe to reuse,
+unlike chat answers); rate limits ignore `X-Forwarded-For`; version numbers are
+max(remaining) + 1.
+
+**Found by running things:**
+- My first version-numbering test expected numbers never to be reused after deleting the newest
+  versions; the code reuses them. I kept the simpler behaviour and documented it.
+- Similarity sources lost their page/section numbers (rebuilt from a dict without them); caught by
+  the new comparison test's response validation.
+- A test expected page 60 in the "spread" selection; the order picks index 60, which is page 61.
+- The UI check showed the fake comparison found no differences between two versions (it compared
+  only the first figure sentence) and the fake summary picked a bare heading; both fakes improved.
+- "Older versions" checkbox had the accessible name "on"; given an explicit label.
+- Again, shell heredocs mangled escapes and quotes in scripted edits; switched to the editor tool
+  and script files.
+
+**Verification:** `ruff` clean; **142 passed** (1 live deselected); `npm run build` (strict
+type-check) ok. UI checked in the browser pane on a **separate fake-mode stack** (own project
+name, volumes, image tags, ports 18000/15173; no key passed) so the real-mode stack and its data
+were untouched: v2 upload and badges, versions panel, custom summary with focus, "What changed
+since v1?" (pages 1, 3, 4 shown as differences), multi-select Compare, a 21st AI request in a
+minute → 429 with `Retry-After`, old-version chat chip.
+
+**NOT VERIFIED:** real-model output of `summary.custom.v1` and `compare.v1`; screenshots of the
+new UI (the pane's screenshot timed out; checks used page text and the accessibility tree).
+
+Human review: ___

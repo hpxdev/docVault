@@ -14,6 +14,14 @@ export type MessageOut = S["MessageOut"];
 export type MessageList = S["MessageList"];
 export type CitationOut = S["CitationOut"];
 export type AskResponse = S["AskResponse"];
+export type VersionList = S["VersionList"];
+export type SummaryRequest = S["SummaryRequest"];
+export type SummaryOut = S["SummaryOut"];
+export type SummaryList = S["SummaryList"];
+export type ComparisonOut = S["ComparisonOut"];
+export type ComparisonList = S["ComparisonList"];
+export type Difference = S["Difference"];
+export type SourceRef = S["SourceRef"];
 
 /** Payload of `snapshot` / `status` events on GET /documents/events. */
 export interface StatusPayload {

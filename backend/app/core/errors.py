@@ -26,9 +26,11 @@ class AppError(Exception):
         code: str | None = None,
         status_code: int | None = None,
         details: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
+        self.headers = headers
         if code:
             self.code = code
         if status_code:
@@ -54,9 +56,15 @@ def error_body(code: str, message: str, details: dict[str, Any] | None = None) -
 
 
 def error_response(
-    status_code: int, code: str, message: str, details: dict[str, Any] | None = None
+    status_code: int,
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
-    return JSONResponse(status_code=status_code, content=error_body(code, message, details))
+    return JSONResponse(
+        status_code=status_code, content=error_body(code, message, details), headers=headers
+    )
 
 
 _HTTP_CODES = {
@@ -71,7 +79,9 @@ _HTTP_CODES = {
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError) -> JSONResponse:
-        return error_response(exc.status_code, exc.code, exc.message, exc.details)
+        return error_response(
+            exc.status_code, exc.code, exc.message, exc.details, getattr(exc, "headers", None)
+        )
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:
