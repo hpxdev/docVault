@@ -14,6 +14,7 @@ answer_events (async generator of events; owns its own DB sessions)
 """
 
 import asyncio
+import json
 import logging
 import time
 import uuid
@@ -43,7 +44,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_TITLE = "New chat"
 HISTORY_MESSAGES = 6
-CONDENSE_VERSION = "chat.condense.v2"  # v1 kept for history; see docs/PROMPTS.md
+CONDENSE_VERSION = "chat.condense.v3"  # older versions kept; see docs/PROMPTS.md
 ANSWER_VERSION = "chat.answer.v1"
 ANSWER_MAX_TOKENS = 800
 CONDENSE_MAX_TOKENS = 200
@@ -348,7 +349,9 @@ async def answer_events(
         if prep.history:
             condensed, _ = await ai.complete(
                 load_prompt(CONDENSE_VERSION).messages(
-                    history=format_history(prep.history), question=prep.question
+                    history=format_history(prep.history),
+                    question=prep.question,
+                    document_names=json.dumps(sorted(set(prep.document_names.values()))),
                 ),
                 purpose="condense",
                 prompt_version=CONDENSE_VERSION,

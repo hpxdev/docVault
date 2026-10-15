@@ -910,3 +910,23 @@ new isolated clean-clone stack is pending and will be recorded separately. No re
 
 **NOT VERIFIED:** expanded walkthrough against a running stack at this point.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: conservative follow-up rewriting v3
+
+**Produced by AI (OpenAI Codex):** added immutable `chat.condense.v3.md`; older prompts
+are unchanged. The active condenser receives JSON-encoded document names from the resolved
+server scope. Names are context only, not evidence of a pronoun's referent. The prompt asks
+for unchanged questions when the conversation leaves a referent unnamed or ambiguous;
+explicit budget approval and lease examples distinguish resolvable and ambiguous cases.
+Updated prompt documentation and integration checks for scope forwarding, historical prompt
+rendering and persistence of an unchanged scripted ambiguous rewrite.
+
+**Verified:** `docker compose -f compose.test.yml run --rm tests sh -c 'ruff check . &&
+ruff format --check . && pytest -q'`: lint passed, 105 files formatted, 145 passed,
+1 live test deselected (28.39 s). Earlier run before the extra scope regression: 144 passed.
+
+**NOT VERIFIED:** real-model v3 improvement. The scripted ambiguous-output test proves
+transport and persistence only; it cannot prove the model's reasoning. The broader paid
+A/B evaluation is being prepared separately. No app rebuild or real AI calls in this change.
+Human review: ___

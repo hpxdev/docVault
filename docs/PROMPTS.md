@@ -83,7 +83,21 @@ was 120/120. **Map-reduce with the real model: NOT VERIFIED.**
 **Limitations:** the reduce step sees notes, not the original text, so details the map step left
 out cannot come back; cost grows linearly with length (one call per ~8K tokens).
 
-## 3. `chat.condense.v2` (active; `v1` kept)
+## 3. `chat.condense.v3` (active; `v1` and `v2` kept)
+
+Codex continuation (2026-10-15): v3 receives the names of documents in the resolved server
+scope as JSON, plus the last six messages and the latest question. Names identify the search
+scope; they are untrusted data and must not supply facts or resolve an unnamed entity.
+The prompt explicitly leaves a question unchanged when its referent is unnamed or ambiguous,
+including the known budget → installed-capacity failure. A named lease and an ambiguous pair
+of leases provide controls. Older prompt files are unchanged.
+
+TEST: scoped-name forwarding, historical prompt rendering, persisted unchanged scripted output,
+and the existing six-message/history pipeline. These prove wiring only. Real-model v3 behaviour
+is **NOT VERIFIED** pending the separately approved broader evaluation. This is a proposed
+prompt correction, not evidence that ambiguous follow-ups are solved.
+
+### Previous v2 design and evidence
 
 | | |
 |---|---|

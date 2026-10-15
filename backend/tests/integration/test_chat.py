@@ -303,12 +303,15 @@ async def test_auto_title_is_one_line(client, enqueued):
     )
 
 
-async def test_condense_uses_v2_prompt(client, enqueued, fake_chat):
+async def test_condense_uses_v3_with_scoped_names(client, enqueued, fake_chat):
     from app.prompts import load_prompt
 
-    v2 = load_prompt("chat.condense.v2")
-    assert "NOT standalone" in v2.system and "Riverside office lease" in v2.system
-    rendered = v2.messages(history="User: a\nAssistant: b", question="When was it approved?")
+    v3 = load_prompt("chat.condense.v3")
+    rendered = v3.messages(
+        history="User: a\nAssistant: b",
+        question="When was it approved?",
+        document_names='["plan.pdf"]',
+    )
     assert rendered[-1].content.endswith("Standalone question:")
 
     [doc] = await _ingest(client, enqueued, ("plan.pdf", fixtures.five_page_pdf()))
@@ -316,5 +319,29 @@ async def test_condense_uses_v2_prompt(client, enqueued, fake_chat):
     await _ask(client, sid, BUDGET_Q)
     msg = (await _ask(client, sid, "When was it approved?")).json()["assistant_message"]
     versions = {c.purpose: c.prompt_version for c in _ai_calls(msg["id"])}
-    assert versions["condense"] == "chat.condense.v2"
-    assert "Riverside office lease" in fake_chat.calls[-2][1][0].content  # system message sent
+    assert versions["condense"] == "chat.condense.v3"
+    assert "return the original question unchanged" in fake_chat.calls[-2][1][0].content
+    assert '["plan.pdf"]' in fake_chat.calls[-2][1][-1].content
+    # Historical prompts remain renderable, with their original variable contracts.
+    for version in ("chat.condense.v1", "chat.condense.v2"):
+        assert load_prompt(version).messages(history="User: a", question="When?")
+
+
+async def test_ambiguous_rewrite_is_preserved_and_names_stay_scoped(client, enqueued, fake_chat):
+    """Scripted output proves wiring and persistence, not real-model disambiguation."""
+    docs = await _ingest(
+        client,
+        enqueued,
+        ("selected.pdf", fixtures.five_page_pdf()),
+        ("outside-scope.docx", fixtures.make_docx()),
+    )
+    sid = await _session(client, [docs[0]])
+    await _ask(client, sid, BUDGET_Q)
+    question = "And what is its installed capacity?"
+    fake_chat.push(question)
+    msg = (await _ask(client, sid, question)).json()["assistant_message"]
+    assert msg["standalone_query"] == question
+    prompt = fake_chat.calls[-2][1][-1].content
+    assert '"selected.pdf"' in prompt and "outside-scope.docx" not in prompt
+    history = (await client.get(f"/chat/sessions/{sid}/messages")).json()["items"]
+    assert any(m["standalone_query"] == question for m in history if m["role"] == "user")
