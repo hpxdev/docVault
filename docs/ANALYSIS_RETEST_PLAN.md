@@ -1,8 +1,33 @@
-# Summary v4 / comparison v2: targeted re-test, awaiting approval
+# Summary v4 / comparison v2: completed; v5 check awaiting approval
 
 Prepared by OpenAI Codex on 2026-10-15 after the approved broader run exposed prose/focus
-failures. No paid re-test has been performed. The previous approval covered the completed
-broader run, not this additional test.
+failures. The developer approved the five-call re-test, which completed in 15.93 s at
+$0.00156255 estimated cost. Four retained results met their checks, but v4 merged budget and
+risks and missed the risks gap. See EVALUATION.md and evaluations/analysis-2026-10-15-v4-v2.json.
+The original five-call plan below records that completed run; the new proposal follows here.
+
+## New v5 check: two calls, fresh approval needed
+
+V5 defines requested-topic IDs on the server and requires one independent boolean field per
+ID. Merged/missing/extra keys cannot validate. The server's list grammar splits commas,
+semicolons and standalone `and`/`or`; it does not infer semantic topic boundaries. Existing
+evidence checks/rendering remain. No further paid call has been made after the approved five.
+
+Proposed **two summary_custom calls**: (1) medium/executive budget and risks, requiring
+separate budget=true / risks=false and the gap notice; (2) a short/plain no-focus handbook
+control, checking the no-focus schema branch. Estimated **$0.001**, allowance **$0.003**.
+The isolated guard is $0.002 and checks before calls, so a final call may exceed its threshold.
+No comparison rerun, embedding or insight generation is needed. No automatic paid iteration.
+
+```bash
+TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 \
+docker compose -f compose.test.yml run --rm -e RUN_ANALYSIS_RETEST=1 -e SUMMARY_V5_ONLY=1 tests \
+  pytest -m live tests/live/test_analysis_retest.py -q -s
+```
+
+Fake rehearsal substitutes `-e ANALYSIS_RETEST_FAKE_DRY_RUN=1 -e SUMMARY_V5_ONLY=1`, without
+the live switches. Results go to `summary_v5_retest_real.json` (or `_fake.json`) under
+backend/tests/live/.results, preserving the earlier five-call result file.
 
 ## Concrete changes ready for review
 

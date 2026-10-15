@@ -12,7 +12,7 @@ citations are checked by the server** (document, page/section, original excerpt)
 amber "not found", a two-document answer, and the source panel showing page 4's original text.*
 
 > **Status (2026-10-15):** backend and ChatGPT-style UI complete, plus custom summaries,
-> comparisons, document versions and rate limiting; 151 fake-mode backend tests.
+> comparisons, document versions and rate limiting; 152 fake-mode backend tests.
 > Earlier approved real-model checks:
 > - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
 > - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
@@ -26,7 +26,7 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 >   v3 (active) asks for a verdict per focus topic and returned "risks" as not addressed.
 >
 > A broader approved run added 42 calls at $0.00791661 estimated cost. Current demo and
-> evaluation ledgers total $0.01465682; earlier cumulative records differ from the retained
+> evaluation evidence plus the targeted re-test total $0.01621937; earlier cumulative records differ from the retained
 > demo snapshot. See [docs/EVALUATION.md](docs/EVALUATION.md) for evidence and limits;
 > retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
@@ -40,11 +40,14 @@ a missing gap sentence, and an unsupported claim about a partially included docu
 Comparisons contained off-focus or generic similarities. Passing API tests does not mean
 every generated statement is grounded. [Results and raw evidence](docs/EVALUATION.md#broader-real-evaluation-2026-10-15-approved).
 
-**Corrections prepared:** active `summary.custom.v4` builds prose from cited points, adds
+**Corrections prepared:** active `summary.custom.v5` builds prose from cited points, adds
 missing-topic/partial-coverage notices on the server, and requires literal evidence quotes.
 Active `compare.v2` retains matching shared sentences rather than generic similarities and
-builds its overview on the server. These changes passed fake-mode checks; real-model quality
-is **NOT VERIFIED** pending the [five-call targeted re-test](docs/ANALYSIS_RETEST_PLAN.md).
+builds its overview on the server. The approved five-call re-test cost $0.00156255: comparisons,
+leave and partial-document summaries met the targeted checks, but summary v4 merged "budget
+and risks" into one addressed topic and missed the risks gap. V5 gives each server-listed
+topic a required independent verdict; real v5 quality is **NOT VERIFIED** pending a
+[two-call check](docs/ANALYSIS_RETEST_PLAN.md).
 Literal quote checks do not establish semantic entailment, and conservative shared-sentence
 matching can omit valid differently worded similarities.
 
@@ -65,10 +68,10 @@ matching can omit valid differently worded similarities.
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 151 backend tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 152 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
-| Summary customisation: length, focus, tone (BONUS) | Implemented; v3 real checks exposed focus/prose issues. V4 adds evidence quotes and server-rendered notices/prose; real v4 quality pending; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
-| Comparative analysis between documents (BONUS) | Implemented for 2–4 documents or versions; v2 conservatively requires identical cited shared sentences; real v2 quality pending; [details](docs/PROMPTS.md) | `services/comparisons.py`, `POST /comparisons` |
+| Summary customisation: length, focus, tone (BONUS) | Implemented; v4 real run exposed merged focus topics. V5 requires independent server-named verdicts; real v5 quality pending; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
+| Comparative analysis between documents (BONUS) | Implemented for 2–4 documents or versions; v2 requires identical cited shared sentences; two targeted real comparisons returned correct retained results; [details](docs/EVALUATION.md) | `services/comparisons.py`, `POST /comparisons` |
 | Rate limiting and quota management (BONUS) | Done: per-client limits in Redis (`429 RATE_LIMITED` + `Retry-After`) next to the spend cap | `core/ratelimit.py` |
 | Document version tracking (BONUS) | Done: new versions keep history; vault-wide chat uses the latest | `POST /documents/{id}/versions` |
 
@@ -437,10 +440,11 @@ Prompt work:
   outputs in a small real A/B check, including two repeats of the known ambiguous-capacity
   case. Add held-out histories, named referents, competing referents and document names
   beyond this one budget history before claiming general disambiguation quality.
-- **Validate summary v4 and comparison v2.** The broader run exposed missing gap prose,
+- **Validate summary v5 and broaden comparison v2 coverage.** The broader run exposed missing gap prose,
   irrelevant content, a partial-summary overclaim and a generic unsupported similarity in
-  older versions. New server checks address those paths but still require the targeted real
-  re-test; paraphrase support and relevance remain model judgements.
+  older versions. V4 then merged focus topics in the targeted real run; v5 now requires
+  independent server-named verdicts. Its real check is pending; paraphrase support and
+  relevance remain model judgements. Comparison v2 passed two specific real requests.
 - **A broader evaluation set** (multi-document, follow-ups, long documents, injection) to compare
   prompt versions on more than a handful of questions.
 

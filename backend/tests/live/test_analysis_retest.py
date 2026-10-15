@@ -15,6 +15,7 @@ from app.services.pipeline import execute_stage
 from tests import fixtures
 from tests.live.eval_set import PAGES, make_eval_pdf
 
+V5_ONLY = os.environ.get("SUMMARY_V5_ONLY") == "1"
 FAKE = os.environ.get("ANALYSIS_RETEST_FAKE_DRY_RUN") == "1"
 LIVE = (
     os.environ.get("RUN_ANALYSIS_RETEST") == "1"
@@ -28,7 +29,7 @@ pytestmark = [pytest.mark.live, pytest.mark.skipif(not (FAKE or LIVE), reason="o
 async def test_analysis_retest(client, enqueued, monkeypatch):
     settings = get_settings()
     assert settings.ai_provider == ("fake" if FAKE else "openai")
-    monkeypatch.setattr(settings, "ai_spend_limit_usd", 0.006)
+    monkeypatch.setattr(settings, "ai_spend_limit_usd", 0.002 if V5_ONLY else 0.006)
     report = {
         "date_utc": datetime.now(UTC).isoformat(),
         "mode": settings.ai_provider,
@@ -72,28 +73,35 @@ async def test_analysis_retest(client, enqueued, monkeypatch):
             f"/documents/{brief}/summaries",
             json={"length": "medium", "tone": "executive", "focus": "budget and risks"},
         )
-        await post(
-            "plain_leave",
-            f"/documents/{handbook}/summaries",
-            json={"length": "short", "tone": "plain", "focus": "annual leave"},
-        )
-        with monkeypatch.context() as context:
-            context.setattr(settings, "on_demand_max_input_tokens", 2000)
+        if V5_ONLY:
             await post(
-                "partial_archive",
-                f"/documents/{long_doc}/summaries",
-                json={"length": "long", "tone": "technical", "focus": "archive code"},
+                "no_focus_control",
+                f"/documents/{handbook}/summaries",
+                json={"length": "short", "tone": "plain"},
             )
-        await post(
-            "budget_comparison",
-            "/comparisons",
-            json={"document_ids": [brief, version["id"]], "focus": "capital budget"},
-        )
-        await post(
-            "different_documents",
-            "/comparisons",
-            json={"document_ids": [brief, handbook], "focus": "leave policy and construction"},
-        )
+        else:
+            await post(
+                "plain_leave",
+                f"/documents/{handbook}/summaries",
+                json={"length": "short", "tone": "plain", "focus": "annual leave"},
+            )
+            with monkeypatch.context() as context:
+                context.setattr(settings, "on_demand_max_input_tokens", 2000)
+                await post(
+                    "partial_archive",
+                    f"/documents/{long_doc}/summaries",
+                    json={"length": "long", "tone": "technical", "focus": "archive code"},
+                )
+            await post(
+                "budget_comparison",
+                "/comparisons",
+                json={"document_ids": [brief, version["id"]], "focus": "capital budget"},
+            )
+            await post(
+                "different_documents",
+                "/comparisons",
+                json={"document_ids": [brief, handbook], "focus": "leave policy and construction"},
+            )
     finally:
         with sync_session() as db:
             calls = list(db.scalars(select(AICall).order_by(AICall.created_at)))
@@ -114,10 +122,16 @@ async def test_analysis_retest(client, enqueued, monkeypatch):
         path = (
             Path(__file__).parent
             / ".results"
-            / ("analysis_retest_fake.json" if FAKE else "analysis_retest_real.json")
+            / (
+                ("summary_v5_retest_fake.json" if FAKE else "summary_v5_retest_real.json")
+                if V5_ONLY
+                else ("analysis_retest_fake.json" if FAKE else "analysis_retest_real.json")
+            )
         )
         path.parent.mkdir(exist_ok=True)
         path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"{report['mode']}: {len(calls)} calls; ${report['estimated_cost_usd']}; {path}")
-    assert len(calls) == 5
-    assert {c.purpose for c in calls} == {"summary_custom", "compare"}
+    assert len(calls) == (2 if V5_ONLY else 5)
+    assert {c.purpose for c in calls} == (
+        {"summary_custom"} if V5_ONLY else {"summary_custom", "compare"}
+    )

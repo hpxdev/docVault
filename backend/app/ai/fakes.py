@@ -11,6 +11,7 @@ in API responses, and "FAKE AI MODE" in generated text. They prove the plumbing,
 
 import asyncio
 import hashlib
+import json
 import math
 import re
 from collections import Counter, deque
@@ -424,8 +425,18 @@ _SUMMARY_FIELDS: dict[type[BaseModel], tuple[str, ...]] = {
 
 def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessage]) -> M:
     prompt = _human_text(messages)
-    if schema is CustomSummaryV4LLM:
+    if schema is CustomSummaryV4LLM or schema.__name__ == "CustomSummaryV5LLM":
         out = fake_custom_summary(prompt)
+        catalog = []
+        if schema.__name__ == "CustomSummaryV5LLM":
+            match = re.search(r"<requested_topics>\s*(.*?)\s*</requested_topics>", prompt, re.S)
+            catalog = json.loads(match.group(1)) if match else []
+            text = _DELIMITED.search(prompt)
+            words = set(content_words(text.group(2) if text else ""))
+            out["focus_topics"] = [
+                {"topic": t["topic"], "addressed": bool(set(content_words(t["topic"])) & words)}
+                for t in catalog
+            ]
         points = []
         for point in out["key_points"]:
             points.append(
@@ -439,6 +450,13 @@ def fake_structured[M: BaseModel](schema: type[M], messages: Sequence[BaseMessag
                     ],
                     "evidence": [{"ref": ref, "quote": point["text"]} for ref in point["refs"]],
                 }
+            )
+        if schema.__name__ == "CustomSummaryV5LLM":
+            verdicts = {
+                t["id"]: v["addressed"] for t, v in zip(catalog, out["focus_topics"], strict=True)
+            }
+            return schema.model_validate(
+                {"focus_verdicts": verdicts or {"none_requested": True}, "key_points": points}
             )
         return schema.model_validate({"focus_topics": out["focus_topics"], "key_points": points})
     if schema is ComparisonV2LLM:

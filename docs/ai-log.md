@@ -1136,3 +1136,36 @@ existing summary-correction scope. Any new paid validation still needs fresh app
 No app code changed in this result-recording commit. Main demo stayed 43 calls/$0.00674021;
 three retained ledgers total 90 real calls/$0.01621937. Human review field left unchanged.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: server-owned summary topic verdicts (v5)
+
+**Produced:** summary.custom.v5 prompt; strict dynamic Pydantic schema with a required boolean
+per server-owned requested-topic ID. Literal list splitting (commas, semicolons, standalone
+and/or), deduplication preserving spelling; model no longer names/merges topic verdicts.
+No-focus uses required none_requested flag, ignored for public coverage. Point evidence/focus
+checks and server prose/notices remain. Fake support and version/cache expectations updated;
+old prompts and schemas preserved. Updated README, PROMPTS, architecture, AI_USAGE, evaluation,
+test count and the re-test plan with the approved five-call result and new pending two-call
+proposal. Public response and DB schema remain unchanged; no dependencies added.
+
+**Why:** the approved real v4 re-test merged budget and risks and lost the risks gap. A stronger
+required-output contract addresses this representational failure instead of just asking more
+firmly in another prose instruction. It still cannot force correct boolean judgements.
+Explicit list syntax is documented; compound phrases containing and/or split literally.
+
+**Verified:** `docker compose -f compose.test.yml run --rm tests sh -c 'ruff format . && ruff
+check . && pytest -q'`: ruff passed, 152 tests passed / 3 deselected in 52.05 s.
+New regression checks schema-required topic_1/topic_2 and rejects merged, missing or extra
+verdict keys. Fake two-call run with ANALYSIS_RETEST_FAKE_DRY_RUN=1 and SUMMARY_V5_ONLY=1:
+1 passed in 14.96 s, 2 calls, $0; independent budget/risks verdicts and the server gap sentence,
+no-focus control. Result file names preserve earlier real evidence. Main API/worker rebuilt;
+readiness ready, openai, worker OK. Real evidence copy integrity passed: identical hashes,
+exact 5-call total $0.00156255. `git diff --check` passed. No additional paid runs.
+
+**Spend / needs developer:** approved five-call run cost $0.00156255. Additional v5 spend $0.
+Current retained real evidence totals 90 calls / $0.01621937; main demo still 43/$0.00674021.
+V5 real acceptance/quality is NOT VERIFIED. Proposed two-call re-test estimated $0.001,
+allowance $0.003, separate fresh approval required. No automatic paid iteration. No publishing;
+developer-owned review fields unchanged.
+Human review: ___

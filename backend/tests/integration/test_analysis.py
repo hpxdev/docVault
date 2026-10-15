@@ -53,7 +53,7 @@ async def test_custom_summary_options_cache_and_ledger(client, enqueued, fake_ch
     assert r.status_code == 200, r.text
     first = r.json()
     assert first["cached"] is False and first["ai_mode"] == "fake"
-    assert first["prompt_version"] == "summary.custom.v4"
+    assert first["prompt_version"] == "summary.custom.v5"
     assert (first["length"], first["tone"], first["focus"]) == (
         "short",
         "executive",
@@ -71,7 +71,7 @@ async def test_custom_summary_options_cache_and_ledger(client, enqueued, fake_ch
     assert "at most 80 words; give at most 3 key points" in fake_chat.calls[-1][1][0].content
 
     [call] = _calls("summary_custom")
-    assert str(call.document_id) == doc and call.prompt_version == "summary.custom.v4"
+    assert str(call.document_id) == doc and call.prompt_version == "summary.custom.v5"
 
     # Same options (focus differs only in case and spacing): stored result, no AI call.
     again = await client.post(
@@ -110,29 +110,23 @@ async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
             f"/documents/{doc}/summaries", json={"focus": "approved budget and submarine volcanoes"}
         )
     ).json()
-    assert body["prompt_version"] == "summary.custom.v4"
+    assert body["prompt_version"] == "summary.custom.v5"
     assert body["focus_covered"] is True
     assert body["focus_not_addressed"] == ["submarine volcanoes"]
     assert body["summary"].endswith("The document does not address submarine volcanoes.")
     assert any("4.2 million" in kp["text"] for kp in body["key_points"])
     system = fake_chat.calls[-1][1][0].content
     assert "never add risks, opinions" in system.lower()
-    assert "one focus_topics verdict per requested topic" in system
+    assert "one required focus_verdicts boolean" in system
     assert body["coverage"]["focus_topics"] == [
         {"topic": "approved budget", "addressed": True},
         {"topic": "submarine volcanoes", "addressed": False},
     ]
 
-    # The server derives the gaps from the verdicts, cleaning names (whitespace, duplicates,
-    # length); the model's own summary text is not trusted for this.
+    # The server owns topic names; each requested topic has a required independent boolean.
     fake_chat.push(
         {
-            "focus_topics": [
-                {"topic": "  budget ", "addressed": True},
-                {"topic": "Budget", "addressed": False},  # duplicate: first verdict wins
-                {"topic": "risks", "addressed": False},
-                {"topic": "x" * 150, "addressed": False},
-            ],
+            "focus_verdicts": {"topic_1": True, "topic_2": False},
             "key_points": [_point("Budget approved.", [3], fixtures.FACT_PAGE3, ["budget"])],
         }
     )
@@ -140,21 +134,21 @@ async def test_custom_summary_lists_focus_topics_the_document_does_not_address(
         await client.post(f"/documents/{doc}/summaries", json={"focus": "budget and risks"})
     ).json()
     assert body["focus_covered"] is True
-    assert body["focus_not_addressed"] == ["risks", "x" * 100]
+    assert body["focus_not_addressed"] == ["risks"]
     listed = (await client.get(f"/documents/{doc}/summaries")).json()["items"]
-    assert listed[0]["focus_not_addressed"] == ["risks", "x" * 100]
+    assert listed[0]["focus_not_addressed"] == ["risks"]
 
-    # All topics unaddressed → not covered; no verdicts at all → coverage unknown.
+    # All topics unaddressed -> not covered; no focus -> coverage is not applicable.
     fake_chat.push(
         {
-            "focus_topics": [{"topic": "risks", "addressed": False}],
+            "focus_verdicts": {"topic_1": False},
             "key_points": [],
         },
-        {"focus_topics": [], "key_points": []},
+        {"focus_verdicts": {"none_requested": True}, "key_points": []},
     )
     none = (await client.post(f"/documents/{doc}/summaries", json={"focus": "risks"})).json()
     assert none["focus_covered"] is False and none["focus_not_addressed"] == ["risks"]
-    unknown = (await client.post(f"/documents/{doc}/summaries", json={"focus": "teams"})).json()
+    unknown = (await client.post(f"/documents/{doc}/summaries", json={})).json()
     assert unknown["focus_covered"] is None and unknown["focus_not_addressed"] == []
 
 
@@ -173,9 +167,38 @@ def test_every_summary_prompt_version_is_reproducible():
             tone_rule="neutral",
             focus_rule=with_focus,
             focus="budget",
+            focus_topic_catalog='[{"id":"topic_1","topic":"budget"}]',
             document_text="[Page 1]\nText.",
         )
         assert with_focus in messages[0].content and without_focus
+
+
+def test_topic_contract_rejects_merged_missing_or_invented_verdicts():
+    import pytest
+    from pydantic import ValidationError
+
+    from app.ai.schemas import summary_v5_schema
+    from app.services.summaries import requested_topics
+
+    topics = requested_topics("  budget and risks; Budget, schedule or timeline ")
+    assert topics == ["budget", "risks", "schedule", "timeline"]
+    schema = summary_v5_schema(["budget", "risks"])
+    for verdicts in (
+        {"budget and risks": True},
+        {"topic_1": True},
+        {"topic_1": True, "topic_2": False, "topic_3": True},
+    ):
+        with pytest.raises(ValidationError):
+            schema.model_validate({"focus_verdicts": verdicts, "key_points": []})
+    parsed = schema.model_validate(
+        {"focus_verdicts": {"topic_1": True, "topic_2": False}, "key_points": []}
+    )
+    assert parsed.focus_verdicts.model_dump() == {"topic_1": True, "topic_2": False}
+    assert set(schema.model_json_schema()["$defs"]["RequestedTopicVerdicts"]["required"]) == {
+        "topic_1",
+        "topic_2",
+    }
+    assert requested_topics("research & development") == ["research & development"]
 
 
 async def test_custom_summary_validates_model_output(client, enqueued, fake_chat):
@@ -183,7 +206,7 @@ async def test_custom_summary_validates_model_output(client, enqueued, fake_chat
     run_queued(enqueued)
     fake_chat.push(
         {
-            "focus_topics": [{"topic": "ignored without a focus", "addressed": False}],
+            "focus_verdicts": {"none_requested": True},
             "key_points": [
                 _point(fixtures.FACT_PAGE3, [3, 99]),  # 99 is not a page
                 _point("Invented point.", [42]),  # no valid ref: dropped
@@ -236,10 +259,7 @@ async def test_summary_rejects_invented_quotes_and_unaddressed_or_unrelated_topi
     run_queued(enqueued)
     fake_chat.push(
         {
-            "focus_topics": [
-                {"topic": "budget", "addressed": True},
-                {"topic": "risks", "addressed": False},
-            ],
+            "focus_verdicts": {"topic_1": True, "topic_2": False},
             "key_points": [
                 _point(fixtures.FACT_PAGE3, [3], topics=["budget"]),
                 _point("An invented risk.", [3], fixtures.FACT_PAGE3, ["risks"]),
@@ -270,7 +290,7 @@ async def test_partial_summary_missing_topic_is_scoped_to_supplied_parts(
     monkeypatch.setattr(get_settings(), "on_demand_max_input_tokens", 500)
     doc = await _upload(client, "heron.pdf", fixtures.long_pdf(30))
     run_queued(enqueued)
-    fake_chat.push({"focus_topics": [{"topic": "volcanoes", "addressed": False}], "key_points": []})
+    fake_chat.push({"focus_verdicts": {"topic_1": False}, "key_points": []})
     body = (
         await client.post(
             f"/documents/{doc}/summaries", json={"focus": "volcanoes", "length": "short"}
@@ -529,7 +549,7 @@ async def test_new_prompt_versions_do_not_reuse_old_cached_results(client, enque
         "prompt_version"
     ] == "compare.v1"
     listed = (await client.get(f"/documents/{a}/summaries")).json()["items"]
-    assert {row["prompt_version"] for row in listed} == {"summary.custom.v3", "summary.custom.v4"}
+    assert {row["prompt_version"] for row in listed} == {"summary.custom.v3", "summary.custom.v5"}
 
 
 async def test_compare_errors_and_cleanup(client, enqueued):

@@ -5,7 +5,7 @@ enforced server-side after parsing (see `services/insights.py`), so a non-confor
 counted and dropped rather than failing the whole call.
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 CATEGORIES = (
     "contract",
@@ -156,6 +156,27 @@ class CustomSummaryV4LLM(_Strict):
     focus_topics: list[FocusTopicLLM]
     key_points: list[SummaryPointV4LLM] = Field(
         description="Only relevant cited facts; the server constructs the summary and gap notices"
+    )
+
+
+def summary_v5_schema(topics: list[str]) -> type[BaseModel]:
+    """Required named fields prevent merging or silently omitting requested-topic verdicts."""
+    fields = {
+        f"topic_{index}": (
+            bool,
+            Field(description=f"Explicitly addressed in supplied text: {topic}"),
+        )
+        for index, topic in enumerate(topics, 1)
+    } or {"none_requested": (bool, Field(description="True: no focus was requested"))}
+    verdicts = create_model("RequestedTopicVerdicts", __base__=_Strict, **fields)
+    return create_model(
+        "CustomSummaryV5LLM",
+        __base__=_Strict,
+        focus_verdicts=(verdicts, Field(description="One required boolean per server-named topic")),
+        key_points=(
+            list[SummaryPointV4LLM],
+            Field(description="Cited facts about addressed topics"),
+        ),
     )
 
 

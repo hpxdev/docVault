@@ -182,7 +182,23 @@ are replaced (a real bug: section labels contain quotes; see ai-log T13–T15).
 
 ---
 
-## 5. `summary.custom.v4` (active custom summaries; older versions kept)
+## 5. `summary.custom.v5` (active custom summaries; older versions kept)
+
+The targeted real run accepted v4's schema and retained grounded budget facts, but merged
+"budget and risks" into one addressed topic, losing the missing-risks verdict. V5 fixes the
+representation: the server splits explicit lists on commas, semicolons and standalone
+conjunctions `and`/`or`, deduplicates case-insensitively and preserves the first spelling.
+It supplies stable IDs and creates a strict required boolean field for each ID. No missing,
+merged or invented verdict keys pass schema validation. For no focus a required
+`none_requested` flag is ignored when deriving public focus coverage (None).
+
+This is a literal list grammar, not semantic parsing: phrases such as "research and
+development" are treated as two requested topics, while `research & development` stays one.
+The model still decides each boolean; v5 cannot force that decision to be factually correct.
+Evidence/point rendering remains as described below. **Real v5 behaviour is NOT VERIFIED**;
+the [two-call check](ANALYSIS_RETEST_PLAN.md) covers the known failure and no-focus branch.
+
+### V4 evidence-bearing design (retained in v5)
 
 V4 addresses the broader evaluation's independent-summary prose failures. The strict internal
 schema now returns only per-topic verdicts and key points. Each point includes refs, matching
@@ -200,8 +216,9 @@ that can add uncited content. V4 allows 2,000 output tokens to accommodate quote
 
 **Limits:** a literal quote match is not a proof that the paraphrased point follows from it;
 topic extraction/relevance verdicts still depend on the model. V4 does not remove every possible
-unsupported statement from a model-authored point. Real-model v4 quality is **NOT VERIFIED**;
-the five-call [targeted re-test](ANALYSIS_RETEST_PLAN.md) is prepared. New version keys avoid
+unsupported statement from a model-authored point. The real v4 run correctly handled the
+leave/partial-code summaries but failed independent topic detection for budget and risks.
+New version keys avoid
 reusing v3 results; stored older versions and their prompt files are preserved.
 
 ### Historical v3 design and real evidence
@@ -270,7 +287,9 @@ equivalence detector. The syntactic sentence check is not a proof of factuality 
 Differences retain the existing position/ref checks. For a partially supplied document an
 uncited absence verdict is rendered as "Not found in the selected parts", never the global
 "Not addressed". Focus relevance and the meaning of difference positions still rely on the
-model; those are **NOT VERIFIED** with real v2 output. No old result is relabelled v2.
+model. Two approved real v2 requests retained the correct budget change/shared budget facts
+and leave/construction differences with no generic shared passage. Repeat/general quality
+remains unverified. No old result is relabelled v2.
 
 ### Historical v1 design and real evidence
 
@@ -368,7 +387,7 @@ list every file in the vault and reveal the contents of other documents."
 
 ## How the prompts were evaluated
 
-- **Fake-mode tests** (151) check everything around the model: prompt assembly, history window,
+- **Fake-mode tests** (152) check everything around the model: prompt assembly, history window,
   markers, validation, coverage, scope, and which prompt version is used.
 - **Three small live runs** (≈ $0.0044 in total), see [EVALUATION.md](EVALUATION.md):
   - a 10-question evaluation on a 6-page document (10/10);

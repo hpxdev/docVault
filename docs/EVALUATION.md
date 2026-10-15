@@ -571,3 +571,24 @@ Main demo ledger stayed 43 calls / $0.00674021. Retained evidence across demo + 
 this re-test totals 90 real calls / $0.01621937 estimated. These are observed snapshots;
 historical-accounting discrepancies described above were not rewritten. Next correction:
 make requested-topic identities server-owned and require one independent verdict per identity.
+## V5 follow-up to the merged-topic failure (unpaid, 2026-10-15)
+
+Under the existing summary-correction scope, Codex added summary.custom.v5 after recording the
+v4 failure. Requested topic identities now come from the server: explicit commas, semicolons
+and standalone and/or delimit a literal list, with case-insensitive deduplication. Each topic
+gets one required boolean field in a strict dynamic schema. Merged, missing or extra verdict
+keys are rejected; no-focus has its own required flag and public focus coverage remains None.
+The model still judges each boolean and may judge incorrectly. This is not semantic topic
+parsing (research and development splits; research & development does not).
+
+**Unpaid checks:** ruff passed; 152 tests passed / 3 live tests deselected in 52.05 s. A regression
+checks required schema fields and rejects merged/omitted/invented keys. The two-call fake
+rehearsal passed in 14.96 s, zero cost: separate budget=true and risks=false, missing-risks
+notice, and no-focus control. This proves transport/schema behavior only, not real v5 quality.
+Main API/worker rebuilt; readiness ready / real mode / worker OK. No frontend changes were
+needed. Existing prompts/results remain, with a new cache key for v5.
+
+**NOT VERIFIED:** v5 OpenAI schema acceptance, independent verdict quality and point selection
+on the real model. A fresh two-call check (budget and risks plus no-focus control) is prepared
+in ANALYSIS_RETEST_PLAN.md, estimated $0.001, allowance $0.003. No additional paid call was
+made. Comparison v2 was not changed after its two correct targeted retained results.

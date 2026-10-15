@@ -7,6 +7,7 @@ point must cite markers that were in the prompt.
 
 import hashlib
 import json
+import re
 import uuid
 
 from sqlalchemy import select
@@ -14,7 +15,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.registry import async_ai
-from app.ai.schemas import CustomSummaryV4LLM
+from app.ai.schemas import summary_v5_schema
 from app.core.config import get_settings
 from app.core.errors import ConflictError
 from app.models import Document, DocumentSegment, DocumentSummary
@@ -30,7 +31,7 @@ from app.services.selection import select_parts
 
 # v1 invented a "risks" point in the first real check; v2 stopped that but left its optional
 # gap list empty; v3 asks for a verdict per focus topic. See docs/PROMPTS.md.
-VERSION = "summary.custom.v4"
+VERSION = "summary.custom.v5"
 MAX_TOPICS = 5
 MAX_OUTPUT_TOKENS = 2000
 
@@ -89,7 +90,25 @@ FOCUS_RULES = {
         "no focus requested: cover the supplied text; return focus_topics as [] both at the "
         "top level and on each point.",
     ),
+    "summary.custom.v5": (
+        "judge each server-listed topic independently using its required verdict field; never "
+        "merge topics or infer a missing topic from another. Points use the exact topic names "
+        "from the catalog. Missing-topic notices are added by the server.",
+        "no focus requested: set none_requested true; each point's focus_topics is [].",
+    ),
 }
+
+
+def requested_topics(focus: str | None) -> list[str]:
+    """Explicit lists only; conjunctions/commas/semicolons delimit independently judged topics."""
+    topics = []
+    seen = set()
+    for value in re.split(r"\s+(?:and|or)\s+|[,;]", focus or "", flags=re.I):
+        topic = " ".join(value.split())
+        if topic and topic.casefold() not in seen:
+            topics.append(topic)
+            seen.add(topic.casefold())
+    return topics
 
 
 def summary_text(points: list[dict], missing: list[str], coverage: dict, words: int, v) -> str:
@@ -221,9 +240,10 @@ async def get_or_create_summary(
     budget = get_settings().on_demand_max_input_tokens
     chosen, coverage = select_parts(parts, budget, focus)
     rules = LENGTHS[length]
+    requested = requested_topics(focus)
     prompt = load_prompt(VERSION)
     raw, _ = await ai.structured(
-        CustomSummaryV4LLM,
+        summary_v5_schema(requested),
         prompt.messages(
             filename=filename,
             marker_kind="[Page N] = physical page N" if pdf else "[Section N: heading] = section N",
@@ -233,6 +253,9 @@ async def get_or_create_summary(
             tone_rule=TONES[tone],
             focus_rule=FOCUS_RULES[VERSION][0 if focus else 1],
             focus=focus or "",
+            focus_topic_catalog=json.dumps(
+                [{"id": f"topic_{i}", "topic": topic} for i, topic in enumerate(requested, 1)]
+            ),
             document_text=render(chosen),
         ),
         purpose="summary_custom",
@@ -242,7 +265,13 @@ async def get_or_create_summary(
     )
 
     v = Validation()
-    topics, missing, covered = focus_verdicts(raw.focus_topics, focus)
+    verdicts = raw.focus_verdicts.model_dump()
+    topics = [
+        {"topic": topic, "addressed": verdicts[f"topic_{i}"]}
+        for i, topic in enumerate(requested, 1)
+    ]
+    missing = [t["topic"] for t in topics if not t["addressed"]]
+    covered = any(t["addressed"] for t in topics) if requested else None
     addressed = {str(t["topic"]).casefold() for t in topics if t["addressed"]}
     supplied = {p.ref: p.text for p in chosen}
     grounded = []

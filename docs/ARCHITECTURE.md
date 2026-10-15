@@ -242,7 +242,9 @@ snapshots are held while waiting. Both go through the same spend cap and `ai_cal
 (purposes `summary_custom` and `compare`); a comparison's ledger row has no `document_id`
 because it spans several documents. Results are stored (see Caching).
 
-Active summary v4 returns evidence-bearing points rather than a separate free-form summary.
+Active summary v5 returns evidence-bearing points rather than a separate free-form summary.
+The server defines requested-topic IDs with one required boolean verdict per ID; the model
+cannot merge or omit IDs. It still judges whether each requested topic is addressed.
 The server validates quote occurrences, focus-topic links and refs, builds prose from retained
 points, and adds gap/partial-input notices. Active comparison v2 requires literal shared
 sentences in at least two cited documents and builds its overview from retained-item counts.

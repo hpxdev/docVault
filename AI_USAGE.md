@@ -17,7 +17,9 @@ from the git history. Sections the developer must write in their own words are m
   walkthrough, refreshed documentation, implemented v3 follow-up rewriting, and ran/reviewed
   the explicitly approved broader real evaluation.
   After reviewing its failures, Codex added summary v4 / comparison v2 validation, regression
-  checks, coverage-aware UI wording and a five-call re-test harness (fake rehearsal only so far).
+  checks, coverage-aware UI wording and a five-call re-test harness. The explicitly approved
+  real re-test cost $0.00156255 and exposed merged focus topics in v4; Codex then added v5's
+  required server-owned topic verdict fields. V5 has not yet been checked with the real model.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method
