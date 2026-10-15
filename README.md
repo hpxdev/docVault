@@ -23,10 +23,10 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 >   changes between two versions on the right pages, but listed two identical statements as
 >   differences (now dropped by the server). The summary invented a "risks" point;
 > - re-tests of the summary prompt: v2 stopped inventing content but left its gap list empty;
->   v3 (active) asks for a verdict per focus topic and returned "risks" as not addressed.
+>   v3 asked for a verdict per focus topic and returned "risks" as not addressed.
 >
 > A broader approved run added 42 calls at $0.00791661 estimated cost. Current demo and
-> evaluation evidence plus the targeted re-test total $0.01621937; earlier cumulative records differ from the retained
+> evaluation evidence plus the targeted re-tests total $0.01672337; earlier cumulative records differ from the retained
 > demo snapshot. See [docs/EVALUATION.md](docs/EVALUATION.md) for evidence and limits;
 > retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
@@ -40,14 +40,16 @@ a missing gap sentence, and an unsupported claim about a partially included docu
 Comparisons contained off-focus or generic similarities. Passing API tests does not mean
 every generated statement is grounded. [Results and raw evidence](docs/EVALUATION.md#broader-real-evaluation-2026-10-15-approved).
 
-**Corrections prepared:** active `summary.custom.v5` builds prose from cited points, adds
+**Corrections checked:** active `summary.custom.v5` builds prose from cited points, adds
 missing-topic/partial-coverage notices on the server, and requires literal evidence quotes.
 Active `compare.v2` retains matching shared sentences rather than generic similarities and
 builds its overview on the server. The approved five-call re-test cost $0.00156255: comparisons,
 leave and partial-document summaries met the targeted checks, but summary v4 merged "budget
 and risks" into one addressed topic and missed the risks gap. V5 gives each server-listed
-topic a required independent verdict; real v5 quality is **NOT VERIFIED** pending a
-[two-call check](docs/ANALYSIS_RETEST_PLAN.md).
+topic a required independent verdict. Its approved two-call real check cost $0.00050400:
+budget/risks returned the correct independent verdicts and gap notice; the no-focus handbook
+control returned correct facts and section citations. These are single examples, not evidence
+of general reliability. [Results](docs/EVALUATION.md#summary-v5-two-call-real-check-2026-10-15-approved).
 Literal quote checks do not establish semantic entailment, and conservative shared-sentence
 matching can omit valid differently worded similarities.
 
@@ -70,7 +72,7 @@ matching can omit valid differently worded similarities.
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
 | pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 152 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
-| Summary customisation: length, focus, tone (BONUS) | Implemented; v4 real run exposed merged focus topics. V5 requires independent server-named verdicts; real v5 quality pending; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
+| Summary customisation: length, focus, tone (BONUS) | Implemented; v5 requires independent server-named verdicts and passed the known budget/risks case plus a no-focus real control; broad quality remains unverified; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
 | Comparative analysis between documents (BONUS) | Implemented for 2–4 documents or versions; v2 requires identical cited shared sentences; two targeted real comparisons returned correct retained results; [details](docs/EVALUATION.md) | `services/comparisons.py`, `POST /comparisons` |
 | Rate limiting and quota management (BONUS) | Done: per-client limits in Redis (`429 RATE_LIMITED` + `Retry-After`) next to the spend cap | `core/ratelimit.py` |
 | Document version tracking (BONUS) | Done: new versions keep history; vault-wide chat uses the latest | `POST /documents/{id}/versions` |
@@ -440,11 +442,12 @@ Prompt work:
   outputs in a small real A/B check, including two repeats of the known ambiguous-capacity
   case. Add held-out histories, named referents, competing referents and document names
   beyond this one budget history before claiming general disambiguation quality.
-- **Validate summary v5 and broaden comparison v2 coverage.** The broader run exposed missing gap prose,
+- **Broaden summary v5 and comparison v2 coverage.** The broader run exposed missing gap prose,
   irrelevant content, a partial-summary overclaim and a generic unsupported similarity in
   older versions. V4 then merged focus topics in the targeted real run; v5 now requires
-  independent server-named verdicts. Its real check is pending; paraphrase support and
-  relevance remain model judgements. Comparison v2 passed two specific real requests.
+  independent server-named verdicts and passed the known case plus a no-focus control.
+  Paraphrase support and relevance remain model judgements. Comparison v2 passed two
+  specific real requests; repeat stability and held-out documents remain unverified.
 - **A broader evaluation set** (multi-document, follow-ups, long documents, injection) to compare
   prompt versions on more than a handful of questions.
 

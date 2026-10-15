@@ -195,8 +195,12 @@ merged or invented verdict keys pass schema validation. For no focus a required
 This is a literal list grammar, not semantic parsing: phrases such as "research and
 development" are treated as two requested topics, while `research & development` stays one.
 The model still decides each boolean; v5 cannot force that decision to be factually correct.
-Evidence/point rendering remains as described below. **Real v5 behaviour is NOT VERIFIED**;
-the [two-call check](ANALYSIS_RETEST_PLAN.md) covers the known failure and no-focus branch.
+Evidence/point rendering remains as described below. **REAL v5 (approved two-call check):**
+budget=true / risks=false, correct p3 facts and the server gap sentence; no-focus handbook
+control returned 27 annual-leave days, up to 5 carried over and 3 remote days with correct
+sections. Two calls cost $0.00050400 estimated. This verifies the known case and no-focus
+branch once each, not general verdict quality or v5 partial-input behaviour.
+See [the re-test record](ANALYSIS_RETEST_PLAN.md).
 
 ### V4 evidence-bearing design (retained in v5)
 

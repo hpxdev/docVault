@@ -588,7 +588,53 @@ notice, and no-focus control. This proves transport/schema behavior only, not re
 Main API/worker rebuilt; readiness ready / real mode / worker OK. No frontend changes were
 needed. Existing prompts/results remain, with a new cache key for v5.
 
-**NOT VERIFIED:** v5 OpenAI schema acceptance, independent verdict quality and point selection
+**Before the two-call run below, NOT VERIFIED:** v5 OpenAI schema acceptance, independent verdict quality and point selection
 on the real model. A fresh two-call check (budget and risks plus no-focus control) is prepared
 in ANALYSIS_RETEST_PLAN.md, estimated $0.001, allowance $0.003. No additional paid call was
 made. Comparison v2 was not changed after its two correct targeted retained results.
+
+# Summary v5 two-call real check (2026-10-15, approved)
+
+**Result:** both specific checks met their expectations. The developer approved two summary
+calls, estimated $0.001 with a $0.003 allowance. Command:
+`TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 docker compose -f compose.test.yml run --rm
+-e RUN_ANALYSIS_RETEST=1 -e SUMMARY_V5_ONLY=1 tests pytest -m live
+tests/live/test_analysis_retest.py -q -s`.
+Observed: **1 passed in 8.72 s; 2 succeeded real summary_custom calls; $0.00050400 estimated**.
+Both used gpt-4o-mini and summary.custom.v5. No embeddings, insights or comparisons ran.
+The isolated $0.002 pre-call cap was not reached. No additional paid iteration followed.
+
+[Raw responses and ledger](evaluations/summary-v5-2026-10-15.json), copied unchanged from the
+result file; SHA-256:
+`f2e235202552b27dd6693ce5d592d22d8fda6001fcec7e4a48a1bb31ecb60eb0`.
+The developer-owned human_review field remains NOT REVIEWED. The assessment below is Codex's
+inspection of retained output against the self-written source fixtures.
+
+| Case | Actual output | Assessment |
+|---|---|---|
+| Medium/executive, budget and risks | Separate verdicts budget=true, risks=false; focus_not_addressed=[risks]. Correct 41.5m budget and 3.2m contingency, both p3 with matching quotes. Summary ends "The document does not address risks." | Known merged-topic/gap failure corrected in this generation; no unrelated schedule/panel facts or invented risks |
+| Short/plain, no-focus handbook | 27 annual-leave days and up to 5 carried over (section 2); up to 3 remote days weekly with manager approval (section 3). Matching quotes, no invented DOCX pages, focus=null, focus_covered=null, gaps=[], topic list=[] | Correct no-focus schema branch and retained facts; full source supplied, short summary intentionally not exhaustive |
+
+The budget summary (verbatim):
+
+> The total capital budget for the Northwind Solar Farm project is 41.5 million euros. A contingency reserve of 3.2 million euros is included in the total budget. The document does not address risks.
+
+Compared with v4's immediately preceding real result, the two budget facts remained and the
+separate missing-risks verdict/notice appeared. V4 had returned one combined addressed topic
+and no gap. This is an observed correction for the known case, not a general reliability
+claim. Each v5 request ran once; no repeat variance, new focus grammar edge cases, v5 partial
+input, difficult paraphrase entailment or broader document corpus was tested in this run.
+Comparison v2's two correct retained results remain evidence from the earlier five-call run.
+Map/reduce insight prose was unchanged. No application code changed during this check.
+
+| Case | Input tokens | Output tokens | Estimated USD |
+|---|---:|---:|---:|
+| budget and risks | 1239 | 135 | 0.00026685 |
+| no-focus control | 941 | 160 | 0.00023715 |
+| **Total** | | | **0.00050400** |
+
+The original main demo ledger remains 43 calls / $0.00674021. Retained demo plus broader,
+five-call and two-call evaluation evidence totals **92 real calls / $0.01672337 estimated**.
+These are observed ledger snapshots, not invoice totals or a reconstruction of the historical
+accounting discrepancy already documented. The full fake suite remains 152 passed / 3 live
+tests deselected from the preceding code change; this task changed evidence/docs only.

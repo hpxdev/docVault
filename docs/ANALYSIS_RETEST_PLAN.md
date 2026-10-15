@@ -1,4 +1,4 @@
-# Summary v4 / comparison v2: completed; v5 check awaiting approval
+# Summary v4 / comparison v2 and v5 re-tests: completed
 
 Prepared by OpenAI Codex on 2026-10-15 after the approved broader run exposed prose/focus
 failures. The developer approved the five-call re-test, which completed in 15.93 s at
@@ -6,12 +6,19 @@ $0.00156255 estimated cost. Four retained results met their checks, but v4 merge
 risks and missed the risks gap. See EVALUATION.md and evaluations/analysis-2026-10-15-v4-v2.json.
 The original five-call plan below records that completed run; the new proposal follows here.
 
-## New v5 check: two calls, fresh approval needed
+## V5 check: two calls, approved and completed
+
+The developer explicitly approved the two-call proposal. Actual output: **1 passed in
+8.72 s; 2 succeeded calls, $0.00050400 estimated**. Budget/risks had separate correct verdicts,
+the missing-risks notice and p3 facts. The no-focus handbook control had correct section
+citations and focus_covered=None. Raw evidence: [summary-v5-2026-10-15.json](evaluations/summary-v5-2026-10-15.json).
+No further paid call followed. The proposal/command below record exactly what was approved;
+future paid reruns still require their own authorization.
 
 V5 defines requested-topic IDs on the server and requires one independent boolean field per
 ID. Merged/missing/extra keys cannot validate. The server's list grammar splits commas,
 semicolons and standalone `and`/`or`; it does not infer semantic topic boundaries. Existing
-evidence checks/rendering remain. No further paid call has been made after the approved five.
+evidence checks/rendering remain. The two calls above followed the separately approved five.
 
 Proposed **two summary_custom calls**: (1) medium/executive budget and risks, requiring
 separate budget=true / risks=false and the gap notice; (2) a short/plain no-focus handbook
@@ -44,7 +51,8 @@ backend/tests/live/.results, preserving the earlier five-call result file.
   explaining that valid differently worded facts may be omitted.
 
 These checks are conservative. Quote occurrence does not establish semantic entailment of a
-paraphrase, and topic/relevance judgements remain model-dependent. Real quality is **NOT VERIFIED**.
+paraphrase, and topic/relevance judgements remain model-dependent. The targeted real results
+are documented above; general quality and repeat stability remain unverified.
 The insight map/reduce prompts are outside this correction and retain their documented limits.
 
 ## Proposed paid run

@@ -19,7 +19,9 @@ from the git history. Sections the developer must write in their own words are m
   After reviewing its failures, Codex added summary v4 / comparison v2 validation, regression
   checks, coverage-aware UI wording and a five-call re-test harness. The explicitly approved
   real re-test cost $0.00156255 and exposed merged focus topics in v4; Codex then added v5's
-  required server-owned topic verdict fields. V5 has not yet been checked with the real model.
+  required server-owned topic verdict fields. A separately approved two-call real check then
+  returned correct independent budget/risks verdicts and a correct no-focus control at
+  $0.00050400 estimated. These narrow successes do not establish general grounding quality.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

@@ -1,0 +1,374 @@
+{
+  "date_utc": "2026-10-15T11:43:14.497833+00:00",
+  "mode": "openai",
+  "human_review": "NOT REVIEWED",
+  "cases": [
+    {
+      "case": "upload:northwind-brief.pdf",
+      "http_status": 202,
+      "response": {
+        "results": [
+          {
+            "filename": "northwind-brief.pdf",
+            "outcome": "accepted",
+            "duplicate": false,
+            "document": {
+              "id": "a2d63ea4-1b54-435b-a101-bedf07285cf2",
+              "filename": "northwind-brief.pdf",
+              "file_type": "pdf",
+              "mime_type": "application/pdf",
+              "size_bytes": 4542,
+              "sha256": "d3d565cc07802d88e3040479ca9b644541362b341f22b30ff85b9c14443f2dfe",
+              "status": "queued",
+              "stages": {
+                "extract": "pending",
+                "index": "pending",
+                "insights": "pending"
+              },
+              "chat_ready": false,
+              "page_count": null,
+              "segment_count": null,
+              "char_count": null,
+              "token_count": null,
+              "warnings": [],
+              "error": null,
+              "category": null,
+              "version": 1,
+              "version_group_id": "a2d63ea4-1b54-435b-a101-bedf07285cf2",
+              "is_latest": true,
+              "created_at": "2026-10-15T11:43:14.562952Z",
+              "updated_at": "2026-10-15T11:43:14.562957Z",
+              "chat_ready_at": null,
+              "ready_at": null
+            },
+            "error": null
+          }
+        ],
+        "accepted": 1,
+        "duplicates": 0,
+        "rejected": 0
+      }
+    },
+    {
+      "case": "version",
+      "http_status": 202,
+      "response": {
+        "id": "fca7a690-3b62-4ad7-b6d4-3bbdb012df46",
+        "filename": "northwind-revised.pdf",
+        "file_type": "pdf",
+        "mime_type": "application/pdf",
+        "size_bytes": 4542,
+        "sha256": "01abeab97f8502817b41471c749107390fc356e05c21aebf87576a5abafbb7b3",
+        "status": "queued",
+        "stages": {
+          "extract": "pending",
+          "index": "pending",
+          "insights": "pending"
+        },
+        "chat_ready": false,
+        "page_count": null,
+        "segment_count": null,
+        "char_count": null,
+        "token_count": null,
+        "warnings": [],
+        "error": null,
+        "category": null,
+        "version": 2,
+        "version_group_id": "a2d63ea4-1b54-435b-a101-bedf07285cf2",
+        "is_latest": true,
+        "created_at": "2026-10-15T11:43:15.419844Z",
+        "updated_at": "2026-10-15T11:43:15.419846Z",
+        "chat_ready_at": null,
+        "ready_at": null
+      }
+    },
+    {
+      "case": "upload:employee-handbook.docx",
+      "http_status": 202,
+      "response": {
+        "results": [
+          {
+            "filename": "employee-handbook.docx",
+            "outcome": "accepted",
+            "duplicate": false,
+            "document": {
+              "id": "56cf46ae-2748-4606-9ab8-263eed37efb9",
+              "filename": "employee-handbook.docx",
+              "file_type": "docx",
+              "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "size_bytes": 36962,
+              "sha256": "2c1af4bd45d7372ec56e5631f151e73483fa5795a2e52360680b5304729d8c69",
+              "status": "queued",
+              "stages": {
+                "extract": "pending",
+                "index": "pending",
+                "insights": "pending"
+              },
+              "chat_ready": false,
+              "page_count": null,
+              "segment_count": null,
+              "char_count": null,
+              "token_count": null,
+              "warnings": [],
+              "error": null,
+              "category": null,
+              "version": 1,
+              "version_group_id": "56cf46ae-2748-4606-9ab8-263eed37efb9",
+              "is_latest": true,
+              "created_at": "2026-10-15T11:43:15.492824Z",
+              "updated_at": "2026-10-15T11:43:15.492828Z",
+              "chat_ready_at": null,
+              "ready_at": null
+            },
+            "error": null
+          }
+        ],
+        "accepted": 1,
+        "duplicates": 0,
+        "rejected": 0
+      }
+    },
+    {
+      "case": "upload:heron-160-pages.pdf",
+      "http_status": 202,
+      "response": {
+        "results": [
+          {
+            "filename": "heron-160-pages.pdf",
+            "outcome": "accepted",
+            "duplicate": false,
+            "document": {
+              "id": "74c0e857-2aba-48a3-8853-65dbd61d598b",
+              "filename": "heron-160-pages.pdf",
+              "file_type": "pdf",
+              "mime_type": "application/pdf",
+              "size_bytes": 108889,
+              "sha256": "01c77d2b6de09f3e0329ec447f48f31bdd55187064aef22c5f077e3d07a62bf8",
+              "status": "queued",
+              "stages": {
+                "extract": "pending",
+                "index": "pending",
+                "insights": "pending"
+              },
+              "chat_ready": false,
+              "page_count": null,
+              "segment_count": null,
+              "char_count": null,
+              "token_count": null,
+              "warnings": [],
+              "error": null,
+              "category": null,
+              "version": 1,
+              "version_group_id": "74c0e857-2aba-48a3-8853-65dbd61d598b",
+              "is_latest": true,
+              "created_at": "2026-10-15T11:43:15.589021Z",
+              "updated_at": "2026-10-15T11:43:15.589026Z",
+              "chat_ready_at": null,
+              "ready_at": null
+            },
+            "error": null
+          }
+        ],
+        "accepted": 1,
+        "duplicates": 0,
+        "rejected": 0
+      }
+    },
+    {
+      "case": "budget_and_risks",
+      "http_status": 200,
+      "response": {
+        "id": "f423e91e-0c35-4dbc-9380-05136efc3c76",
+        "document_id": "a2d63ea4-1b54-435b-a101-bedf07285cf2",
+        "length": "medium",
+        "tone": "executive",
+        "focus": "budget and risks",
+        "summary": "The total capital budget for the Northwind Solar Farm project is 41.5 million euros. A contingency reserve of 3.2 million euros is included in the total budget. The document does not address risks.",
+        "key_points": [
+          {
+            "text": "The total capital budget for the Northwind Solar Farm project is 41.5 million euros.",
+            "pages": [
+              3
+            ],
+            "sections": null
+          },
+          {
+            "text": "A contingency reserve of 3.2 million euros is included in the total budget.",
+            "pages": [
+              3
+            ],
+            "sections": null
+          }
+        ],
+        "focus_covered": true,
+        "focus_not_addressed": [
+          "risks"
+        ],
+        "coverage": {
+          "complete": true,
+          "evidence": [
+            {
+              "text": "The total capital budget for the Northwind Solar Farm project is 41.5 million euros.",
+              "sources": [
+                {
+                  "ref": 3,
+                  "quote": "The total capital budget is 41.5 million euros."
+                }
+              ],
+              "focus_topics": [
+                "budget"
+              ]
+            },
+            {
+              "text": "A contingency reserve of 3.2 million euros is included in the total budget.",
+              "sources": [
+                {
+                  "ref": 3,
+                  "quote": "A contingency reserve of 3.2 million euros is included in the total."
+                }
+              ],
+              "focus_topics": [
+                "budget"
+              ]
+            }
+          ],
+          "selection": "all",
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 0
+          },
+          "focus_topics": [
+            {
+              "topic": "budget",
+              "addressed": true
+            },
+            {
+              "topic": "risks",
+              "addressed": false
+            }
+          ],
+          "segments_total": 6,
+          "segments_included": 6,
+          "input_token_budget": 40000
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "summary.custom.v5",
+        "cached": false,
+        "created_at": "2026-10-15T11:43:19.232006Z"
+      }
+    },
+    {
+      "case": "no_focus_control",
+      "http_status": 200,
+      "response": {
+        "id": "d1c6797e-0922-478f-ae3e-d552aa6e8bdc",
+        "document_id": "56cf46ae-2748-4606-9ab8-263eed37efb9",
+        "length": "short",
+        "tone": "plain",
+        "focus": null,
+        "summary": "Employees receive 27 days of paid annual leave per year. Unused leave of up to 5 days may be carried over. Staff may work remotely up to three days per week with manager approval.",
+        "key_points": [
+          {
+            "text": "Employees receive 27 days of paid annual leave per year.",
+            "pages": [],
+            "sections": [
+              2
+            ]
+          },
+          {
+            "text": "Unused leave of up to 5 days may be carried over.",
+            "pages": [],
+            "sections": [
+              2
+            ]
+          },
+          {
+            "text": "Staff may work remotely up to three days per week with manager approval.",
+            "pages": [],
+            "sections": [
+              3
+            ]
+          }
+        ],
+        "focus_covered": null,
+        "focus_not_addressed": [],
+        "coverage": {
+          "complete": true,
+          "evidence": [
+            {
+              "text": "Employees receive 27 days of paid annual leave per year.",
+              "sources": [
+                {
+                  "ref": 2,
+                  "quote": "Employees receive 27 days of paid annual leave per year."
+                }
+              ],
+              "focus_topics": []
+            },
+            {
+              "text": "Unused leave of up to 5 days may be carried over.",
+              "sources": [
+                {
+                  "ref": 2,
+                  "quote": "Unused leave of up to 5 days may be carried over."
+                }
+              ],
+              "focus_topics": []
+            },
+            {
+              "text": "Staff may work remotely up to three days per week with manager approval.",
+              "sources": [
+                {
+                  "ref": 3,
+                  "quote": "Staff may work remotely up to three days per week with manager approval."
+                }
+              ],
+              "focus_topics": []
+            }
+          ],
+          "selection": "all",
+          "validation": {
+            "dropped_refs": 0,
+            "invalid_enums": 0,
+            "truncated_fields": [],
+            "dropped_key_points": 0
+          },
+          "focus_topics": [],
+          "segments_total": 3,
+          "segments_included": 3,
+          "input_token_budget": 40000
+        },
+        "ai_mode": "openai",
+        "model": "gpt-4o-mini",
+        "prompt_version": "summary.custom.v5",
+        "cached": false,
+        "created_at": "2026-10-15T11:43:21.753055Z"
+      }
+    }
+  ],
+  "ledger": [
+    {
+      "purpose": "summary_custom",
+      "model": "gpt-4o-mini",
+      "prompt_version": "summary.custom.v5",
+      "input_tokens": 1239,
+      "output_tokens": 135,
+      "estimated_cost_usd": "0.00026685",
+      "status": "succeeded"
+    },
+    {
+      "purpose": "summary_custom",
+      "model": "gpt-4o-mini",
+      "prompt_version": "summary.custom.v5",
+      "input_tokens": 941,
+      "output_tokens": 160,
+      "estimated_cost_usd": "0.00023715",
+      "status": "succeeded"
+    }
+  ],
+  "estimated_cost_usd": "0.00050400",
+  "call_count": 2
+}

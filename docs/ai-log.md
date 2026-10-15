@@ -1169,3 +1169,32 @@ V5 real acceptance/quality is NOT VERIFIED. Proposed two-call re-test estimated 
 allowance $0.003, separate fresh approval required. No automatic paid iteration. No publishing;
 developer-owned review fields unchanged.
 Human review: ___
+---
+
+## 2026-10-15 · Codex: approved summary v5 real checks
+
+**Authorization:** developer approved two real summary calls, estimated $0.001 with a
+$0.003 allowance. Ran the isolated extraction-only harness with SUMMARY_V5_ONLY=1;
+no embeddings, insights, comparisons or additional paid runs.
+
+**Observed:** 1 passed in 8.72 s; 2 succeeded gpt-4o-mini calls using summary.custom.v5,
+$0.00050400 estimated. The budget-and-risks case returned independent budget=true and
+risks=false verdicts, valid budget quotes and the explicit missing-risks sentence. The
+no-focus control returned the expected leave/remote-work facts with section citations,
+focus_covered=null and no requested-topic gaps. Each case was generated once.
+
+**Evidence / documentation:** preserved the raw result byte-for-byte at
+`docs/evaluations/summary-v5-2026-10-15.json` (SHA256
+f2e235202552b27dd6693ce5d592d22d8fda6001fcec7e4a48a1bb31ecb60eb0).
+Updated README, PROMPTS, AI_USAGE, EVALUATION and the re-test plan with actual outcomes,
+costs and limitations. Raw developer review status remains NOT REVIEWED.
+
+**Verified:** evidence copy hashes match; two succeeded v5 calls sum exactly to $0.00050400;
+separate topic gaps and no-focus fields checked. Main demo remains 43 calls/$0.00674021.
+Retained evidence totals 92 calls/$0.01672337, not an invoice or all historical spend.
+`git diff --check` passed. No application code changed; the latest full suite remains
+152 passed / 3 deselected from the v5 implementation, so no docs-only suite rerun.
+
+**NOT VERIFIED:** general quality, repeat variance and real v5 partial-input behavior.
+Literal quote checks do not prove semantic entailment. No publishing or new dependencies.
+Human review: ___
