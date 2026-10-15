@@ -225,3 +225,13 @@ edited processing timing is not a performance benchmark.
 
 See [VIDEO_DELIVERY.md](VIDEO_DELIVERY.md) for the final files, coverage, disclosures and
 export verification. This status supersedes the earlier planning and pilot-only status.
+
+
+## 13. Motion revision after developer review
+
+The preferred file is now ai-vault-demo-polished.webm: 1080p / 24 fps, about 6:13.
+Repetitive zooms were removed. Added stationary detail cuts, explanatory motion diagrams,
+loaded Swagger documentation and an actual read-only HTTP 200 response. Corrected suggestions
+and evidence crops, recaptured saved UI at higher resolution, and verified 66 exported
+subscene frames plus audio and complete accelerated playback. See VIDEO_DELIVERY.md for
+normal-speed sample results and limits. No new paid model calls; earlier edit retained.

@@ -1,0 +1,72 @@
+{
+  "file": "ai-vault-demo-polished.webm",
+  "bytes": 71996934,
+  "sha256": "90efe4a5e1183019fb0eda8518bb00fb256ab82d847c9e3dc6481686c6730866",
+  "duration": 372.541666,
+  "width": 1920,
+  "height": 1080,
+  "fps": 24,
+  "video_frames": 8941,
+  "audio_packets": 18628,
+  "audio_correlation": 0.9720339518970453,
+  "speech_chapters": 22,
+  "playback": {
+    "ended": true,
+    "time": 372.541666,
+    "frames": 12377,
+    "droppedFrames": 3669,
+    "audioDecodedBytes": 5667217,
+    "error": null
+  },
+  "normal_speed_sample": {
+    "time": 33.022919,
+    "rate": 1,
+    "frames": 384,
+    "dropped": 0,
+    "error": null
+  },
+  "normal_speed_warm_app_sample": {
+    "time": 33.075051,
+    "rate": 1,
+    "frames": 385,
+    "dropped": 24,
+    "error": null
+  },
+  "normal_speed_cold_sample": {
+    "time": 33.023608,
+    "rate": 1,
+    "frames": 420,
+    "dropped": 23,
+    "error": null
+  },
+  "sampled_frames": 66,
+  "frame_comparison_maximum_rms": 7.706497718367957,
+  "frame_comparison_failures": [],
+  "editorial": {
+    "caption_or_title_failures": [],
+    "stationary_reading_views": {
+      "source": true,
+      "summary": true,
+      "versions": true,
+      "comparison": true,
+      "multidoc": true,
+      "notfound": true
+    },
+    "motion_graphic_changes_pixels": true,
+    "archived_replay_requests": 87,
+    "blocked_requests": 0,
+    "unhandled_requests": 0,
+    "fps": 24,
+    "frames": 8941,
+    "duration": 372.5416666666667,
+    "swagger_operations": 28,
+    "swagger_executed_get_status": 200
+  },
+  "new_paid_model_calls": 0,
+  "format": "WebM / VP8 + Opus",
+  "limits": [
+    "No human listening judgement",
+    "Normal-speed sample is not a full normal-speed viewing",
+    "MP4 and universal player compatibility not verified"
+  ]
+}

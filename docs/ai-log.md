@@ -1383,3 +1383,47 @@ The output folder includes subtitles, spoken script, feature chapters and poster
 media verification evidence is local; git diff --check passed. No publishing or pushing.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex: remove repetitive zooms and repair Swagger demo
+
+**Request / finding:** developer found the slow repeating zooms boring and reported that
+Swagger was absent, requesting a thorough video review and permitting graphical motion.
+Confirmed that the earlier Swagger source PNG contained a loading spinner. The previous
+final review missed it; did not treat successful playback as proof of visual completeness.
+Replaced the source with fully loaded local Swagger (28 operations) and an executed read-only
+GET for an existing document, visibly HTTP 200. No uploads or AI requests reached the backend.
+
+**Revision:** rebuilt the edit at 24 fps, removed continuous camera scaling/panning, and used
+quick chapter reveals, stationary detail cuts, and labelled explanatory motion graphics.
+Graphics cover architecture, validation/deduplication, independent indexing/insight branches,
+RAG, cache reuse and limitations. Recaptured saved real-response UI at device scale 2 for
+sharper details. Replaced the empty suggestions shot with actual stored suggestions, and
+corrected crops to retain the complete not-found and Stopped status. First framing review
+caught an overbroad version crop, a truncated not-found card and a Stop crop missing the
+status; fixed these before the full render. Narration is retained unchanged from the approved
+saved-result edit. No new paid AI/TTS calls, dependencies, app-source edits or publishing.
+
+**Pre-export review:** inspected contact sheets and key full-size source/detail previews.
+Checked all caption line counts and title widths, six stationary reading views with pixel
+comparisons, and changing motion-graphic frames. Replay audit: 87 handled requests, zero
+blocked and zero unhandled. Swagger loading checks are distinct from model evaluation;
+archived API/SQL panels and backend test counts remain historical evidence. The source/UI
+remains the developer's uncommitted work and is excluded from this documentation commit.
+
+**Final verification:** exported 372.542 s / 1920x1080 / 24 fps / 8,941 frames,
+18,628 Opus packets, 71,996,934 bytes. Decoded 66 chapter/subscene samples and compared them
+to the frame-aligned composition: max RMS 7.71 / 255, zero failures. Initial limits sample
+straddled a hard cut by 0.0005 s; checked the actual earlier encoded frame instead of
+loosening tolerance. Visually inspected encoded Swagger list and real HTTP 200 response,
+source, summary, independent-stage diagram, Stop and closing graphics. All 22 speech
+windows passed; source correlation 0.972034. Full muted 4x playback ended without error
+(dropped 3,669 frames across accelerated playback/seeks). Initial app-page 1x samples: 23/420 and 24/385 dropped;
+clean dedicated full-size 1x architecture sample: 0/384 dropped, no error. Not a full
+human listening/pacing or all-player compatibility review. MP4 remains NOT VERIFIED.
+Checks and SHA256 retained in docs/evaluations/video-motion-2026-10-15.json. Video and
+sidecars are in B:\f-work\case study\demo-video; earlier edit retained. git diff --check
+passed; no application tests rerun for media/docs-only work. No publishing or pushing.
+
+Human review: ___

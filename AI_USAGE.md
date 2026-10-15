@@ -34,6 +34,9 @@ from the git history. Sections the developer must write in their own words are m
   Codex also captured the approved full real demo (25 calls, $0.00391133 estimated), then
   rebuilt its video for the developer-updated UI using saved real results, local narration,
   captions, zooms and transitions. The UI remake made no new paid model calls.
+  A further video revision removed repeated zooms, added explanatory motion graphics,
+  recaptured the UI at higher resolution, and replaced a missed Swagger loading screen
+  with loaded documentation and a real read-only GET response. No new paid AI calls.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method
