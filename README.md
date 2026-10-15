@@ -237,7 +237,7 @@ documents up to 60K tokens and map-reduce over ~8K-token groups above that, so t
 is covered; page references outside the document are dropped and counted. Retrieval fuses vector
 search (exact scan within a scope, HNSW with iterative scans vault-wide) and Postgres full-text
 search with reciprocal rank fusion, with per-document candidates and a soft per-document cap for
-multi-document chats. Details: [docs/PROMPTS.md](docs/PROMPTS.md) (written at T24).
+multi-document chats. Details: [docs/PROMPTS.md](docs/PROMPTS.md); architecture details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## 9. Scale (design reasoning, not measured)
 
@@ -326,5 +326,5 @@ Authentication and multi-tenant ownership; S3-compatible storage; document versi
 limiting; OCR; WebSocket only if a two-way need appears; cursor pagination; summary
 customisation and comparative analysis (P2).
 
-AI-assisted development is documented in `AI_USAGE.md` (T24) and the running log
+AI-assisted development is documented in [AI_USAGE.md](AI_USAGE.md) and the running log
 [docs/ai-log.md](docs/ai-log.md).

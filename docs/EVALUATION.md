@@ -73,9 +73,14 @@ processing (the leading `[NO_ANSWER]` marker is removed for `not_found`).
 
 Token sources: chat tokens should come from OpenAI's usage metadata (`stream_usage=True`). The
 ledger does not record whether the local fallback was used. Indirect check: rebuilding question
-1's prompt locally gives 632 o200k tokens (what the fallback would have stored), while the ledger
-has 655. The +23 difference is consistent with provider-counted chat framing, so these are very
-likely provider-reported. Embedding tokens are always counted locally with `cl100k_base`
+1's prompt locally gives 632 o200k tokens (what the fallback would have stored). The message's
+usage (655 input tokens in the raw JSON) also includes its 12-token query embedding, so the
+answer call itself recorded 643. The +11 difference is consistent with provider-counted chat
+framing, so these counts are very likely provider-reported. (An earlier version of this file
+compared 632 with 655; corrected 2026-10-15.)
+
+Per-question `usage` in the raw JSON is the **sum for the message** (query
+embedding + answer): 6,496 input tokens in total = 6,403 (answer) + 93 (embed_query). Embedding tokens are always counted locally with `cl100k_base`
 (LangChain's `OpenAIEmbeddings` returns no usage).
 
 ## Not verified by this run

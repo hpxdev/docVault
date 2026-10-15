@@ -617,3 +617,26 @@ output; mobile layouts beyond the responsive classes (not checked at narrow widt
 other than the Chromium-based pane; no automated frontend tests.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T24 — Documentation
+
+**Produced by AI:** `docs/ARCHITECTURE.md` (components, both flows as sequence diagrams, status
+rules, retrieval and the vector-index note, Celery settings, data model, SSE rationale, caches,
+observability), `docs/PROMPTS.md` (each prompt's inputs, output, rules, validation, failure
+behaviour, limitations; five worked examples labelled REAL / TEST / ILLUSTRATIVE),
+`AI_USAGE.md` (from this log only; the developer's own parts are left as
+"[developer to complete]"), README links updated.
+
+**Correction found while writing:** EVALUATION.md (T19) compared the locally counted answer
+prompt (632 tokens) with 655, but 655 is the *message* total, which also includes the 12-token
+query embedding. The answer call recorded 643 (+11 vs local, still consistent with
+provider-counted chat framing). EVALUATION.md now states this correctly and notes the
+correction; the per-question `usage` in the raw JSON is documented as message totals
+(6,496 = 6,403 answer + 93 embed_query).
+
+**Verification:** documents cross-checked against the code (settings values, TTLs, limits, file
+names) and the log; no tests affected.
+
+Human review: ___
