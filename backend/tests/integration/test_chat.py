@@ -301,3 +301,20 @@ async def test_auto_title_is_one_line(client, enqueued):
     assert (await client.get(f"/chat/sessions/{sid}")).json()["title"] == (
         "What is the budget? Answer briefly."
     )
+
+
+async def test_condense_uses_v2_prompt(client, enqueued, fake_chat):
+    from app.prompts import load_prompt
+
+    v2 = load_prompt("chat.condense.v2")
+    assert "NOT standalone" in v2.system and "Riverside office lease" in v2.system
+    rendered = v2.messages(history="User: a\nAssistant: b", question="When was it approved?")
+    assert rendered[-1].content.endswith("Standalone question:")
+
+    [doc] = await _ingest(client, enqueued, ("plan.pdf", fixtures.five_page_pdf()))
+    sid = await _session(client, [doc])
+    await _ask(client, sid, BUDGET_Q)
+    msg = (await _ask(client, sid, "When was it approved?")).json()["assistant_message"]
+    versions = {c.purpose: c.prompt_version for c in _ai_calls(msg["id"])}
+    assert versions["condense"] == "chat.condense.v2"
+    assert "Riverside office lease" in fake_chat.calls[-2][1][0].content  # system message sent

@@ -11,15 +11,16 @@ citations are checked by the server** (document, page/section, original excerpt)
 *Real mode (`gpt-4o-mini`), from the demo dry run: cited answers with page/section chips, an
 amber "not found", a two-document answer, and the source panel showing page 4's original text.*
 
-> **Status (2026-10-15):** backend and ChatGPT-style UI complete; 125 fake-mode backend tests.
-> Two approved real-model runs:
+> **Status (2026-10-15):** backend and ChatGPT-style UI complete; 126 fake-mode backend tests.
+> Three approved real-model runs:
 > - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
 > - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
->   search and Stop.
+>   search and Stop;
+> - a re-test of the follow-up rewrite prompt (`chat.condense.v2`). It fixed "When was it
+>   approved?" but mis-resolved "its" when the conversation never named the referent.
 >
-> Estimated AI spend so far: $0.0038. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
-> results and for what they do **not** show. In particular, follow-up rewriting did not work in
-> the dry run (a known weakness), and retrieval at scale is untested.
+> Estimated AI spend so far: $0.0044. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
+> results and for what they do **not** show; retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
 
 ## 1. Features mapped to the brief
@@ -308,7 +309,7 @@ docker compose -f compose.test.yml run --rm tests                  # full fake-m
 docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff format --check ."
 ```
 
-- **Fake-mode suite (125 tests)** runs against real Postgres + pgvector and Redis containers.
+- **Fake-mode suite (126 tests)** runs against real Postgres + pgvector and Redis containers.
   `FakeEmbeddings` is a hashed bag-of-words (lexical similarity is real, so retrieval tests mean
   something); `FakeChatModel` is scripted. It proves the plumbing: upload rules, extraction codes
   and locators, state machine and retries, idempotency, concurrency, retrieval scope and fusion,

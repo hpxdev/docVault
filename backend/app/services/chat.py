@@ -43,7 +43,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_TITLE = "New chat"
 HISTORY_MESSAGES = 6
-CONDENSE_VERSION = "chat.condense.v1"
+CONDENSE_VERSION = "chat.condense.v2"  # v1 kept for history; see docs/PROMPTS.md
 ANSWER_VERSION = "chat.answer.v1"
 ANSWER_MAX_TOKENS = 800
 CONDENSE_MAX_TOKENS = 200

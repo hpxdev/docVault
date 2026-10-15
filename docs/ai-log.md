@@ -719,3 +719,34 @@ now REAL and shows the weakness; condense evidence; evaluation summary), DEMO_SC
 replaces the fake-mode one; status and spend), AI_USAGE.md (new correction row; limits).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · `chat.condense.v2` + real re-test (approved)
+
+**Produced by AI:** `backend/app/prompts/chat.condense.v2.md`. It defines "standalone" (reference
+words or a missing subject mean "rewrite") and adds three examples from an unrelated domain (an
+office lease), so it isn't tuned to the test questions. The pipeline now uses v2; v1 is kept.
+New test `test_condense_uses_v2_prompt` (v2 loads, renders, is sent, and the ledger records
+`chat.condense.v2`). `ruff` clean, 126 passed; api/worker rebuilt; the container reports
+`CONDENSE_VERSION=chat.condense.v2`.
+
+**Real re-test (approved, < $0.001 estimated):** new chat on `northwind-brief.pdf` via the API:
+base question, then *When was it approved?* → rewritten correctly ("When was the total capital
+budget of 41.5 million euros approved?"), answered from page 3 (**fixed**). *And what is its
+installed capacity?* → "…installed capacity of the total capital budget?", `not_found`
+(**wrong**: the conversation never named the solar farm; v1 would likely have left the question
+unchanged and found page 2). Control *Who is the CFO?* → unchanged, `not_found`. 9 calls,
+$0.00062647 (2 query embeddings from the cache); project total $0.00444987.
+
+**Self-critique:** my second follow-up was ambiguous, because its referent was never in the
+conversation. It still exposed a real trade-off of v2 rather than a test artefact. v2 was kept
+active as a judgement call on four questions (documented in EVALUATION.md); a v3 (document names
+in the condense prompt; leave unresolvable references alone) is proposed, not done.
+
+**Docs:** EVALUATION.md (new section with the table, ledger and decision), PROMPTS.md (§3 now
+v2, Example 4 compares v1 and v2, evaluation summary), DEMO_SCRIPT.md (step 5 can show the
+rewrite again; avoid follow-ups whose referent was never named), README status and spend,
+AI_USAGE.md limits.
+
+Human review: ___

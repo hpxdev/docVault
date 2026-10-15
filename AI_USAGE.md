@@ -89,8 +89,9 @@ have **not** been iterated on a broad real evaluation set.
 - **Several bugs came from the assistant**, and some were found only by running the full stack:
   the concurrency bug passed all 121 tests that existed then, because they ran stages one at a time.
 - **Fake-model tests prove plumbing, not quality.** Real-model behaviour was checked in two
-  small runs (a 10-question evaluation and a demo dry run). The dry run showed the follow-up
-  rewrite does not work with `chat.condense.v1`, which fake tests could not reveal. Map-reduce
+  small runs plus a prompt re-test. The dry run showed the follow-up rewrite does not work with
+  `chat.condense.v1`, which fake tests could not reveal; v2 fixed that case but mis-resolved a
+  reference the conversation never named. Map-reduce
   insights and injection resistance with the real model are NOT VERIFIED.
 - **Some things it could not do or verify:** record the demo video; test the Stop button against
   a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements

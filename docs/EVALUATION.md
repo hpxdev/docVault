@@ -169,3 +169,46 @@ retrieval + generation), with the browser on the same machine.
 
 **Project AI spend so far (sum of both ledgers):** $0.00164608 (evaluation) + $0.00217732
 (dry run) = **$0.00382340**, estimated.
+
+---
+
+# `chat.condense.v2` re-test (2026-10-15, approved)
+
+Why: in the demo dry run `chat.condense.v1` returned "When was it approved?" unchanged. v2
+defines "standalone" precisely (any reference word or missing subject means "rewrite") and adds
+three examples from an unrelated domain (an office lease), so it isn't tuned to the test.
+Run: a new chat on `northwind-brief.pdf` through the API (`POST /chat/sessions/{id}/messages`),
+real mode, one base question then three follow-ups.
+
+| # | Question | Standalone query produced by v2 | Status | Answer (stored) | Verdict |
+|---|---|---|---|---|---|
+| 0 | What is the total capital budget? | (first turn, not condensed) | answered, p3 | The total capital budget is 41.5 million euros [S1]. | ✓ |
+| 1 | When was it approved? | When was the total capital budget of 41.5 million euros approved? | answered, p3 | The total capital budget of 41.5 million euros was approved on 4 March 2026 [S1]. | ✓ **fixed** (v1 left it unchanged) |
+| 2 | And what is its installed capacity? | What is the installed capacity of the total capital budget? | not_found | The sources do not provide a relationship between the installed capacity and the total capital budget. | ✗ **wrong rewrite** |
+| 3 | Who is the CFO? | Who is the CFO? (unchanged) | not_found | The documents do not mention the CFO. | ✓ (control) |
+
+**Reading the miss honestly:** the conversation never named the solar farm, only "the total
+capital budget", so "its" had no correct antecedent in the conversation and v2 bound it to the
+only candidate. The test question was ambiguous by design of the conversation, but a user would
+expect "its" to mean the project. v1 would most likely have left the question unchanged, and
+retrieval on "installed capacity" would then have found page 2. v2 therefore fixes the case
+where the referent is in the conversation and is worse when it isn't. The answer step still
+refused instead of inventing a number. A possible v3 (not done): give the condense prompt the
+names of the documents in scope, and tell it to leave a reference unresolved rather than bind it
+to an unrelated noun.
+
+**Decision:** v2 is the active version (the pipeline sets `CONDENSE_VERSION = "chat.condense.v2"`;
+`chat.condense.v1.md` is kept), because the miss needs a conversation that never names the
+referent. This is a judgement call based on four questions, not a measured improvement.
+
+| Purpose | Prompt | Calls | Input tokens | Output tokens | Estimated cost (USD) |
+|---|---|---|---|---|---|
+| answer | chat.answer.v1 | 4 | 2,562 | 74 | 0.00042870 |
+| condense | chat.condense.v2 | 3 | 1,191 | 31 | 0.00019725 |
+| embed_query | — | 2 | 26 | 0 | 0.00000052 |
+| **Total** | | **9** | | | **0.00062647** |
+
+Two query embeddings were served from the 7-day cache (the same questions as in the dry run).
+
+**Project AI spend so far (estimated, both ledgers):** $0.00164608 (evaluation) + $0.00217732
+(dry run) + $0.00062647 (this re-test) = **$0.00444987**.

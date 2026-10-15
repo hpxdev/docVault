@@ -228,7 +228,7 @@ _REFERENCE_WORDS = frozenset(
 
 
 def fake_condense(messages: Sequence[BaseMessage]) -> str:
-    """Mirrors chat.condense.v1: add context only when the follow-up refers back to the
+    """Mirrors chat.condense.v1/v2: add context only when the follow-up refers back to the
     conversation (a reference word such as "it"); a standalone question is returned unchanged."""
     text = _human_text(messages)
     follow_up = text.rsplit("Follow-up question:", 1)[-1].split("Standalone question:")[0].strip()
