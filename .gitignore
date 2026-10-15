@@ -27,3 +27,4 @@ Thumbs.db
 
 # Generated test/demo fixtures
 backend/tests/.generated/
+backend/tests/live/.results/
