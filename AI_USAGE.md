@@ -12,7 +12,9 @@ from the git history. Sections the developer must write in their own words are m
   check the UI, and kept `docs/ai-log.md`.
 - **OpenAI `gpt-4o-mini` and `text-embedding-3-small`**: the application's own models (not a
   coding tool). They are called only at runtime and in one approved live evaluation.
-- No other AI coding tools (Cursor, Copilot, …) were used for this repository.
+- **OpenAI Codex**: continued development from the 2026-10-15 handover: expanded the bonus-feature
+  walkthrough, refreshed documentation, and prepared follow-up rewriting and evaluation work.
+  Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method
 

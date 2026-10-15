@@ -893,3 +893,20 @@ stored result (no AI call; ledger unchanged) and showed "Not in the document: ri
 browser check of that note.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex continuation: bonus-feature walkthrough
+
+**Produced by AI (OpenAI Codex):** expanded `scripts/walkthrough.sh` with custom-summary
+cached reuse, version upload plus processing wait, stored comparison reads, and an optional
+fake-only rate-limit check using invalid empty messages. Requests now fail on HTTP errors.
+The script checks readiness and refuses real mode without `ALLOW_REAL_AI=1`; rate-limit
+probing is prohibited in real mode. It expects a fresh vault. Updated AI_USAGE.md to disclose
+Codex use from this continuation onward; developer-owned sections remain blank.
+
+**Verified:** Git Bash `bash -n scripts/walkthrough.sh` passed. Runtime verification on the
+new isolated clean-clone stack is pending and will be recorded separately. No real AI calls.
+
+**NOT VERIFIED:** expanded walkthrough against a running stack at this point.
+Human review: ___
