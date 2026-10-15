@@ -22,6 +22,9 @@ from the git history. Sections the developer must write in their own words are m
   required server-owned topic verdict fields. A separately approved two-call real check then
   returned correct independent budget/risks verdicts and a correct no-focus control at
   $0.00050400 estimated. These narrow successes do not establish general grounding quality.
+  Codex also prepared a beginner learning guide and a video narration/recording guide from
+  the repository, checked demo facts against sample text, and corrected destructive setup
+  instructions in the earlier demo script. No new model evaluation ran for that documentation.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

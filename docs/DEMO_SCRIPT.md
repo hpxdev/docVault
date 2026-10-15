@@ -1,4 +1,10 @@
-# Demo script (5–7 minutes)
+# Earlier demo script (5–7 minutes)
+
+> For current recording instructions, use [VIDEO_WALKTHROUGH.md](VIDEO_WALKTHROUGH.md).
+> Learn the application first with [LEARNING_GUIDE.md](LEARNING_GUIDE.md).
+> This document preserves the earlier rehearsal sequence and historical results.
+> Active prompts are now chat.condense.v3, summary.custom.v5 and compare.v2.
+> Historical timings/costs are observations, not guarantees for a new recording.
 
 For recording the demo video. It uses only the self-written sample files in
 [`samples/`](../samples/), whose facts are known:
@@ -30,8 +36,9 @@ estimated for three documents and six questions (dry-run ledger).
 
 ## Before recording
 
-1. In `.env`: `AI_PROVIDER=openai` and your key (on its own line). Start fresh:
-   `docker compose down -v` then `docker compose up --build -d`.
+1. Preserve the existing vault. Check `docker compose ps`; if stopped, use `docker compose up -d`.
+   Do not delete volumes for recording. Never show `.env` or keys. New real-mode actions can
+   incur cost; a new assistant-run live rehearsal requires its own bounded approval.
 2. Wait until http://localhost:8000/api/v1/health/ready says `"status": "ready"`. The FAKE AI
    MODE banner must **not** be visible in the UI.
 3. Open http://localhost:5173 in one browser tab, http://localhost:8000/docs in a second, and a

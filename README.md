@@ -53,6 +53,12 @@ of general reliability. [Results](docs/EVALUATION.md#summary-v5-two-call-real-ch
 Literal quote checks do not establish semantic entailment, and conservative shared-sentence
 matching can omit valid differently worded similarities.
 
+## New to this application?
+
+Read the [beginner learning guide](docs/LEARNING_GUIDE.md) for the product, terminology,
+upload/question flows, features, code map, test evidence and limitations. Use the
+[video walkthrough and spoken script](docs/VIDEO_WALKTHROUGH.md) to prepare a recording.
+
 ## 1. Features mapped to the brief
 
 | Brief item | Status | Where |

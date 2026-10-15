@@ -1198,3 +1198,39 @@ Retained evidence totals 92 calls/$0.01672337, not an invoice or all historical 
 **NOT VERIFIED:** general quality, repeat variance and real v5 partial-input behavior.
 Literal quote checks do not prove semantic entailment. No publishing or new dependencies.
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex: beginner application guide and recording script
+
+**Request / produced:** developer asked to understand the whole application from the beginning
+and prepare a video. Added docs/LEARNING_GUIDE.md: plain-language terminology, UI tour,
+architecture diagram, upload and RAG flows, source locators, states, hybrid retrieval,
+citation limits, condenser v3, summary v5, comparison v2, versions, storage/privacy,
+caching/cost/rate limits, reliability, code map, recorded test evidence and reviewer Q&A.
+Added docs/VIDEO_WALKTHROUGH.md: recording preparation, sample truth sheet, full spoken
+12–15 minute plan with a shorter route, click/type/expected-result instructions, fallback
+paths and a no-paid-call rehearsal. Personal contribution/AI assistance must be described
+truthfully; no human review fields filled in.
+
+**Decisions / corrections:** preserve existing vault and use existing results where practical.
+The earlier demo script instructed deleting volumes and referenced older prompts. Marked it
+historical, linked the current guides and replaced destructive setup with existing-stack
+startup. Linked guides from README and recorded documentation assistance in AI_USAGE.
+Explained that indexing is not model training, valid citations are not semantic proof,
+local services can still send document text to OpenAI, pre-call estimated spend checks are
+not exact reservations, and latest-version scope can omit a newly processing version group.
+
+**Verification:** read current implementation/docs for pipelines, retrieval, citations,
+configuration, prompts and UI controls. Extracted original/revised PDF budget/schedule and
+handbook text with existing container libraries, and read the Markdown sample; verified the
+video facts against those source contents. Initial attempt to read /app/samples failed because
+samples are not mounted there; streamed the local sample bytes to the existing parser instead.
+No source files or database records changed. Documentation relative links and code fences
+checked; git diff --check passed. Application tests were not rerun for these docs-only edits;
+152 passed / 3 deselected remains recorded earlier evidence, not a new run.
+
+**NOT VERIFIED / spend:** no new UI rehearsal, recording, upload or live model call; actual
+recording duration and future generated answers remain unverified. No paid spend this task.
+No publishing or new dependencies. Broad model reliability remains unverified as documented.
+Human review: ___
