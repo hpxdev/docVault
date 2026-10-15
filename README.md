@@ -353,46 +353,45 @@ estimates (not measured): ~$0.01-0.02 per 100-page document, ~$0.001 per questio
 
 ## Web UI
 
-![Real-mode custom summary with missing-topic notice and retained document versions](docs/screenshot-summary.png)
+A dark workspace for document uploads, cited conversations and saved analysis.
 
-*Captured on 2026-10-15 from the existing real-mode stack: a stored `gpt-4o-mini`
-`summary.custom.v3` result for version 2, showing "Not in the document: risks", a page-3
-key point and both retained versions. The result was read from the cache; capturing it made
-no new AI call. This screenshot does not show a fresh comparison run.*
+![Dark document library with a stored summary and page-linked key insights](docs/library-insights-dark.png)
 
-`frontend/`: Vite + React 19 + TypeScript (strict) + Tailwind CSS 4 + TanStack Query +
-react-markdown. API types are generated from the backend's OpenAPI schema
-(`npm run gen:api` → `src/api/schema.d.ts`).
+*Current interface showing the document library and stored real-model insights with page references.*
 
-- **Chat:** sidebar with "New chat" and sessions (rename, delete); drop several files anywhere
-  on the chat (or use **+**): each gets a chip with live status from the SSE status stream,
-  the failure reason, "already in vault" for duplicates, and a remove button. Send stays disabled,
-  with a hint, until the attached documents are chat-ready. Answers stream token by token
-  (**Stop** closes the stream; the server saves the partial answer). Citation chips open a side
-  panel with the document, page/section and the stored original excerpt. `not_found`,
-  `unsupported` and failed answers are styled differently. An empty chat offers the attached
-  documents' suggested questions. "Search entire vault" switches the session's scope.
-  Enter sends, Shift+Enter adds a line.
-- **Library:** all documents with status, filters, insights drawer (summary, key points with
-  pages/sections, entities, tags, tone), reprocess and delete. The drawer also has a **custom
-  summary** form (length, tone, focus) and a **versions** panel (upload a new version, switch
-  between versions, "What changed since v1?"). Tick 2-4 documents and press **Compare** for the
-  comparison page (`#/compare/<id>`): differences as a table with one column per document,
-  similarities, and page chips that open the original PDF at that page. "Older versions" shows
-  superseded versions.
-- **Metrics:** document statistics, AI usage and estimated cost, chat rates and latency,
-  per-stage processing.
-- A yellow **FAKE AI MODE** banner shows whenever the backend runs with `AI_PROVIDER=fake`.
-- The chat stream is a POST, which the browser's `EventSource` cannot do, so it is read from
-  the `fetch` body with a small SSE parser (`src/api/sse.ts`); document status uses
-  `EventSource`.
+| Area | What you can do |
+|---|---|
+| **Chat** | Drop files or browse to attach them, follow processing status, ask questions, stop a response and open its cited sources. Search selected documents or the whole vault. |
+| **Library** | Search and filter documents, read summaries and key points, customise a summary, and manage retained versions. |
+| **Compare** | Select 2-4 documents or versions and inspect cited differences and supported similarities. |
+| **Metrics** | Review document status, processing activity, chat latency and estimated AI usage cost. |
 
-Development (hot reload, proxying to the API on :8000):
+The interface starts in dark mode. Short transitions respect reduced-motion preferences.
+Fake mode displays a clear banner. Chat becomes available when the selected documents are
+indexed; processing failures remain visible with an explanation.
+
+[Watch the short demo on YouTube](https://youtu.be/usDljevj8is).
+
+<details>
+<summary>Frontend stack and local development</summary>
+
+The frontend uses React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query and
+react-markdown. API types are generated from the backend's OpenAPI schema with
+`npm run gen:api`. Chat tokens and document status use SSE.
+
+For hot reload, stop the web container while keeping the API running on port 8000:
 
 ```bash
-cd frontend && npm ci && npm run dev      # http://localhost:5173 (stop the web container first)
-npm run build                                  # strict type-check + production build
+docker compose stop web
+cd frontend
+npm ci
+npm run dev
 ```
+
+Run `npm run build` from the frontend directory for the strict TypeScript check and
+production build. The development server opens at http://localhost:5173.
+
+</details>
 
 ## 11. Testing
 

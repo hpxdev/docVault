@@ -1556,3 +1556,14 @@ The developer supplied https://youtu.be/usDljevj8is for the submission. Added it
 README, current recording notes and submission evidence. The YouTube page resolved with
 the AI Vault 81-second demo title. This was a link/documentation update, not a full playback
 review or a new application test. No model calls were made.
+
+
+## 2026-10-15: Refresh README interface presentation
+
+The developer flagged the old light-mode summary image in the README. Replaced it with a
+fresh full-width capture of the current dark library and insights drawer. The capture reads
+existing saved real-model results and invokes no generation. The historical light screenshot
+is retained as an earlier artifact but is no longer shown in the README. Replaced the long
+Web UI feature list with a compact capability table and moved frontend setup details into
+an expandable section. No application code or behavior changed. The screenshot was visually
+inspected, local image/document links were checked and git diff --check passed.
