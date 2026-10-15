@@ -25,6 +25,8 @@ from the git history. Sections the developer must write in their own words are m
   Codex also prepared a beginner learning guide and a video narration/recording guide from
   the repository, checked demo facts against sample text, and corrected destructive setup
   instructions in the earlier demo script. No new model evaluation ran for that documentation.
+  Codex subsequently recorded a short captioned browser preview using saved real-model
+  results, with no new model calls; video capture/export limitations are logged.
   Subsequent checks and changes are recorded in `docs/ai-log.md`.
 
 ## Working method

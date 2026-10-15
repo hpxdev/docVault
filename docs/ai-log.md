@@ -1234,3 +1234,35 @@ checked; git diff --check passed. Application tests were not rerun for these doc
 recording duration and future generated answers remain unverified. No paid spend this task.
 No publishing or new dependencies. Broad model reliability remains unverified as documented.
 Human review: ___
+
+---
+
+## 2026-10-15 · Codex: short application video sample
+
+**Request / produced:** developer accepted the free capture/export sample step. Created
+B:\f-work\case study\demo-video\ai-vault-sample.webm: 47.64 seconds, 1920x1080, silent with
+embedded explanatory captions. Shows the actual Library, saved insights, summary controls,
+retained real-mode budget answer, its original page-3 source and a retained not-found result.
+Temporary browser-only framing/captions and pointer highlight are presentation overlays;
+application source and saved records are unchanged. Saved results are explicitly labelled.
+Reproduction scripts, capture request audit and playback frames remain in ignored .checks.
+A README beside the video documents format, evidence and limits.
+
+**Problems / decisions:** bundled Playwright's default browser revision was absent; used the
+existing installed Chromium executable without adding dependencies. The first capture hit
+an ambiguous chat-button selector; narrowed it to the observed title attribute and reran.
+Native MP4 MediaRecorder reported support but the test produced zero bytes, so no MP4 was
+claimed or delivered. Existing Playwright/FFmpeg successfully produced WebM instead.
+No native Windows app automation was needed.
+
+**Verified:** browser loaded the exported WebM and reported 47.64 s / 1920x1080. Playback
+advanced from 3 s to 4.21 s and decoded frames; extracted video screenshots at 4, 17, 24, 32,
+40 and 46 seconds, visually inspected key summary/answer/source/not-found frames. The final
+capture audit contains only GET API requests and zero attempted writes; no questions,
+uploads, summaries or comparisons were generated. No paid AI calls. No app-code changes,
+so application test suite not rerun. git diff --check passed before local commit.
+
+**NOT VERIFIED:** MP4 export, audio narration, universal player compatibility and the full
+all-features recording. This is a captioned sample using previous model outputs, not a new
+real-model evaluation. No publishing, new dependencies or data deletion.
+Human review: ___
