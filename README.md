@@ -49,8 +49,8 @@ and targeted prompt re-tests. These are limited examples, not a reliability guar
 | Frontend (OPT/BONUS) | Done: ChatGPT-style React UI (sessions, multi-file drag-and-drop with live status chips, streamed cited answers + source panel, library with insights, metrics) | `frontend/` |
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
-| Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 152 backend tests | |
+| Multi-document chat, categorisation/tagging, sentiment/key insights (BONUS) | Implemented, with document-based suggested questions rather than turn-by-turn follow-up generation | `services/insights.py`, `services/chat.py` |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream; see final verification for the current test count | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
 | Summary customisation: length, focus, tone (BONUS) | Implemented; v5 requires independent server-named verdicts and passed the known budget/risks case plus a no-focus real control; broad quality remains unverified; [details](docs/PROMPTS.md) | `services/summaries.py`, `POST /documents/{id}/summaries` |
 | Comparative analysis between documents (BONUS) | Implemented for 2-4 documents or versions; v2 requires identical cited shared sentences; two targeted real comparisons returned correct retained results; [details](docs/EVALUATION.md) | `services/comparisons.py`, `POST /comparisons` |
@@ -106,7 +106,7 @@ Ports 5173 and 8000 must be free. This setup is for local review, not public hos
 | `OPENAI_CHAT_MODEL` | `gpt-4o-mini` | Chat/insights model (must have a price in `app/ai/pricing.py`) |
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
 | `EMBEDDING_DIMENSIONS` | `1536` | Must match the `vector(1536)` column |
-| `AI_SPEND_LIMIT_USD` | `0.50` | Hard cap on estimated spend, checked before every AI call |
+| `AI_SPEND_LIMIT_USD` | `0.50` | Estimated-spend threshold checked before every AI call; concurrent in-flight calls may overshoot |
 | `AI_MAX_RETRIES` | `3` | Bounded retries for transient AI errors |
 | `DATABASE_URL` | `postgresql+psycopg://vault:vault@db:5432/vault` | Postgres (psycopg 3) |
 | `REDIS_URL` / `CACHE_REDIS_URL` | `redis://redis:6379/0` / `/1` | Celery broker / caches, pub/sub, heartbeat |
@@ -128,6 +128,7 @@ Ports 5173 and 8000 must be free. This setup is for local review, not public hos
 
 The same steps are scripted in [`scripts/walkthrough.sh`](scripts/walkthrough.sh)
 (`bash scripts/walkthrough.sh`). Sample files are in [`samples/`](samples/).
+The `.exe` sample is generated test data for invalid-upload checks, not a program to run.
 
 The script also covers custom-summary cached reuse, version ingestion (waiting for processing),
 and stored comparisons. Run it on a fresh fake-mode stack. It refuses real mode unless
@@ -392,6 +393,11 @@ npm run build                                  # strict type-check + production 
 ```
 
 ## 11. Testing
+
+Final clean-checkout result (15 October 2026): **152 passed, 3 live tests deselected**.
+Lint, formatting, frontend builds and the fake-mode API walkthrough passed.
+The initial infrastructure failure and successful rerun are recorded in
+[the submission report](docs/SUBMISSION_CHECK.md). No new paid AI calls were made.
 
 ```bash
 docker compose -f compose.test.yml run --rm tests                  # full fake-mode suite

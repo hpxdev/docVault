@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-15",
+  "source_commit": "91369b06bc33d66f5d5be270073e83e55e2962b9",
+  "backend_tree": "5212f7636461f866e5d7ca562a9c3fecc479a862",
+  "frontend_tree": "454a528fe6ffe1b1a0bc1132963a62cf2555321f",
+  "ai_mode": "fake",
+  "api_key_present": false,
+  "new_paid_model_calls": 0,
+  "frontend_install": "passed after automatic download retries",
+  "frontend_build": "passed",
+  "ruff_check": "passed",
+  "ruff_format_files": 109,
+  "first_pytest": {
+    "passed": 151,
+    "deselected": 3,
+    "errors": 1,
+    "duration_seconds": 339.84,
+    "error": "PostgreSQL connection closed during test setup; server process restart observed"
+  },
+  "retry_pytest": {
+    "passed": 152,
+    "deselected": 3,
+    "errors": 0,
+    "duration_seconds": 98.44
+  },
+  "runtime_retry": "passed with one worker process",
+  "walkthrough": {
+    "exit_code": 0,
+    "rate_limit_status": 429,
+    "retry_after_seconds": 39,
+    "local_log_sha256": "6adae9ee73c2eab67840bbd565dd57470f2329a35a6dde67e82e96bd091096fb"
+  },
+  "browser": {
+    "dark_default": true,
+    "fake_label": true,
+    "library_ready_version": 2,
+    "horizontal_overflow": false
+  },
+  "video_review": "pending developer",
+  "youtube_link": null
+}

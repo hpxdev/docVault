@@ -1458,3 +1458,23 @@ links were checked; the README and AI_USAGE.md contain no em dashes.
 The final video review and YouTube upload remain with the developer. No YouTube URL or final
 human video approval has been invented. Final clean-checkout results are recorded separately
 in SUBMISSION_CHECK.md after they run.
+
+
+### Submission verification results
+
+Clean snapshot 91369b0: fresh npm install and build passed; Docker app images built using
+cached dependency layers; Ruff lint passed and 109 files passed formatting. The first full
+suite had 151 passed, 3 deselected and one setup error when PostgreSQL restarted. Runtime
+startup also exceeded health-check timeouts under contention. After stopping only the new
+verification runtime stack, a full rerun passed: 152 passed, 3 deselected in 98.44 seconds.
+No application or test source changes were made to obtain this result. The database process
+exit's exact cause was not established. Test services were stopped before a successful
+runtime retry with one worker process. The full fake walkthrough passed, including cached
+summaries/comparisons, version processing and 429 with Retry-After. Browser inspection
+confirmed dark mode, the fake-mode banner and the ready document in Library. The first
+library response was slow on the busy host, then loaded; no performance claim is made.
+
+Final evidence is in SUBMISSION_CHECK.md and evaluations/submission-2026-10-15.json.
+README/AI_USAGE links resolve, no em dashes remain in those two files, and a limited historical
+credential-pattern scan found no matches in 749 Git objects (400 blobs). The .env file is not
+tracked. No new paid model calls, video review or YouTube upload were performed for this task.
