@@ -521,3 +521,34 @@ client disconnect during a slow stream (the test closes the endpoint generator d
 HNSW being chosen for vault-wide queries at scale.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T19 — Live smoke test and 10-question evaluation
+
+**Approval:** the user confirmed their key was in `.env` and approved the run (~20 calls, ~$0.01
+estimated). Pre-flight (key never printed): working tree clean; key present, `sk-` prefix, no
+inline comment or spaces; `.env` itself still has `AI_PROVIDER=fake` (the live test sets the
+provider via `TEST_AI_PROVIDER=openai`, so the run was unaffected; the main stack would still
+start in fake mode).
+
+**Run (actually executed, 2026-10-15 05:41 UTC):**
+`TEST_AI_PROVIDER=openai RUN_LIVE_AI_TESTS=1 docker compose -f compose.test.yml run --rm tests pytest -m live -s`
+→ 1 passed in 33.4 s. Score 10/10 (7/7 answerable with the right page and key phrase, 3/3
+`not_found`). 22 AI calls, all succeeded; ledger total **$0.00164608** (estimate).
+
+**Observations:**
+- Strict JSON-schema structured output accepted by OpenAI on the first try (the schema had only
+  been checked against LangChain's API before); insights validation dropped nothing.
+- Insights paraphrased "15-metre" as "15-meter" (wording only).
+- Caveat recorded in EVALUATION.md: 6 chunks with top-k 8 means all pages were always in the
+  prompt, so this does not measure retrieval at scale.
+- Token-source check without extra spend: question 1's prompt counted locally is 632 o200k
+  tokens vs 655 in the ledger. The difference fits provider-counted chat framing, so stream usage
+  was very likely provider-reported. The ledger does not store an "estimated" flag (possible
+  follow-up).
+
+**Outputs:** `docs/EVALUATION.md` (actual results only), raw JSON
+`docs/evaluation/live_eval_2026-10-15.json` (checked: no key in it), README status updated.
+
+Human review: ___

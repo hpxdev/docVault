@@ -6,16 +6,18 @@ generates AI insights; then you chat with one or more documents and get **stream
 citations are checked by the server** (document, page/section, original excerpt), or an explicit
 "not found".
 
-> **Status (2026-10-15):** backend complete and tested with deterministic fake AI providers.
-> **Real OpenAI behaviour is NOT VERIFIED yet** (no live run has been approved; see
-> [docs/EVALUATION.md](docs/EVALUATION.md)). The React UI (Phase 3) is not built yet.
+> **Status (2026-10-15):** backend complete; 123 fake-mode tests. One approved live run with
+> `gpt-4o-mini` + `text-embedding-3-small` scored 10/10 on a small single-document smoke test
+> (7 cited answers on the right page, 3 correct "not found") for an estimated $0.0016; see
+> [docs/EVALUATION.md](docs/EVALUATION.md) for what that does **not** show (retrieval at scale,
+> multi-document, follow-ups). The React UI (Phase 3) is not built yet.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
 
 ## 1. Features mapped to the brief
 
 | Brief item | Status | Where |
 |---|---|---|
-| RAG document chat with source citations (REQ, core) | Done (fake-mode tested) | `services/chat.py`, `services/citations.py` |
+| RAG document chat with source citations (REQ, core) | Done (fake-mode tests + one live smoke test, 10/10) | `services/chat.py`, `services/citations.py` |
 | Intelligent upload handler (REQ) | Done: byte sniffing, limits, SHA-256 dedupe, per-file outcomes | `services/upload.py` |
 | Smart document analysis (REQ) | Done: summaries, key points with source pages, entities, topics, category, tags, sentiment, suggested questions | `services/insights.py` |
 | Asynchronous pipeline (REQ) | Done: Celery extract → index ‖ insights, retries, idempotent stages | `services/pipeline.py`, `workers/` |
@@ -278,7 +280,8 @@ docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff fo
 
 No OCR · single user, no authentication · English-oriented full-text search · local file
 storage · `gpt-4o-mini` is deprecated by OpenAI (shutdown 2027-01-14; `OPENAI_CHAT_MODEL` is
-configurable) · cost figures are estimates · real-model answer quality not yet verified.
+configurable) · cost figures are estimates · real-model quality checked only on a 10-question,
+single-document smoke test (docs/EVALUATION.md).
 
 ## 13. Future work
 
