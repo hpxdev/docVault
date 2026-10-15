@@ -10,9 +10,17 @@ For recording the demo video. It uses only the self-written sample files in
 | `onboarding-guide.md` | "Accounts": VPN client Tunnelbear-X · "Staging": deploys every Tuesday at 14:00 UTC |
 | `not-a-document.exe` | Not a document (shows the rejection path) |
 
-**Evidence status:** the flow below was rehearsed end to end in **fake mode** (deterministic
-test doubles). With the real model, only the budget question (step 4) and "not found" (step 6)
-were part of the live evaluation; **do one dry run in real mode before recording.** Estimated
+**Evidence status:** steps 2 and 4–7 were rehearsed in the UI on a fresh clean-clone stack in
+**fake mode** (2026-10-15, see ai-log T25); step 3 was checked through the API on that stack
+(DOCX key points reference sections, coverage 3/3), and the Metrics page and test run (steps 8–9)
+were checked during T20–T23 and T25. In the rehearsal: chips went Queued → Processing → Ready, the binary was
+rejected, the re-dropped PDF showed "already in vault", the budget answer cited page 3, the
+follow-up was rewritten, "Who is the CFO?" was not found, and for the multi-document question
+retrieval ranked the handbook's "Leave Policy" section and the brief's page 4 as S1 and S2.
+The fake model quotes a single best sentence, so it cited only S1; **two citations from two
+documents with the real model is NOT VERIFIED**. With the real model, only the budget question
+(step 4) and "not found" (step 6) were part of the live evaluation; **do one dry run in real
+mode before recording.** Estimated
 cost of a run-through (not measured): well under $0.01 (three small documents and about six
 questions; the live evaluation of one document and ten questions cost about $0.0016).
 

@@ -6,6 +6,12 @@ generates AI insights; then you chat with one or more documents and get **stream
 citations are checked by the server** (document, page/section, original excerpt), or an explicit
 "not found".
 
+![Chat with a cited answer, a follow-up, a "not found" answer and the source panel](docs/screenshot-chat-fake-mode.jpg)
+
+*Screenshot taken in **fake AI mode** (note the banner): the answer text comes from the
+deterministic test double; citations, excerpts, statuses and the source panel are the real
+application.*
+
 > **Status (2026-10-15):** backend complete; 124 fake-mode backend tests. One approved live run with
 > `gpt-4o-mini` + `text-embedding-3-small` scored 10/10 on a small single-document smoke test
 > (7 cited answers on the right page, 3 correct "not found") for an estimated $0.0016; see

@@ -640,3 +640,44 @@ correction; the per-question `usage` in the raw JSON is documented as message to
 names) and the log; no tests affected.
 
 Human review: ___
+
+---
+
+## 2026-10-15 · T25 — Clean-clone verification, demo data and script
+
+**Produced by AI:** hash routing in the UI (`#/chat/<id>`, `#/library`, `#/metrics`; needed
+for a deep-linked screenshot, and refresh/Back now keep the place), `docs/DEMO_SCRIPT.md`
+(9 segments, 5–7 min, built on the self-written `samples/`), README screenshot.
+
+**Problem found and fixed:** after adding routing, "New chat" and session clicks called
+`onSelectSession` and then `onView("chat")`; the second call navigated back with a stale
+session id. Caught by reading the change before testing; the redundant calls were removed.
+Browser check afterwards: session click, New chat, Library, Back, Back, and a reloaded deep link
+all land correctly.
+
+**Clean-clone verification (actually run):** `docker compose down -v`; `git clone` at
+`85a0e17`; `cp .env.example .env` with `AI_PROVIDER=fake` (fake chosen to avoid spend; the
+key path was verified in T19); `docker compose build --no-cache` (backend and web images rebuilt
+from `uv.lock` / `package-lock.json`, 2 min 3 s); `docker compose up -d` → db, redis, api
+healthy, worker and web running, UI 200; `bash scripts/walkthrough.sh` → exit 0 (accepted /
+duplicate / rejected; cited page-3 answer; condensed follow-up; `not_found`);
+`docker compose -f compose.test.yml build --no-cache tests` then `ruff check . && ruff format
+--check . && pytest -q` → all checks passed, 124 passed, 1 deselected.
+
+**Demo rehearsal (fake mode, UI on fresh volumes):** the real sample files were served from a
+temporary local CORS file server and dropped with real `DragEvent`s. Chips went Queued →
+Processing… → Ready with the Send hint clearing; the binary was rejected; re-dropping the PDF
+showed "already in vault"; typed questions gave a page-3 citation, a rewritten follow-up,
+`not_found` for "Who is the CFO?", and for the two-document question retrieval ranked the
+handbook "Leave Policy" section and brief page 4 as S1/S2 (the fake cites only S1). DOCX insights
+reference sections (API check).
+
+**Screenshot:** headless Chrome (`--virtual-time-budget`) hung on the open SSE connection; the
+leftover process had exited by the time it was checked (only `--headless` processes were
+targeted). A retry with `--timeout` captured the page before data loaded and was discarded. The
+final screenshot is the browser pane's own capture at a 1440×900 viewport, captioned as fake mode.
+
+**Not verified:** the demo with the real model (a dry run in real mode is recommended in the
+script); video recording (the developer's task).
+
+Human review: ___
