@@ -54,15 +54,16 @@ estimated for three documents and six questions (dry-run ledger).
 | 5:15–6:00 | 8. Swagger and metrics | Swagger tab: show the endpoint groups and an example; then the UI's Metrics page | Every endpoint has examples and one error format. Metrics: AI calls and **estimated** cost by purpose and model against the $0.50 cap; not-found rate with numerator/denominator; first-token latency; stage success rates and durations |
 | 6:00–6:45 | 9. Tests, AI usage, limitations | Show the test run summary (124 passed); open AI_USAGE.md and docs/EVALUATION.md | Fake-mode tests prove the plumbing (real Postgres/Redis); one live evaluation, 10/10 on a small set. Built with Claude Code, every step logged, bugs it caused and how they were caught. Limitations: no OCR, single user, no auth, English full-text search, gpt-4o-mini shutdown 2027-01-14 |
 
-### Optional segment (about 1 minute; NOT rehearsed in real mode)
+### Optional segment (about 1 minute)
 
-Custom summaries, comparisons and versions were checked in the UI in **fake mode** only; their
-real-model output is **NOT VERIFIED**, so rehearse once (about 3 AI calls, a fraction of a cent
-estimated) before recording.
+Checked in the UI in fake mode, and once with the real model **through the API** (not the UI):
+the v1 → v2 comparison found all five changes (see EVALUATION.md). Use a focus without "risks"
+for the summary on camera: in the real check, *budget and risks* produced an invented risk point.
+Real cost of the segment: about $0.0015 estimated (v2 ingestion + one summary + one comparison).
 
 | Do | Say / point out |
 |---|---|
-| Library → `northwind-brief.pdf` → Custom summary: short, executive, focus *budget and risks* → Generate | Length, tone and focus are options; key points cite pages; asking again returns the stored result ("no AI cost") |
+| Library → `northwind-brief.pdf` → Custom summary: short, executive, focus *budget and schedule* → Generate | Length, tone and focus are options; key points cite pages; asking again returns the stored result ("no AI cost") |
 | Versions → Upload new version → `northwind-brief-v2.pdf` | v2 is processed like an upload; v1 is kept (tick "Older versions" to see it); vault-wide chat now uses v2 |
 | When v2 is ready: "What changed since v1?" | Differences table, one column per version, page chips: the budget, approval date, contingency, construction start and grid connection changed |
 

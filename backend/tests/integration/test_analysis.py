@@ -242,6 +242,13 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
                     "aspect": "Nothing cited",
                     "positions": [{"document": "D1", "statement": "Claim.", "refs": [50]}],
                 },
+                {  # the same statement in every document is not a difference (live finding)
+                    "aspect": "Main contractor",
+                    "positions": [
+                        {"document": "D1", "statement": "Brightline Builders.", "refs": [4]},
+                        {"document": "D2", "statement": "brightline  builders", "refs": [1]},
+                    ],
+                },
             ],
         }
     )
@@ -256,7 +263,7 @@ async def test_compare_validates_model_output(client, enqueued, fake_chat):
     assert leave["positions"][0]["statement"] == "No position given."
     assert leave["positions"][1]["sections"] == [2]
     validation = body["coverage"]["validation"]
-    assert validation["dropped_key_points"] == 3  # 2 similarities + 1 difference
+    assert validation["dropped_key_points"] == 4  # 2 similarities + 2 differences
     assert body["same_document_versions"] is False
 
 

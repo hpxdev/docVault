@@ -190,8 +190,12 @@ over-limit lists and summaries are cut and recorded in `coverage.validation`, ex
 insights. The result is stored per document + normalised options (focus compared case- and
 whitespace-insensitively) + prompt version + model, so asking again costs nothing.
 
-**Evidence:** TEST only (fake model, `tests/integration/test_analysis.py`); real-model output
-is **NOT VERIFIED**.
+**Evidence:** TEST (fake model, `tests/integration/test_analysis.py`) and **REAL** once
+([EVALUATION.md](EVALUATION.md#custom-summary-and-version-comparison-first-real-check-2026-10-15-approved)):
+short/executive/focus *budget and risks* on the revised brief. Figures, pages, length and tone
+were right, but the model **invented a "risks" point** the document does not contain and
+reported the focus as covered. Proposed `summary.custom.v2` (not done): say which part of a
+multi-part focus is not addressed, and never infer risks, opinions or consequences.
 
 ## 6. `compare.v1` (comparisons)
 
@@ -220,7 +224,12 @@ is **NOT VERIFIED**.
   position given.".
 
 **Limitation:** as with chat, the server checks that a cited page exists and was provided, not
-that it supports the statement. **Evidence:** TEST only; real-model output is **NOT VERIFIED**.
+that it supports the statement. A difference whose statements are identical in every document
+is dropped, because the real model padded its list that way.
+
+**Evidence:** TEST, and **REAL** once (v1 vs v2 of the brief, [EVALUATION.md](EVALUATION.md#custom-summary-and-version-comparison-first-real-check-2026-10-15-approved)):
+all five changed facts found with the right pages and verbatim statements, six correct
+similarities, two padded identical "differences" (the reason for the server-side rule above).
 
 ## Worked examples
 

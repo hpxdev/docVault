@@ -819,3 +819,29 @@ minute → 429 with `Retry-After`, old-version chat chip.
 new UI (the pane's screenshot timed out; checks used page text and the accessibility tree).
 
 Human review: ___
+
+---
+
+## 2026-10-15 · Real check: custom summary and v1 → v2 comparison (approved)
+
+Approved by the developer: rebuild the real-mode stack and run one custom summary and one
+comparison. **Rebuild:** `docker compose up -d --build`; `alembic current` = `0002 (head)`; the
+three existing documents became version 1; the worker runs the new image. **Run (API only):**
+`northwind-brief-v2.pdf` uploaded as version 2 of the brief, a custom summary of v2 (short,
+executive, focus *budget and risks*) and the comparison v1 vs v2. 4 calls, **$0.00151967**
+estimated (ledger); project total $0.00596954.
+
+**Results (EVALUATION.md):** the comparison found all five changed facts with the right pages and
+verbatim statements and six correct similarities, but padded the list with two "differences"
+whose statements were identical in both versions. The summary got every figure and page right
+and kept the length and tone, but **invented** a "risks" key point (cited to page 4) and set
+`focus_covered: true`.
+
+**Fixed after the run (no spend):** the server now drops a difference whose positions cite every
+document with the same statement; the validation test covers it; 142 passed; api/worker rebuilt.
+The stored comparison from the run predates the fix and is left as it was produced.
+
+**Not done (proposed):** `summary.custom.v2` against invented content for multi-part focuses;
+it needs another small real run to verify.
+
+Human review: ___

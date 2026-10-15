@@ -212,3 +212,95 @@ Two query embeddings were served from the 7-day cache (the same questions as in 
 
 **Project AI spend so far (estimated, both ledgers):** $0.00164608 (evaluation) + $0.00217732
 (dry run) + $0.00062647 (this re-test) = **$0.00444987**.
+
+---
+
+# Custom summary and version comparison: first real check (2026-10-15, approved)
+
+Why: `summary.custom.v1` and `compare.v1` had run only against the fake model. Run: the main
+stack rebuilt in real mode (migration 0002 applied to the dry-run data; the existing documents
+became version 1), then through the API: `samples/northwind-brief-v2.pdf` uploaded as version 2
+of `northwind-brief.pdf` (`POST /documents/{id}/versions`), one custom summary of v2, and one
+comparison of v1 and v2. The UI was not used for this run. Ground truth: the v2 sample changes
+exactly five facts (budget 41.5 → 44.0 million euros, approval 4 March → 12 May 2026,
+contingency 3.2 → 3.6 million, construction June → September 2026, grid connection Q2 → Q4
+2027, all on pages 3–4) plus the title on page 1 ("revised May 2026"); pages 2, 5 and 6 are
+unchanged.
+
+## Version 2 ingestion
+
+Processed like any upload: chat-ready and insights done within about 10 s; `is_latest` moved from
+v1 to v2; v1 kept.
+
+## Custom summary (v2; `short`, `executive`, focus *budget and risks*), 3.9 s
+
+Stored output (verbatim):
+
+> The Northwind Solar Farm project has a total capital budget of 44 million euros, including a
+> contingency reserve of 3.6 million euros, approved on 12 May 2026. Construction is set to begin
+> in September 2026, with grid connection expected in Q4 2027. Key risks include potential delays
+> in construction and grid connection timelines.
+
+| Key point | Cited page | Verdict |
+|---|---|---|
+| The total capital budget is 44 million euros, including a contingency reserve of 3.6 million euros. | 3 | ✓ |
+| Construction is planned to start in September 2026, with grid connection targeted for Q4 2027. | 4 | ✓ |
+| Key risks include potential delays in construction and grid connection timelines. | 4 | ✗ **not in the document** |
+
+- Length rule kept (≈ 54 words of the 80 allowed, 3 of 3 key points); executive tone (figures,
+  dates first); every figure correct; server validation dropped nothing.
+- **Finding: the model invented the "risks" content.** The brief has no risks section; the third
+  point (and the last summary sentence) is an inference, cited to page 4, and `focus_covered`
+  was `true` although only half of the focus is in the document. The server cannot catch this:
+  page 4 exists and was provided (no entailment check). Proposed, not done: a
+  `summary.custom.v2` that tells the model to say which part of a multi-part focus the document
+  does not address, and never to infer risks, opinions or consequences that are not stated.
+
+## Comparison (v1 vs v2, no focus), 8.9 s
+
+- **Labels:** D1 = `northwind-brief.pdf` (v1), D2 = `northwind-brief-v2.pdf` (v2);
+  `same_document_versions: true`. Both documents included in full.
+- **Overview:** "The documents D1 and D2 are versions of the Northwind Solar Farm project brief,
+  detailing project specifications for the steering committee. Both documents share key project
+  details but differ in budget, schedule, and approval dates." ✓
+
+| Difference (aspect as returned) | D1 → D2 (statements as returned) | Pages | Verdict |
+|---|---|---|---|
+| Total capital budget | 41.5 → 44.0 million euros | 3 / 3 | ✓ |
+| Approval date of budget | 4 March 2026 → revised budget 12 May 2026 | 3 / 3 | ✓ |
+| Contingency reserve | 3.2 → 3.6 million euros | 3 / 3 | ✓ |
+| Construction start date | June → September 2026 | 4 / 4 | ✓ |
+| Grid connection target date | Q2 → Q4 2027 | 4 / 4 | ✓ |
+| Document revision date | "Not addressed" → "This brief summarises the Northwind Solar Farm project (revised May 2026)." | — / 1 | ✓ fact, but the D2 statement merges two page-1 lines (paraphrase, not a quote) |
+| Main contractor | Brightline Builders → Brightline Builders | 4 / 4 | ✗ **identical: not a difference** |
+| Community fund | 50,000 euros per year → the same | 6 / 6 | ✗ **identical: not a difference** |
+
+- **All five changed facts found**, each with the right page in both versions and statements
+  quoted word for word. **6 similarities**, all correct and correctly cited (sponsor, location,
+  capacity, panels, generation, hedgerow buffer). No dropped refs.
+- **Finding: two padded "differences"** whose statements are identical in both versions (the
+  prompt allows up to 8 and the model filled the list). **Fixed after the run** on the server, at
+  no cost: a difference whose positions cite every document with the same statement (compared
+  case-, whitespace- and full-stop-insensitively) is now dropped and counted
+  (`validation.dropped_key_points`); test added. The comparison stored by this run predates the
+  fix and still contains the two rows (stored results are reused as they are). The fix is
+  verified by the fake-mode test, not by a second real run.
+
+## Ledger for this run (actual `ai_calls` rows)
+
+| Purpose | Model | Prompt | Input tokens | Output tokens | Latency | Estimated cost (USD) |
+|---|---|---|---|---|---|---|
+| embed_document | text-embedding-3-small | — | 331 | 0 | 2.9 s | 0.00000662 |
+| insights_single | gpt-4o-mini | insights.single.v1 | 1,175 | 693 | 11.3 s | 0.00059205 |
+| summary_custom | gpt-4o-mini | summary.custom.v1 | 838 | 162 | 3.3 s | 0.00022290 |
+| compare | gpt-4o-mini | compare.v1 | 1,542 | 778 | 8.9 s | 0.00069810 |
+| **Total** | | | | | | **0.00151967** (4 calls) |
+
+**Project AI spend so far (estimated):** $0.00444987 before this run + $0.00151967 =
+**$0.00596954**.
+
+## Not shown by this run
+
+One document pair and one summary. Long documents (partial coverage), comparisons of different
+documents, comparisons with a focus, other lengths and tones, and the UI in real mode were not
+exercised with the real model.

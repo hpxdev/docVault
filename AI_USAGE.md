@@ -68,6 +68,7 @@ the test suite, the live stack, the browser, or a re-read of its own output.
 | Scripted edits on Windows wrote cp1252 bytes and turned `\n` escapes into line breaks | Ruff syntax errors and a repo-wide UTF-8 scan | Edits involving escapes or non-ASCII made with the editor tool |
 | UI: "already in vault" on a new file dropped twice; stale chat title; checkbox named "on"; fake summaries showing prompt headers; multi-line titles | Using the UI in the browser pane | Fixed one by one (ai-log T20–T23) |
 | An early Stop still paid for the embedding and answer calls; a stopped answer was shown with the "no verifiable citation" warning | Real-mode demo dry run | Stop checked between pipeline steps (test added); UI shows "Stopped" |
+| Real comparison listed identical statements (same contractor, same fund) as "differences" | First real check of v1 vs v2 | Server drops differences whose statements are identical in every document (test added) |
 | Comparison similarities lost their page/section numbers (the sources were rebuilt from a dict without them) | New comparison test: response validation error | Sources keep their refs |
 | The fake comparison found no differences between two versions (it compared only the first figure sentence of each) | Using the UI on the fake-mode stack | The fake compares page by page |
 | EVALUATION.md compared a local prompt token count with a per-message total that also included the query embedding | Re-checking the figure while writing PROMPTS.md | Corrected to 643 vs 632 tokens (ai-log T24) |
@@ -96,8 +97,10 @@ have **not** been iterated on a broad real evaluation set.
   small runs plus a prompt re-test. The dry run showed the follow-up rewrite does not work with
   `chat.condense.v1`, which fake tests could not reveal; v2 fixed that case but mis-resolved a
   reference the conversation never named. Map-reduce
-  insights and injection resistance with the real model are NOT VERIFIED, and so are custom
-  summaries and comparisons, which have run only against the fake model.
+  insights and injection resistance with the real model are NOT VERIFIED. Custom summaries and
+  comparisons had one small real check: the comparison was accurate but padded with two
+  identical "differences", and the summary invented a "risks" point that fake tests could not
+  reveal.
 - **Some things it could not do or verify:** record the demo video; test the Stop button against
   a real slow stream (fake answers finish in milliseconds); load-test anything (scale statements
   are design reasoning).

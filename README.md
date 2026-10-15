@@ -13,14 +13,17 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 
 > **Status (2026-10-15):** backend and ChatGPT-style UI complete, plus custom summaries,
 > comparisons, document versions and rate limiting; 142 fake-mode backend tests.
-> Three approved real-model runs:
+> Four approved real-model runs:
 > - a 10-question smoke test: 10/10 (7 cited answers on the right page, 3 correct "not found");
 > - a demo dry run through the UI: six questions, including a two-document answer, whole-vault
 >   search and Stop;
 > - a re-test of the follow-up rewrite prompt (`chat.condense.v2`). It fixed "When was it
->   approved?" but mis-resolved "its" when the conversation never named the referent.
+>   approved?" but mis-resolved "its" when the conversation never named the referent;
+> - a first check of a custom summary and a version comparison. The comparison found all five
+>   changes between two versions on the right pages, but listed two identical statements as
+>   differences (now dropped by the server). The summary invented a "risks" point.
 >
-> Estimated AI spend so far: $0.0044. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
+> Estimated AI spend so far: $0.0060. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
 > results and for what they do **not** show; retrieval at scale is untested.
 > Local, single-user demo with **no authentication**: not a secure or multi-user vault.
 
@@ -41,10 +44,10 @@ amber "not found", a two-document answer, and the source panel showing page 4's 
 | Streaming (OPT/BONUS) | Done: SSE chat tokens | `POST …/messages/stream` |
 | Caching (OPT/BONUS) | Done: query embeddings, metrics; answers deliberately not cached | `services/cache.py` |
 | Multi-document chat, follow-up suggestions, categorisation/tagging, sentiment/key insights (BONUS) | Done | |
-| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 126 backend tests | |
+| pgvector, real-time updates, test coverage (BONUS) | Done: pgvector HNSW + exact scan, SSE status stream, 142 backend tests | |
 | Cost tracking, logging/observability, health checks (BONUS) | Done: `ai_calls` ledger + spend cap, JSON logs with request IDs, `/health/ready` | |
-| Summary customisation: length, focus, tone (BONUS) | Done (fake-mode tests and UI check); real-model output **NOT VERIFIED** | `services/summaries.py`, `POST /documents/{id}/summaries` |
-| Comparative analysis between documents (BONUS) | Done (2–4 documents or versions; cited similarities and differences); real-model output **NOT VERIFIED** | `services/comparisons.py`, `POST /comparisons` |
+| Summary customisation: length, focus, tone (BONUS) | Done (fake-mode tests, UI check, one real check: figures right, but it invented a "risks" point; [details](docs/EVALUATION.md#custom-summary-and-version-comparison-first-real-check-2026-10-15-approved)) | `services/summaries.py`, `POST /documents/{id}/summaries` |
+| Comparative analysis between documents (BONUS) | Done (2–4 documents or versions; cited similarities and differences; one real check: all 5 changes between two versions found; [details](docs/EVALUATION.md#custom-summary-and-version-comparison-first-real-check-2026-10-15-approved)) | `services/comparisons.py`, `POST /comparisons` |
 | Rate limiting and quota management (BONUS) | Done: per-client limits in Redis (`429 RATE_LIMITED` + `Retry-After`) next to the spend cap | `core/ratelimit.py` |
 | Document version tracking (BONUS) | Done: new versions keep history; vault-wide chat uses the latest | `POST /documents/{id}/versions` |
 
@@ -380,15 +383,17 @@ docker compose -f compose.test.yml run --rm tests sh -c "ruff check . && ruff fo
 No OCR · single user, no authentication · English-oriented full-text search · local file
 storage · `gpt-4o-mini` is deprecated by OpenAI (shutdown 2027-01-14; `OPENAI_CHAT_MODEL` is
 configurable) · cost figures are estimates · real-model quality checked only on a 10-question,
-single-document smoke test (docs/EVALUATION.md) · custom summaries and comparisons have run only
-against the fake model: their real-model output is **NOT VERIFIED** · rate limits key on the
+single-document smoke test (docs/EVALUATION.md) · custom summaries and comparisons checked
+with the real model on one document pair only; a custom summary can add content that is not in the
+document (seen once: invented "risks"), which the server cannot detect · rate limits key on the
 socket address, so behind a proxy every client shares one limit.
 
 ## 13. Future work
 
 Authentication and multi-tenant ownership (then per-user rate limits and quotas); S3-compatible
 storage; OCR; WebSocket only if a two-way need appears; cursor pagination; map-reduce for custom
-summaries of very long documents (today: selected parts); comparisons as background tasks for
+summaries of very long documents (today: selected parts); `summary.custom.v2` (say which part
+of a multi-part focus is not addressed; never infer risks or opinions); comparisons as background tasks for
 large documents.
 
 Prompt work:

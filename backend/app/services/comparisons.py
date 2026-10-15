@@ -117,6 +117,15 @@ def _positions_valid(
         if not any(p["addressed"] for p in positions.values()) or not diff.aspect.strip():
             v.dropped_key_points += 1
             continue
+        # Every document says the same thing: not a difference. The real model padded its list
+        # this way in the first live check (identical contractor and fund statements).
+        if (
+            len(positions) == len(labels)
+            and all(p["addressed"] for p in positions.values())
+            and len({_normalise(p["statement"]) for p in positions.values()}) == 1
+        ):
+            v.dropped_key_points += 1
+            continue
         for label, info in labels.items():  # one row per document, in label order
             positions.setdefault(
                 label,
@@ -134,6 +143,10 @@ def _positions_valid(
         v.truncated_fields.append("differences")
         differences = differences[:MAX_DIFFERENCES]
     return similarities, differences, v
+
+
+def _normalise(statement: str) -> str:
+    return " ".join(statement.lower().split()).rstrip(".")
 
 
 def _public(info: dict[str, Any]) -> dict[str, Any]:
