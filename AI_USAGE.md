@@ -94,7 +94,11 @@ Worked examples and changes are in [docs/PROMPTS.md](docs/PROMPTS.md).
 
 ## Demo and remaining limits
 
-The latest video is a fresh real-time recording, made after the developer requested a plain,
+The developer then requested a shorter, faster video. Codex made a silent 1:21 edit from
+the actual recording, omitting long waits and speeding selected interactions. This changed
+the video timing, with no backend change or additional model calls. The full recording remains.
+
+The retained full video is a fresh real-time recording, made after the developer requested a plain,
 silent functionality demo. It contains three live recorded segments joined with two plain
 cuts, with no voiceover, zoom effects or time compression. Its approved isolated run used
 30 calls including one failed server response and a diagnostic check; the ledger estimate

@@ -1,0 +1,201 @@
+{
+  "file": "B:\\f-work\\case study\\demo-video\\ai-vault-short-demo.webm",
+  "duration": 80.936,
+  "width": 1920,
+  "height": 1080,
+  "frames": 1332,
+  "audio_tracks": 0,
+  "bytes": 6046690,
+  "sha256": "4c4a2437336652a5cb06041a5d61656547620ea731b633fd6c81b1db57a596d3",
+  "source": "B:\\f-work\\case study\\demo-video\\ai-vault-realtime-silent.webm",
+  "editing": "Selected actual screen-recording ranges; waits omitted, selected interactions accelerated. Normal reading speed retained for answers. No new AI calls, audio, overlays, graphics or zooms. Edited timing does not represent application latency.",
+  "scenes": [
+    {
+      "name": "Upload",
+      "start": 0.0,
+      "duration": 5.0,
+      "source_start": 0,
+      "source_end": 10,
+      "speed": 2,
+      "frames": 150
+    },
+    {
+      "name": "Ready documents",
+      "start": 5.0,
+      "duration": 4.0,
+      "source_start": 51,
+      "source_end": 55,
+      "speed": 1,
+      "frames": 60
+    },
+    {
+      "name": "AI insights",
+      "start": 9.0,
+      "duration": 4.0,
+      "source_start": 57,
+      "source_end": 61,
+      "speed": 1,
+      "frames": 60
+    },
+    {
+      "name": "Cited answer",
+      "start": 13.0,
+      "duration": 4.533,
+      "source_start": 131,
+      "source_end": 135.5,
+      "speed": 1,
+      "frames": 68
+    },
+    {
+      "name": "Original source",
+      "start": 17.533,
+      "duration": 4.533,
+      "source_start": 317,
+      "source_end": 321.5,
+      "speed": 1,
+      "frames": 68
+    },
+    {
+      "name": "Follow-up answer",
+      "start": 22.066,
+      "duration": 3.933,
+      "source_start": 158.5,
+      "source_end": 162.5,
+      "speed": 1,
+      "frames": 59
+    },
+    {
+      "name": "Not found",
+      "start": 25.999,
+      "duration": 4.0,
+      "source_start": 170,
+      "source_end": 174,
+      "speed": 1,
+      "frames": 60
+    },
+    {
+      "name": "Two-document answer",
+      "start": 29.999,
+      "duration": 4.0,
+      "source_start": 195,
+      "source_end": 199,
+      "speed": 1,
+      "frames": 60
+    },
+    {
+      "name": "Whole-vault answer",
+      "start": 33.999,
+      "duration": 4.0,
+      "source_start": 206,
+      "source_end": 210,
+      "speed": 1,
+      "frames": 60
+    },
+    {
+      "name": "Focused summary",
+      "start": 37.999,
+      "duration": 5.0,
+      "source_start": 334,
+      "source_end": 339,
+      "speed": 1,
+      "frames": 75
+    },
+    {
+      "name": "Version history",
+      "start": 42.999,
+      "duration": 3.933,
+      "source_start": 251.5,
+      "source_end": 255.5,
+      "speed": 1,
+      "frames": 59
+    },
+    {
+      "name": "Version comparison",
+      "start": 46.932,
+      "duration": 6.364,
+      "source_start": 266,
+      "source_end": 273,
+      "speed": 1.1,
+      "frames": 105
+    },
+    {
+      "name": "Library filters",
+      "start": 53.296,
+      "duration": 2.667,
+      "source_start": 275,
+      "source_end": 279,
+      "speed": 1.5,
+      "frames": 60
+    },
+    {
+      "name": "Latest-version answer",
+      "start": 55.963,
+      "duration": 3.533,
+      "source_start": 286,
+      "source_end": 289.5,
+      "speed": 1,
+      "frames": 53
+    },
+    {
+      "name": "Stop response",
+      "start": 59.496,
+      "duration": 3.573,
+      "source_start": 300.5,
+      "source_end": 305,
+      "speed": 1.25,
+      "frames": 67
+    },
+    {
+      "name": "Duplicate reuse",
+      "start": 63.069,
+      "duration": 4.467,
+      "source_start": 325.5,
+      "source_end": 330,
+      "speed": 1,
+      "frames": 67
+    },
+    {
+      "name": "Swagger endpoints",
+      "start": 67.536,
+      "duration": 4.467,
+      "source_start": 350.5,
+      "source_end": 355,
+      "speed": 1,
+      "frames": 67
+    },
+    {
+      "name": "Actual API response",
+      "start": 72.003,
+      "duration": 5.0,
+      "source_start": 357,
+      "source_end": 362,
+      "speed": 1,
+      "frames": 75
+    },
+    {
+      "name": "Usage metrics",
+      "start": 77.003,
+      "duration": 3.933,
+      "source_start": 362.8,
+      "source_end": 366.74,
+      "speed": 1,
+      "frames": 59
+    }
+  ],
+  "verification": {
+    "duration": 80.936,
+    "width": 1920,
+    "height": 1080,
+    "playback": {
+      "ended": true,
+      "time": 80.936,
+      "frames": 2400,
+      "dropped": 47,
+      "audioDecodedBytes": 0,
+      "error": null
+    },
+    "sampled_scenes": 19
+  },
+  "additional_ai_calls": 0,
+  "additional_ai_cost_usd": 0
+}

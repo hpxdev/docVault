@@ -24,9 +24,10 @@ preferences.
 - [Final submission checks](docs/SUBMISSION_CHECK.md): verification of the submission snapshot.
 - [Learning guide](docs/LEARNING_GUIDE.md): a step-by-step explanation of the application.
 
-**Demo:** a fresh, silent real-time recording is available locally (6:07, 1080p).
-It shows uploads, cited chat, summaries, versions, comparison, metrics and working Swagger.
-[Recording details](docs/REALTIME_VIDEO.md) describe its two recorded segments and checks.
+**Demo:** a short, silent demo is available locally (1:21, 1080p, about 6 MB).
+It shows the working upload, cited chat, summary, version, comparison, metrics and Swagger views.
+Long waits are omitted and selected interactions are accelerated in this edit of real footage.
+[Recording details](docs/REALTIME_VIDEO.md#short-demo) describe the short edit and retained full recording.
 The YouTube link will be added after final review and upload. Earlier narrated edits are
 documented in [the previous recording notes](docs/VIDEO_DELIVERY.md).
 

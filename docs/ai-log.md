@@ -1525,3 +1525,26 @@ Evidence: docs/evaluations/realtime-video-2026-10-15.json. MP4, general player c
 and final human acceptance remain NOT VERIFIED. Updated README, AI_USAGE and delivery notes.
 
 Human review: ___
+
+
+---
+
+## 2026-10-15: Codex short functionality video
+
+Developer requested a small, faster demo containing working functionality only.
+Edited actual footage into ai-vault-short-demo.webm: 80.936 s, 1920 x 1080,
+1,332 VP8 frames, no audio track, 6,046,690 bytes. Selected 19 working views,
+omitted long waits and accelerated selected interactions, retaining normal answer
+reading speed. No zooms, graphics or narration. This changes video timing, not
+application performance. No backend/source/dependency changes or additional AI calls.
+
+Verification: .checks/make-short-demo.py exported the cut; .checks/verify-short-demo.cjs
+decoded all 19 scenes and full 4x browser playback reached ended=true, no media error,
+zero decoded audio bytes; 47 dropped frames across accelerated playback and seeks.
+Visually inspected the contact sheet and full-size whole-vault and version views.
+SHA256 4c4a2437336652a5cb06041a5d61656547620ea731b633fd6c81b1db57a596d3.
+Updated README and AI_USAGE; retained full recording. No publication or push.
+MP4/general player compatibility and final human acceptance remain NOT VERIFIED.
+No app tests rerun for media/docs-only changes.
+
+Human review: ___

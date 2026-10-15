@@ -1,5 +1,22 @@
 # Plain real-time demo
 
+## Short demo
+
+Latest requested edit: `B:\f-work\case study\demo-video\ai-vault-short-demo.webm`.
+80.936 seconds (1:21), 1920 x 1080, silent VP8 WebM, 6,046,690 bytes.
+It selects 19 working views from the actual recording, skips long waits and accelerates
+selected interactions. Answer reading views remain at normal speed. There are no zooms,
+graphics, narration or music. Edited timings do not measure application response speed.
+No backend or model changes, new AI calls or new paid costs were involved.
+
+All 19 scenes decoded and complete browser playback at 4x reached the end without error;
+zero audio bytes decoded. The accelerated check/seeks reported 47 dropped frames.
+Visually checked the scene contact sheet and full-size whole-vault and version views.
+Metadata, source ranges, speed factors and checks are in
+[short-video-2026-10-15.json](evaluations/short-video-2026-10-15.json).
+
+## Retained full recording
+
 Latest file: `B:\f-work\case study\demo-video\ai-vault-realtime-silent.webm`.
 Duration 366.747 seconds (6:07), 1920 x 1080, VP8 WebM, no audio track.
 Three live screen recordings are joined with two plain cuts. The first segment
